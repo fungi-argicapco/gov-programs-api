@@ -3,7 +3,7 @@ import { parseISO } from 'date-fns';
 import { Program, type Adapter, type AdapterContext, type AdapterResult, type ProgramT } from '@common/types';
 
 export const generateSlug = (label: string): string => {
-  const normalized = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const normalized = label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   return normalized.length > 0 ? normalized : '-';
 };
 
