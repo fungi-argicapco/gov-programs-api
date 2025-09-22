@@ -127,6 +127,14 @@ function parseDate(value?: string | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/**
+ * Computes the temporal overlap between a business profile and a program.
+ *
+ * The overlap ratio divides the shared active duration by the shortest finite
+ * window between the profile and the program. Using the shorter period rewards
+ * tight alignment and prevents artificially high scores when one side has an
+ * open-ended range.
+ */
 function computeTimingScore(profile: Profile, program: ProgramRecord): number {
   const profileStart = parseDate(profile.start_date) ?? Number.NEGATIVE_INFINITY;
   const profileEnd = parseDate(profile.end_date) ?? Number.POSITIVE_INFINITY;
@@ -282,6 +290,11 @@ export async function suggestStack(
   let totalValueUsd = 0;
 
   for (const raw of sorted) {
+    if (capexUsd && totalValueUsd >= capexUsd) {
+      constraints.add('capex_exhausted');
+      break;
+    }
+
     const program = cloneProgram(raw);
     if (program.country_code !== profile.country_code) {
       constraints.add('jurisdiction');
@@ -359,6 +372,7 @@ export async function suggestStack(
     totalValueUsd += adjustedValueUsd;
 
     if (capexUsd && totalValueUsd >= capexUsd) {
+      constraints.add('capex_exhausted');
       break;
     }
   }
