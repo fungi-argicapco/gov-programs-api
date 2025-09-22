@@ -127,6 +127,15 @@ function parseDate(value?: string | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/**
+ * Compute how well the profile's active window overlaps with the program window.
+ *
+ * The score is the ratio between the overlap duration and the shortest finite
+ * duration of the two ranges. Using the shortest duration as the denominator
+ * ensures that a short-lived profile or program is not unfairly penalised when
+ * the other window is much longer. Infinite or open-ended ranges are treated as
+ * always available and yield a perfect score when any overlap exists.
+ */
 function computeTimingScore(profile: Profile, program: ProgramRecord): number {
   const profileStart = parseDate(profile.start_date) ?? Number.NEGATIVE_INFINITY;
   const profileEnd = parseDate(profile.end_date) ?? Number.POSITIVE_INFINITY;

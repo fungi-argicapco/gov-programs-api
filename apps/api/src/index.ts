@@ -9,6 +9,8 @@ import { scoreProgramWithReasons, suggestStack, loadWeights, type Profile as Mat
 import { loadFxToUSD } from '@common/lookups';
 import { getUtcDayStart, getUtcMonthStart } from './time';
 
+const DEFAULT_MATCH_RESPONSE_LIMIT = 50;
+
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
 const MATCH_RESULT_LIMIT = 50;
