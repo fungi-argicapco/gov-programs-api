@@ -1,18 +1,14 @@
-export type NormalizedProgram = {
-  uid: string;
-  country_code: 'US'|'CA';
-  authority_level: 'federal'|'state'|'prov'|'territory'|'regional'|'municipal';
-  jurisdiction_code: string; // e.g., US-WA, CA-ON
-  title: string;
-  summary?: string;
-  benefit_type?: 'grant'|'rebate'|'tax_credit'|'loan'|'guarantee'|'voucher'|'other';
-  status: 'open'|'scheduled'|'closed'|'unknown';
-  industry_codes?: string[];  // NAICS
-  start_date?: string;
-  end_date?: string;
-  url?: string;
-  source_id?: number;
-};
+import { NormalizedProgramSchema, NormalizedProgramInput as SchemaProgramInput, NormalizedProgram as SchemaProgram } from '@common/types';
+
+export type NormalizedProgramInput = SchemaProgramInput;
+export type NormalizedProgram = SchemaProgram & { uid: string };
+
+export interface UpsertProgramRecord {
+  program: NormalizedProgramInput;
+  raw?: unknown;
+  adapter: string;
+  source_url?: string;
+}
 
 async function stableUID(input: string): Promise<string> {
   const enc = new TextEncoder().encode(input);
@@ -35,7 +31,8 @@ async function stableUID(input: string): Promise<string> {
   return `p-${hex}`;
 }
 
-export async function normalizeToProgram(input: Omit<NormalizedProgram,'uid'>): Promise<NormalizedProgram> {
-  const uid = await stableUID(`${input.authority_level}|${input.jurisdiction_code}|${input.title}`.toLowerCase());
-  return { uid, ...input };
+export async function normalizeToProgram(input: NormalizedProgramInput): Promise<NormalizedProgram> {
+  const parsed = NormalizedProgramSchema.parse(input);
+  const uid = await stableUID(`${parsed.authority_level}|${parsed.jurisdiction_code}|${parsed.title}`.toLowerCase());
+  return { uid, ...parsed };
 }
