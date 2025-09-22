@@ -14,7 +14,7 @@ export type NormalizedProgram = {
   source_id?: number;
 };
 
-function stableUID(input: string) {
+async function stableUID(input: string): Promise<string> {
   const enc = new TextEncoder().encode(input);
   // portable SHA-256 using crypto.subtle (available in Workers & Node >=18)
   // fall back to Node.js crypto if subtle missing, otherwise use simple hash (not for production)
@@ -22,10 +22,10 @@ function stableUID(input: string) {
   if (!subtle) {
     // Try Node.js crypto module if available
     try {
-      // Dynamically require crypto to avoid breaking in non-Node environments
-      // @ts-ignore
-      const crypto = require('crypto');
-      const hash = crypto.createHash('sha256').update(input).digest('hex');
+      const { createHash } = await import('node:crypto').catch(async () => {
+        return await import('crypto');
+      });
+      const hash = createHash('sha256').update(input).digest('hex');
       return `p-${hash.slice(0, 32)}`; // 16 bytes = 32 hex chars
     } catch (e) {
       // Fallback: FNV-1a 32-bit hash (not cryptographically secure, but better distribution than polynomial rolling hash)
@@ -37,10 +37,12 @@ function stableUID(input: string) {
       return `p-${h.toString(16)}`;
     }
   }
-  return crypto.subtle.digest('SHA-256', enc).then(buf => {
-    const hex = Array.from(new Uint8Array(buf)).slice(0, 16).map(b=>b.toString(16).padStart(2,'0')).join('');
-    return `p-${hex}`;
-  });
+  const buf = await subtle.digest('SHA-256', enc);
+  const hex = Array.from(new Uint8Array(buf))
+    .slice(0, 16)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+  return `p-${hex}`;
 }
 
 export async function normalizeToProgram(input: Omit<NormalizedProgram,'uid'>): Promise<NormalizedProgram> {
