@@ -1,68 +1,25 @@
-import { load, type Cheerio, type CheerioAPI } from 'cheerio';
-import { parseISO } from 'date-fns';
-import { Program, type Adapter, type AdapterContext, type AdapterResult, type ProgramT } from '@common/types';
+import * as cheerio from 'cheerio';
+import { upsertPrograms } from '../upsert';
 
-export const generateSlug = (label: string): string => {
-  const normalized = label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  return normalized.length > 0 ? normalized : '-';
-};
-
-const parseItem = (item: Cheerio<any>, $: CheerioAPI): ProgramT | null => {
-  const title = item.find('title').first().text().trim();
-  if (!title) return null;
-  const link = item.find('link').first().text().trim();
-  const summary = item.find('description').first().text().trim();
-  const pubDate = item.find('pubDate').first().text().trim();
-  let startDate: string | undefined;
-  if (pubDate) {
-    const parsed = parseISO(pubDate);
-    if (!Number.isNaN(parsed.getTime())) {
-      startDate = parsed.toISOString();
-    }
-  }
-
-  return undefined;
-};
-
-const hashId = (input: string): string => {
-  return createHash('sha256').update(input).digest('hex');
-};
-
-export const deriveProgramId = (item: Pick<RssItemT, 'guid' | 'link' | 'title'>): string => {
-  const guid = normalizeGuid(item.guid);
-  if (guid) {
-    return hashId(guid);
-  }
-
-  const link = item.link?.trim();
-  if (link) {
-    return hashId(link);
-  }
-
-  const title = item.title.trim();
-  const fallbackSeed = `${title}|${item.link ?? ''}`;
-  return hashId(fallbackSeed);
-};
-
-export const adaptRssItemToProgram = (raw: RssItemT): ProgramT => {
-  const item = RssItem.parse(raw);
-  const { title, summary, link, isoDate } = item;
-  const categories = item.categories ?? [];
-
-  const programId = deriveProgramId(item);
-
-  const program: ProgramT = Program.parse({
-    id: programId,
-    title,
-    summary: summary || undefined,
-    websiteUrl: link || undefined,
-    startDate,
-    tags: categories.map((label) => ({
-      id: crypto.randomUUID(),
-      slug: generateSlug(label),
-      label
-    }))
+export async function ingestRssGeneric(env: { DB: D1Database }, opts: { url: string; country: 'US'|'CA'; authority: string; jurisdiction: string; map?: (item: any)=>Partial<{title:string;summary:string;url:string;status:string}>; limit?: number }) {
+  const res = await fetch(opts.url);
+  const xml = await res.text();
+  const $ = cheerio.load(xml, { xmlMode: true });
+  const items = $('item').toArray().slice(0, opts.limit ?? 50);
+  const payload = items.map(el => {
+    const t = $(el).find('title').first().text().trim();
+    const link = $(el).find('link').first().text().trim();
+    const desc = $(el).find('description').first().text().trim();
+    const mapped = opts.map ? (opts.map({ title: t, link, desc }) || {}) : {};
+    return {
+      country_code: opts.country,
+      authority_level: opts.authority as any,
+      jurisdiction_code: opts.jurisdiction,
+      title: mapped.title ?? t,
+      summary: mapped.summary ?? desc,
+      url: mapped.url ?? link,
+      status: (mapped.status as any) ?? 'unknown'
+    };
   });
-
-  return program;
-};
+  await upsertPrograms(env, payload as any);
+}

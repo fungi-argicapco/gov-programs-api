@@ -1,62 +1,32 @@
-import { load } from 'cheerio';
-import { parseISO } from 'date-fns';
-import { Program, type Adapter, type AdapterContext, type AdapterResult, type ProgramT } from '@common/types';
+import * as cheerio from 'cheerio';
+import { upsertPrograms } from '../upsert';
 
-const normalizeDate = (value?: string) => {
-  if (!value) return undefined;
-  const parsed = parseISO(value);
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
-};
+export async function ingestHtmlTableGeneric(env: { DB: D1Database }, opts: {
+  url: string; tableSelector: string;
+  columns: { title: string; url?: string; summary?: string; start?: string; end?: string; status?: string };
+  country: 'US'|'CA'; authority: string; jurisdiction: string; limit?: number;
+}) {
+  const res = await fetch(opts.url);
+  const html = await res.text();
+  const $ = cheerio.load(html);
+  const rows = $(`${opts.tableSelector} tr`).toArray().slice(1, (opts.limit ?? 200)+1);
 
-const execute = async (sourceUrl: string, context: AdapterContext): Promise<AdapterResult> => {
-  const response = await context.fetch(sourceUrl);
-  const html = await response.text();
-  const $ = load(html);
-  const headerCells = $('table thead th').toArray().map((node) => $(node).text().trim().toLowerCase());
-  const programs: ProgramT[] = [];
+  const get = (row: any, sel?: string) => sel ? $(row).find(sel).text().trim() : undefined;
+  const aHref = (row: any, sel?: string) => sel ? ($(row).find(sel).attr('href') || '').trim() : undefined;
 
-  $('table tbody tr').each((_, row) => {
-    const cells = $(row).find('td');
-    if (cells.length === 0) return;
-    const values: Record<string, string> = {};
-    cells.each((index, cell) => {
-      const key = headerCells[index] ?? `col_${index}`;
-      values[key] = $(cell).text().trim();
-      const link = $(cell).find('a[href]').attr('href');
-      if (link) {
-        values[`${key}_url`] = link;
-      }
-    });
-
-    const tags = (values['tags'] ?? values['tag'] ?? '').split(',').map((tag) => tag.trim()).filter(Boolean);
-
-    const statusRaw = (values['status'] ?? '').toLowerCase();
-    const validStatuses = ['open', 'scheduled', 'closed'] as const;
-    const normalizedStatus: ProgramT['status'] = validStatuses.includes(statusRaw as typeof validStatuses[number])
-      ? (statusRaw as typeof validStatuses[number])
-      : 'unknown';
-
-    const program: ProgramT = Program.parse({
-      id: crypto.randomUUID(),
-      title: values['title'] ?? values['program'] ?? 'Untitled program',
-      summary: values['summary'] || undefined,
-      websiteUrl: values['link_url'] || values['title_url'] || undefined,
-      startDate: normalizeDate(values['start date'] ?? values['start_date']),
-      endDate: normalizeDate(values['end date'] ?? values['end_date']),
-      status: normalizedStatus,
-      tags: tags.map((label) => ({ id: crypto.randomUUID(), slug: label.toLowerCase().replace(/[^a-z0-9]+/g, '-'), label }))
-    });
-
-    programs.push(program);
+  const payload = rows.map((r) => {
+    const title = get(r, opts.columns.title) || 'Untitled';
+    return {
+      country_code: opts.country,
+      authority_level: opts.authority as any,
+      jurisdiction_code: opts.jurisdiction,
+      title,
+      summary: get(r, opts.columns.summary),
+      url: aHref(r, opts.columns.url),
+      start_date: get(r, opts.columns.start),
+      end_date: get(r, opts.columns.end),
+      status: (get(r, opts.columns.status) as any) || 'unknown'
+    };
   });
-
-  return { programs, raw: html };
-};
-
-export const htmlTableGenericAdapter: Adapter = {
-  name: 'html_table_generic',
-  supports: (url: string) => url.endsWith('.html') || url.startsWith('http'),
-  execute
-};
-
-export default htmlTableGenericAdapter;
+  await upsertPrograms(env, payload as any);
+}
