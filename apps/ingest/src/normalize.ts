@@ -28,9 +28,12 @@ function stableUID(input: string) {
       const hash = crypto.createHash('sha256').update(input).digest('hex');
       return `p-${hash.slice(0, 32)}`; // 16 bytes = 32 hex chars
     } catch (e) {
-      // Fallback: simple hash (not suitable for production, only for test/dev)
-      // WARNING: This fallback hash is NOT cryptographically secure and may have poor distribution.
-      let h = 0; for (let i=0;i<enc.length;i++) h = (h*31 + enc[i]) >>> 0;
+      // Fallback: FNV-1a 32-bit hash (not cryptographically secure, but better distribution than polynomial rolling hash)
+      let h = 0x811c9dc5;
+      for (let i = 0; i < enc.length; i++) {
+        h ^= enc[i];
+        h = Math.imul(h, 0x01000193) >>> 0;
+      }
       return `p-${h.toString(16)}`;
     }
   }
