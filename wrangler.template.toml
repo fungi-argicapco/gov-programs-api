@@ -1,0 +1,37 @@
+name = "gov-programs-api"
+main = "apps/api/src/index.ts"
+compatibility_date = "2025-09-21"
+
+[vars]
+NODE_ENV = "production"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gov-programs-api-db"
+database_id = "__D1_DATABASE_ID__"
+
+[[kv_namespaces]]
+binding = "LOOKUPS_KV"
+id = "__KV_LOOKUPS_ID__"
+
+[[kv_namespaces]]
+binding = "API_KEYS"
+id = "__KV_API_KEYS_ID__"
+
+[[r2_buckets]]
+binding = "RAW_R2"
+bucket_name = "__R2_BUCKET__"
+
+[[durable_objects.bindings]]
+name = "__DO_BINDING__"
+class_name = "__DO_CLASS__"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["__DO_CLASS__"]
+
+[migrations]
+dir = "packages/db/migrations"
+
+[triggers]
+crons = ["0 */4 * * *"]
