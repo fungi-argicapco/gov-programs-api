@@ -1,0 +1,36 @@
+{
+  "name": "gov-programs-api",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "scripts": {
+    "dev:api": "bunx miniflare --modules --watch apps/api/src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "setup": "bash scripts/setup.sh",
+    "typecheck": "bunx tsc -p tsconfig.json",
+    "lint": "bun run typecheck"
+  },
+  "dependencies": {
+    "@cloudflare/d1": "^1.4.1",
+    "cheerio": "^1.0.0-rc.12",
+    "currency.js": "^2.0.4",
+    "date-fns": "^3.6.0",
+    "drizzle-orm": "^0.30.10",
+    "hono": "^4.4.2",
+    "node-fetch": "^3.3.2",
+    "zod": "^3.22.4",
+    "better-sqlite3": "^9.4.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250921.0",
+    "@types/node": "^20.12.7",
+    "miniflare": "^4.20250917.0",
+    "ts-to-openapi": "^1.3.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.3.1",
+    "wrangler": "^4.38.0"
+  }
+}
