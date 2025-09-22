@@ -26,7 +26,7 @@ export interface ProgramCriterionResponse {
 export interface ProgramResponse {
   id: number;
   uid: string;
-  country_code: 'US' | 'CA';
+  country_code: 'US' | 'CA' | 'UK';
   authority_level: 'federal' | 'state' | 'prov' | 'territory' | 'regional' | 'municipal';
   jurisdiction_code: string;
   title: string;
