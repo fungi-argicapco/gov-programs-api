@@ -81,8 +81,9 @@ const mapProgramRow = (row: typeof programs.$inferSelect): ProgramT => ({
 
 const buildSearchCondition = (filters: ProgramFilters) => {
   if (!filters.search) return undefined;
-  const token = filters.search.replace(/["'`]/g, ' ').trim();
-  if (!token) return undefined;
+  // Escape embedded double quotes and wrap in double quotes for FTS safety
+  const token = `"${filters.search.replace(/"/g, '""').trim()}"`;
+  if (token === '""') return undefined;
   return sql`exists (select 1 from programs_fts where programs_fts.program_id = ${programs.id} and programs_fts match ${token})`;
 };
 
