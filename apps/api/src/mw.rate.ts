@@ -24,8 +24,7 @@ export const mwRate: MiddlewareHandler = async (c, next) => {
   }
 
   const now = Date.now();
-  const headerKey = c.req.header('x-api-key') || 'anon';
-  const key = headerKey || 'anon';
+  const key = c.req.header('x-api-key') || 'anon';
   const bucket = buckets.get(key) ?? { tokens: RATE_LIMIT, lastRefill: now };
   const refilled = refillBucket(bucket, now);
   if (refilled.tokens < 1) {
