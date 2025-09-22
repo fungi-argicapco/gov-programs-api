@@ -1,14 +1,12 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
-import { rssGenericAdapter } from './rss_generic';
+import { rssGenericAdapter, generateSlug } from './rss_generic';
 import { htmlTableGenericAdapter } from './html_table_generic';
 import { jsonApiGenericAdapter } from './json_api_generic';
 
 const mockUuid = (): (() => `${string}-${string}-${string}-${string}-${string}`) => {
   let counter = 0;
-  return () => {
-    const suffix = (counter++).toString(16).padStart(12, '0');
-    return `00000000-0000-4000-8000-${suffix}` as `${string}-${string}-${string}-${string}-${string}`;
-  };
+  return () =>
+    `00000000-0000-4000-8000-${(counter++).toString().padStart(12, '0')}` as `${string}-${string}-${string}-${string}-${string}`;
 };
 
 const createFetch = (body: string, contentType = 'application/xml') =>
@@ -34,6 +32,20 @@ describe('rssGenericAdapter', () => {
     expect(result.programs).toHaveLength(1);
     expect(result.programs[0].title).toBe('Program A');
     expect(result.programs[0].tags[0].label).toBe('Energy');
+  });
+});
+
+describe('generateSlug', () => {
+  test('creates lowercase hyphenated slugs', () => {
+    expect(generateSlug('Energy Efficiency')).toBe('energy-efficiency');
+  });
+
+  test('trims repeated separators from ends', () => {
+    expect(generateSlug('--Already--Normalized--')).toBe('already-normalized');
+  });
+
+  test('falls back to hyphen when label lacks alphanumerics', () => {
+    expect(generateSlug('###')).toBe('-');
   });
 });
 

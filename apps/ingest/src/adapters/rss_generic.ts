@@ -1,53 +1,23 @@
-import { createHash } from 'node:crypto';
-import { z } from 'zod';
+import { load, type Cheerio, type CheerioAPI } from 'cheerio';
+import { parseISO } from 'date-fns';
+import { Program, type Adapter, type AdapterContext, type AdapterResult, type ProgramT } from '@common/types';
 
-const Program = z.object({
-  id: z.string(),
-  title: z.string(),
-  summary: z.string().optional(),
-  websiteUrl: z.string().optional(),
-  startDate: z.string().optional(),
-  tags: z
-    .object({
-      id: z.string(),
-      slug: z.string(),
-      label: z.string()
-    })
-    .array()
-    .default([])
-});
+export const generateSlug = (label: string): string => {
+  const normalized = label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  return normalized.length > 0 ? normalized : '-';
+};
 
-export type ProgramT = z.infer<typeof Program>;
-
-const RssItem = z.object({
-  guid: z
-    .union([
-      z.string(),
-      z.object({ value: z.string().optional() }).partial()
-    ])
-    .optional(),
-  link: z.string().optional(),
-  title: z.string(),
-  summary: z.string().optional(),
-  categories: z.array(z.string()).optional(),
-  isoDate: z.string().optional()
-});
-
-export type RssItemT = z.infer<typeof RssItem>;
-
-const normalizeGuid = (guid: RssItemT['guid']): string | undefined => {
-  if (!guid) {
-    return undefined;
-  }
-
-  if (typeof guid === 'string') {
-    return guid.trim() || undefined;
-  }
-
-  if (typeof guid.value === 'string') {
-    const trimmed = guid.value.trim();
-    if (trimmed.length > 0) {
-      return trimmed;
+const parseItem = (item: Cheerio<any>, $: CheerioAPI): ProgramT | null => {
+  const title = item.find('title').first().text().trim();
+  if (!title) return null;
+  const link = item.find('link').first().text().trim();
+  const summary = item.find('description').first().text().trim();
+  const pubDate = item.find('pubDate').first().text().trim();
+  let startDate: string | undefined;
+  if (pubDate) {
+    const parsed = parseISO(pubDate);
+    if (!Number.isNaN(parsed.getTime())) {
+      startDate = parsed.toISOString();
     }
   }
 
@@ -86,16 +56,12 @@ export const adaptRssItemToProgram = (raw: RssItemT): ProgramT => {
     title,
     summary: summary || undefined,
     websiteUrl: link || undefined,
-    startDate: isoDate || undefined,
-    tags: categories.map((label) => {
-      const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const slugOrHash = slug || hashId(label);
-      return {
-        id: `${programId}:${slugOrHash}`,
-        slug: slugOrHash,
-        label
-      };
-    })
+    startDate,
+    tags: categories.map((label) => ({
+      id: crypto.randomUUID(),
+      slug: generateSlug(label),
+      label
+    }))
   });
 
   return program;
