@@ -36,9 +36,16 @@ app.get('/v1/programs', async (c) => {
 
 app.get('/v1/programs/:id', async (c) => {
   const id = c.req.param('id');
-  const row = await c.env.DB.prepare(`
-    SELECT * FROM programs WHERE uid = ? OR CAST(id AS TEXT) = ? LIMIT 1
-  `).bind(id, id).first<any>();
+  // Try lookup by uid first
+  let row = await c.env.DB.prepare(
+    `SELECT * FROM programs WHERE uid = ? LIMIT 1`
+  ).bind(id).first<any>();
+  // If not found, and id is an integer, try lookup by id
+  if (!row && /^\d+$/.test(id)) {
+    row = await c.env.DB.prepare(
+      `SELECT * FROM programs WHERE id = ? LIMIT 1`
+    ).bind(Number(id)).first<any>();
+  }
   if (!row) return c.json({ error: 'not_found' }, 404);
   return c.json(row);
 });
