@@ -3,6 +3,16 @@ import { formatDay } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
+type DeadlinkMetrics = {
+  rate: number;
+};
+
+function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as DeadlinkMetrics;
+  return typeof candidate.rate === 'number' && Number.isFinite(candidate.rate);
+}
+
 type IngestEnv = {
   DB: D1Database;
   LOOKUPS_KV?: KVNamespace;
@@ -27,11 +37,8 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
     try {
       const key = `metrics:deadlinks:${day}`;
       const stored = await env.LOOKUPS_KV.get(key, 'json');
-      if (stored && typeof stored === 'object' && 'rate' in stored) {
-        const parsed = Number((stored as any).rate);
-        if (Number.isFinite(parsed)) {
-          deadlinkRate = parsed;
-        }
+      if (isDeadlinkMetrics(stored)) {
+        deadlinkRate = stored.rate;
       }
     } catch (err) {
       console.warn('daily_coverage_deadlinks_lookup_failed', err);

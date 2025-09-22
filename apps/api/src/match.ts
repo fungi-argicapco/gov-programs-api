@@ -127,6 +127,12 @@ function parseDate(value?: string | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/**
+ * Determine how well the profile and program timelines align by comparing the duration of
+ * their overlap against the shortest finite duration between them. The overlap ratio is
+ * capped at 1, so a program that fully covers the shorter window achieves the maximum score
+ * while partial overlaps degrade proportionally.
+ */
 function computeTimingScore(profile: Profile, program: ProgramRecord): number {
   const profileStart = parseDate(profile.start_date) ?? Number.NEGATIVE_INFINITY;
   const profileEnd = parseDate(profile.end_date) ?? Number.POSITIVE_INFINITY;
@@ -318,6 +324,15 @@ export async function suggestStack(
     }
     if (blocked) continue;
 
+    let remainingCapex: number | null = null;
+    if (capexUsd) {
+      remainingCapex = capexUsd - totalValueUsd;
+      if (remainingCapex <= 0) {
+        constraints.add('capex_exhausted');
+        break;
+      }
+    }
+
     const valueUsd = computeProgramValueUsd(program, fxRates);
     if (valueUsd <= 0) continue;
     let adjustedValueUsd = valueUsd;
@@ -332,14 +347,9 @@ export async function suggestStack(
       }
       adjustedValueUsd = Math.min(adjustedValueUsd, capLimit);
     }
-    if (capexUsd) {
-      const remaining = capexUsd - totalValueUsd;
-      if (remaining <= 0) {
-        constraints.add('capex_exhausted');
-        break;
-      }
-      if (adjustedValueUsd > remaining) {
-        adjustedValueUsd = remaining;
+    if (capexUsd && remainingCapex !== null) {
+      if (adjustedValueUsd > remainingCapex) {
+        adjustedValueUsd = remainingCapex;
       }
     }
     if (adjustedValueUsd <= 0) continue;
