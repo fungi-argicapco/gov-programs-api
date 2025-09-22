@@ -31,8 +31,9 @@ const execute = async (sourceUrl: string, context: AdapterContext): Promise<Adap
     const tags = (values['tags'] ?? values['tag'] ?? '').split(',').map((tag) => tag.trim()).filter(Boolean);
 
     const statusRaw = (values['status'] ?? '').toLowerCase();
-    const normalizedStatus: ProgramT['status'] = ['open', 'scheduled', 'closed'].includes(statusRaw as ProgramT['status'])
-      ? (statusRaw as ProgramT['status'])
+    const validStatuses = ['open', 'scheduled', 'closed'] as const;
+    const normalizedStatus: ProgramT['status'] = validStatuses.includes(statusRaw as typeof validStatuses[number])
+      ? (statusRaw as typeof validStatuses[number])
       : 'unknown';
 
     const program: ProgramT = Program.parse({
