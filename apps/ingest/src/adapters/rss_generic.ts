@@ -70,7 +70,7 @@ export const deriveProgramId = (item: Pick<RssItemT, 'guid' | 'link' | 'title'>)
   }
 
   const title = item.title.trim();
-  const fallbackSeed = `${title}\n${item.link ?? ''}`;
+  const fallbackSeed = `${title}|${item.link ?? ''}`;
   return hashId(fallbackSeed);
 };
 
