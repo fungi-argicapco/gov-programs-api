@@ -2,8 +2,11 @@ import { Hono } from 'hono';
 import { Env } from './db';
 import { buildProgramsQuery } from './query';
 import { listSourcesWithMetrics, buildCoverageResponse } from './coverage';
+import { mwAuth, type AuthVariables } from './mw.auth';
+import { mwRate } from './mw.rate';
+import { createAlertSubscription, createSavedQuery, deleteSavedQuery, getSavedQuery } from './saved';
 
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
 function parseIndustryCodes(raw: string | null | undefined): string[] {
   if (!raw) return [];
@@ -93,6 +96,112 @@ app.get('/v1/programs', async (c) => {
   }));
 
   return c.json({ data: enriched, meta: { total: Number(count?.total ?? 0), page, pageSize } });
+});
+
+app.use('/v1/saved-queries', mwRate, mwAuth);
+app.use('/v1/saved-queries/*', mwRate, mwAuth);
+app.use('/v1/alerts', mwRate, mwAuth);
+app.use('/v1/usage/me', mwRate, mwAuth);
+
+app.post('/v1/saved-queries', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  let body: any;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: 'invalid_json' }, 400);
+  }
+  const name = typeof body?.name === 'string' ? body.name.trim() : '';
+  const queryJson = typeof body?.query_json === 'string' ? body.query_json : '';
+  if (!name || !queryJson) {
+    return c.json({ error: 'invalid_payload' }, 400);
+  }
+  const id = await createSavedQuery(c.env, auth.apiKeyId, { name, query_json: queryJson });
+  return c.json({ id });
+});
+
+app.get('/v1/saved-queries/:id', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  const id = Number(c.req.param('id'));
+  if (!Number.isInteger(id)) {
+    return c.json({ error: 'not_found' }, 404);
+  }
+  const row = await getSavedQuery(c.env, auth.apiKeyId, id);
+  if (!row) {
+    return c.json({ error: 'not_found' }, 404);
+  }
+  return c.json(row);
+});
+
+app.delete('/v1/saved-queries/:id', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  const id = Number(c.req.param('id'));
+  if (!Number.isInteger(id)) {
+    return c.json({ error: 'not_found' }, 404);
+  }
+  const deleted = await deleteSavedQuery(c.env, auth.apiKeyId, id);
+  if (!deleted) {
+    return c.json({ error: 'not_found' }, 404);
+  }
+  return c.json({ ok: true });
+});
+
+app.post('/v1/alerts', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  let body: any;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: 'invalid_json' }, 400);
+  }
+  const savedQueryId = Number(body?.saved_query_id);
+  const sink = typeof body?.sink === 'string' ? body.sink : '';
+  const target = typeof body?.target === 'string' ? body.target : '';
+  if (!Number.isInteger(savedQueryId) || !sink || !target) {
+    return c.json({ error: 'invalid_payload' }, 400);
+  }
+  const savedQuery = await getSavedQuery(c.env, auth.apiKeyId, savedQueryId);
+  if (!savedQuery) {
+    return c.json({ error: 'not_found' }, 404);
+  }
+  const id = await createAlertSubscription(c.env, {
+    saved_query_id: savedQuery.id,
+    sink,
+    target
+  });
+  return c.json({ id });
+});
+
+app.get('/v1/usage/me', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  const now = new Date();
+  const nowSeconds = Math.floor(now.getTime() / 1000);
+  const dayStart = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 1000);
+  const monthStart = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1) / 1000);
+
+  const [dayUsage, monthUsage] = await Promise.all([
+    c.env.DB.prepare('SELECT COALESCE(SUM(cost), 0) as total FROM usage_events WHERE api_key_id = ? AND ts >= ?')
+      .bind(auth.apiKeyId, dayStart)
+      .first<{ total: number | null }>(),
+    c.env.DB.prepare('SELECT COALESCE(SUM(cost), 0) as total FROM usage_events WHERE api_key_id = ? AND ts >= ?')
+      .bind(auth.apiKeyId, monthStart)
+      .first<{ total: number | null }>()
+  ]);
+
+  return c.json({
+    day: { used: Number(dayUsage?.total ?? 0), window_started_at: dayStart },
+    month: { used: Number(monthUsage?.total ?? 0), window_started_at: monthStart },
+    limits: {
+      daily: auth.quotaDaily,
+      monthly: auth.quotaMonthly,
+      last_seen_at: nowSeconds
+    }
+  });
 });
 
 app.get('/v1/programs/:id', async (c) => {
