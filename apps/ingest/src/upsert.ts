@@ -275,7 +275,7 @@ async function writeRelations(env: IngestEnv, programId: number, benefits: Progr
   }
   if (tags.length > 0) {
     await env.DB.batch(
-      tags.map((tag) => env.DB.prepare(`INSERT INTO tags (program_id, tag) VALUES (?, ?)`)).map((stmt, idx) => stmt.bind(programId, tags[idx]))
+      tags.map((tag) => env.DB.prepare(`INSERT INTO tags (program_id, tag) VALUES (?, ?)`).bind(programId, tag))
     );
   }
 }
