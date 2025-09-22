@@ -1,15 +1,15 @@
 import { defineConfig } from 'vitest/config';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const resolveFromRoot = (...segments: string[]) => path.resolve(__dirname, ...segments);
 
 export default defineConfig({
-  test: {
-    environment: 'node',
-    globals: true,
-    include: ['**/*.test.ts']
-  },
   resolve: {
     alias: {
-      '@common': '/workspace/gov-programs-api/packages/common/src',
-      '@db': '/workspace/gov-programs-api/packages/db/src'
-    }
-  }
+      '@common': resolveFromRoot('packages/common/src'),
+      '@db': resolveFromRoot('packages/db/src'),
+    },
+  },
 });
