@@ -18,8 +18,7 @@ function stableUID(input: string) {
   const enc = new TextEncoder().encode(input);
   // portable SHA-256 using crypto.subtle (available in Workers & Node >=18)
   // fall back to simple hex if subtle missing
-  // @ts-ignore
-  const subtle = (globalThis.crypto && globalThis.crypto.subtle) || undefined;
+  const subtle = globalThis.crypto?.subtle;
   if (!subtle) {
     let h = 0; for (let i=0;i<enc.length;i++) h = (h*31 + enc[i]) >>> 0;
     return `p-${h.toString(16)}`;
