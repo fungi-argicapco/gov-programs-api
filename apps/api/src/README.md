@@ -214,7 +214,7 @@ If there is no overlap the score is `0`; when overlap covers the shortest durati
 
 ### Size and currency handling
 
-Benefit amounts are normalised to USD using lookup rates from `loadFxToUSD`. When both maximum and minimum amounts are missing or the currency is unknown, the benefit contributes `0` to the size score. Programs with multiple benefits sum their converted USD amounts before comparing against profile capex.
+Benefit amounts are normalized to USD using lookup rates from `loadFxToUSD`. When both maximum and minimum amounts are missing or the currency is unknown, the benefit contributes `0` to the size score. Programs with multiple benefits sum their converted USD amounts before comparing against profile capex.
 
 ### Freshness decay
 
