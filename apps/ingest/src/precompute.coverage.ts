@@ -44,8 +44,8 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
   }
 
   const totalPrograms = Number(programsRow?.total ?? 0);
-  const programsWithCodes = Number(programsRow?.with_codes ?? 0);
-  const naicsDensity = totalPrograms > 0 ? programsWithCodes / totalPrograms : 0;
+  const totalCodes = Number(programsRow?.total_codes ?? 0);
+  const naicsDensity = totalPrograms > 0 ? totalCodes / totalPrograms : 0;
   const freshSources = Number(freshSourcesRow?.fresh ?? 0);
 
   await env.DB.prepare(

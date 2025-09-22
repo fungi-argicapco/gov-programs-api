@@ -80,6 +80,7 @@ export async function runOutbox(
         status = 'ok';
         deliveredAt = now;
       } else {
+
         status = attempts >= MAX_DELIVERY_ATTEMPTS ? 'error' : 'queued';
       }
     } catch (err) {
