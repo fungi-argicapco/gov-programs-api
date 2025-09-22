@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS programs (
   end_date TEXT,
   url TEXT,
   source_id INTEGER,
-  created_at INTEGER DEFAULT (unixepoch('now')*1000),
-  updated_at INTEGER DEFAULT (unixepoch('now')*1000)
+  created_at INTEGER DEFAULT (strftime('%s','now')*1000),
+  updated_at INTEGER DEFAULT (strftime('%s','now')*1000)
 );
 
 CREATE TABLE IF NOT EXISTS benefits (
