@@ -127,6 +127,15 @@ function parseDate(value?: string | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/**
+ * Compute how well the profile's active window overlaps with the program window.
+ *
+ * The score is the ratio between the overlap duration and the shortest finite
+ * duration of the two ranges. Using the shortest duration as the denominator
+ * ensures that a short-lived profile or program is not unfairly penalised when
+ * the other window is much longer. Infinite or open-ended ranges are treated as
+ * always available and yield a perfect score when any overlap exists.
+ */
 function computeTimingScore(profile: Profile, program: ProgramRecord): number {
   const profileStart = parseDate(profile.start_date) ?? Number.NEGATIVE_INFINITY;
   const profileEnd = parseDate(profile.end_date) ?? Number.POSITIVE_INFINITY;
@@ -282,6 +291,15 @@ export async function suggestStack(
   let totalValueUsd = 0;
 
   for (const raw of sorted) {
+    let remainingCapex: number | null = null;
+    if (capexUsd) {
+      remainingCapex = capexUsd - totalValueUsd;
+      if (remainingCapex <= 0) {
+        constraints.add('capex_exhausted');
+        break;
+      }
+    }
+
     const program = cloneProgram(raw);
     if (program.country_code !== profile.country_code) {
       constraints.add('jurisdiction');
@@ -332,14 +350,9 @@ export async function suggestStack(
       }
       adjustedValueUsd = Math.min(adjustedValueUsd, capLimit);
     }
-    if (capexUsd) {
-      const remaining = capexUsd - totalValueUsd;
-      if (remaining <= 0) {
-        constraints.add('capex_exhausted');
-        break;
-      }
-      if (adjustedValueUsd > remaining) {
-        adjustedValueUsd = remaining;
+    if (capexUsd && remainingCapex !== null) {
+      if (adjustedValueUsd > remainingCapex) {
+        adjustedValueUsd = remainingCapex;
       }
     }
     if (adjustedValueUsd <= 0) continue;
