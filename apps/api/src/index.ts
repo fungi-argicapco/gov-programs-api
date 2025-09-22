@@ -9,6 +9,8 @@ import { scoreProgramWithReasons, suggestStack, loadWeights, type Profile as Mat
 import { loadFxToUSD } from '@common/lookups';
 import { getUtcDayStart, getUtcMonthStart } from './time';
 
+const DEFAULT_MATCH_RESPONSE_LIMIT = 50;
+
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
 function parseIndustryCodes(raw: string | null | undefined): string[] {
@@ -279,7 +281,7 @@ app.post('/v1/match', async (c) => {
   const now = Date.now();
   const scored = await getScoredPrograms(c.env, profile, filters, filters.limit ?? 100, weights, fxRates, now);
   return c.json({
-    data: scored.slice(0, 50).map((entry) => ({
+    data: scored.slice(0, DEFAULT_MATCH_RESPONSE_LIMIT).map((entry) => ({
       program: entry.payload,
       score: entry.score,
       reasons: entry.reasons

@@ -5,6 +5,8 @@ type IngestEnv = {
   LOOKUPS_KV?: KVNamespace;
 };
 
+const MAX_OUTBOX_RETRY_ATTEMPTS = 10;
+
 async function loadSigningSecret(env: IngestEnv): Promise<string> {
   if (env.LOOKUPS_KV) {
     try {
@@ -78,11 +80,11 @@ export async function runOutbox(
         status = 'ok';
         deliveredAt = now;
       } else {
-        status = attempts >= 10 ? 'error' : 'queued';
+        status = attempts >= MAX_OUTBOX_RETRY_ATTEMPTS ? 'error' : 'queued';
       }
     } catch (err) {
       console.warn('alerts_outbox_delivery_error', err);
-      status = attempts >= 10 ? 'error' : 'queued';
+      status = attempts >= MAX_OUTBOX_RETRY_ATTEMPTS ? 'error' : 'queued';
     }
     await env.DB.prepare(
       `UPDATE alert_outbox SET status = ?, attempts = ?, delivered_at = ? WHERE id = ?`
