@@ -281,7 +281,7 @@ app.post('/v1/match', async (c) => {
   const now = Date.now();
   const scored = await getScoredPrograms(c.env, profile, filters, filters.limit ?? 100, weights, fxRates, now);
   return c.json({
-    data: scored.slice(0, MAX_MATCH_RESULTS).map((entry) => ({
+    data: scored.slice(0, 50).map((entry) => ({
       program: entry.payload,
       score: entry.score,
       reasons: entry.reasons
