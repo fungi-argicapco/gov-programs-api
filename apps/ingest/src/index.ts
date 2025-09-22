@@ -3,13 +3,18 @@ import { runOutbox } from './alerts.outbox';
 import { checkDeadlinks, formatDay } from './deadlinks';
 import { writeDailyCoverage } from './precompute.coverage';
 
+interface ScheduledEvent {
+  scheduledTime?: string | number | Date;
+  cron?: string;
+}
+
 function getScheduledDate(event: ScheduledEvent): Date {
-  const scheduled = (event as any)?.scheduledTime;
+  const scheduled = event?.scheduledTime;
   return scheduled ? new Date(scheduled) : new Date();
 }
 
 function shouldRunOutbox(event: ScheduledEvent): boolean {
-  const cron = (event as any)?.cron;
+  const cron = event?.cron;
   if (typeof cron === 'string' && cron.trim()) {
     const minuteToken = cron.trim().split(/\s+/)[0];
     const parsed = Number(minuteToken);
