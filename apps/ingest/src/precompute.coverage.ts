@@ -22,6 +22,7 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
   const programsRow = await env.DB.prepare(
     `SELECT COUNT(*) as total, SUM(CASE WHEN industry_codes IS NOT NULL AND json_array_length(industry_codes) > 0 THEN 1 ELSE 0 END) as with_codes FROM programs`
   ).first<{ total: number; with_codes: number }>();
+
   const freshSourcesRow = await env.DB.prepare(
     `SELECT COUNT(DISTINCT source_id) as fresh FROM programs WHERE source_id IS NOT NULL AND updated_at >= ?`
   )

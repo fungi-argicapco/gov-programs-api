@@ -9,6 +9,8 @@ import { scoreProgramWithReasons, suggestStack, loadWeights, type Profile as Mat
 import { loadFxToUSD } from '@common/lookups';
 import { getUtcDayStart, getUtcMonthStart } from './time';
 
+const MAX_MATCH_RESULTS = 50;
+
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
 function parseIndustryCodes(raw: string | null | undefined): string[] {
