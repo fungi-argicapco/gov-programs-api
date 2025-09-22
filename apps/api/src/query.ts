@@ -27,8 +27,13 @@ export function buildProgramsQuery(f: Filters) {
     // Limit the number of industry codes to prevent excessively large queries
     const maxIndustryCodes = 100;
     const industryCodes = f.industry.slice(0, maxIndustryCodes);
-    where.push(`EXISTS (SELECT 1 FROM json_each(programs.industry_codes) WHERE value IN (${industryCodes.map(() => '?').join(',')}))`);
-    params.push(...industryCodes);
+    if (industryCodes.length !== f.industry.length) {
+      throw new Error(`Too many industry codes: received ${f.industry.length}, maximum allowed is ${maxIndustryCodes}`);
+    }
+    if (industryCodes.length > 0) {
+      where.push(`EXISTS (SELECT 1 FROM json_each(programs.industry_codes) WHERE value IN (${industryCodes.map(() => '?').join(',')}))`);
+      params.push(...industryCodes);
+    }
   }
   if (f.benefitType?.length) {
     where.push(`benefit_type IN (${f.benefitType.map(()=>'?').join(',')})`);
