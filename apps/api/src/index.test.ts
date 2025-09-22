@@ -42,7 +42,7 @@ const setupDatabase = async () => {
       industries: JSON.stringify(['22', '54']),
       status: 'open',
       benefitType: 'grant',
-      websiteUrl: 'https://example.com/grants',
+      websiteUrl: 'https://calosba.ca.gov/funding-grants-incentives/',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     },
@@ -54,7 +54,7 @@ const setupDatabase = async () => {
       industries: JSON.stringify(['31']),
       status: 'scheduled',
       benefitType: 'tax_credit',
-      websiteUrl: 'https://example.com/credits',
+      websiteUrl: 'https://business.ca.gov/advantages/incentives/',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }
