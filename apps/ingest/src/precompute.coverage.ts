@@ -1,35 +1,16 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import { formatDay, type DeadlinkMetricsRecord } from './deadlinks';
+import { formatDay } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+type DeadlinkMetrics = {
+  rate: number;
+};
 
 type IngestEnv = {
   DB: D1Database;
   LOOKUPS_KV?: KVNamespace;
 };
-
-function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const record = value as Partial<DeadlinkMetricsRecord> & { bad?: unknown };
-  if (!Number.isFinite(Number(record.rate)) || !Number.isFinite(Number(record.n))) {
-    return false;
-  }
-
-  if (!Array.isArray(record.bad)) {
-    return false;
-  }
-
-  return record.bad.every((entry) => {
-    if (!entry || typeof entry !== 'object') {
-      return false;
-    }
-    const { id, url } = entry as { id: unknown; url: unknown };
-    return Number.isInteger(Number(id)) && typeof url === 'string';
-  });
-}
 
 export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promise<void> {
   const now = Date.now();
@@ -37,8 +18,9 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
   const thirtyDaysAgo = now - THIRTY_DAYS_MS;
 
   const programsRow = await env.DB.prepare(
-    `SELECT COUNT(*) as total, SUM(CASE WHEN industry_codes IS NOT NULL THEN json_array_length(industry_codes) ELSE 0 END) as total_codes FROM programs`
-  ).first<{ total: number; total_codes: number }>();
+    `SELECT COUNT(*) as total, SUM(CASE WHEN industry_codes IS NOT NULL AND json_array_length(industry_codes) > 0 THEN 1 ELSE 0 END) as with_codes FROM programs`
+  ).first<{ total: number; with_codes: number }>();
+
   const freshSourcesRow = await env.DB.prepare(
     `SELECT COUNT(DISTINCT source_id) as fresh FROM programs WHERE source_id IS NOT NULL AND updated_at >= ?`
   )
@@ -47,24 +29,23 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
 
   let deadlinkRate: number | null = null;
   if (env.LOOKUPS_KV) {
+    const key = `metrics:deadlinks:${day}`;
     try {
-      const key = `metrics:deadlinks:${day}`;
-      const stored = await env.LOOKUPS_KV.get<DeadlinkMetricsRecord>(key, 'json');
-      if (isDeadlinkMetricsRecord(stored)) {
+      const stored = await env.LOOKUPS_KV.get<DeadlinkMetrics>(key, 'json');
+      if (stored && typeof stored === 'object' && 'rate' in stored) {
         const parsed = Number(stored.rate);
-
         if (Number.isFinite(parsed)) {
           deadlinkRate = parsed;
         }
       }
     } catch (err) {
-      console.warn('daily_coverage_deadlinks_lookup_failed', err);
+      console.warn('daily_coverage_deadlinks_lookup_failed', { key, err });
     }
   }
 
   const totalPrograms = Number(programsRow?.total ?? 0);
-  const totalCodes = Number(programsRow?.total_codes ?? 0);
-  const naicsDensity = totalPrograms > 0 ? totalCodes / totalPrograms : 0;
+  const programsWithCodes = Number(programsRow?.with_codes ?? 0);
+  const naicsDensity = totalPrograms > 0 ? programsWithCodes / totalPrograms : 0;
   const freshSources = Number(freshSourcesRow?.fresh ?? 0);
 
   await env.DB.prepare(
