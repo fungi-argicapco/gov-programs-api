@@ -2,6 +2,9 @@ import { load, type Cheerio, type CheerioAPI } from 'cheerio';
 import { parseISO } from 'date-fns';
 import { Program, type Adapter, type AdapterContext, type AdapterResult, type ProgramT } from '@common/types';
 
+export const generateSlug = (label: string): string =>
+  label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
 const parseItem = (item: Cheerio<any>, $: CheerioAPI): ProgramT | null => {
   const title = item.find('title').first().text().trim();
   if (!title) return null;
@@ -29,7 +32,7 @@ const parseItem = (item: Cheerio<any>, $: CheerioAPI): ProgramT | null => {
     startDate,
     tags: categories.map((label) => ({
       id: crypto.randomUUID(),
-      slug: label.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      slug: generateSlug(label),
       label
     }))
   });
