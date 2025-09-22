@@ -1,6 +1,7 @@
 import type { MiddlewareHandler } from 'hono';
 import type { D1Database } from '@cloudflare/workers-types';
 import type { Env } from './db';
+import { getUtcDayStart, getUtcMonthStart } from './time';
 
 type Role = 'admin' | 'partner' | 'read';
 
@@ -21,14 +22,6 @@ async function hashKey(rawKey: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', encoder.encode(rawKey));
   const hashArray = Array.from(new Uint8Array(digest));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-function getUtcDayStart(now: Date): number {
-  return Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 1000);
-}
-
-function getUtcMonthStart(now: Date): number {
-  return Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1) / 1000);
 }
 
 async function fetchUsage(env: Env, apiKeyId: number, startTs: number) {

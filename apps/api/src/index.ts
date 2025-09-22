@@ -5,6 +5,7 @@ import { listSourcesWithMetrics, buildCoverageResponse } from './coverage';
 import { mwAuth, type AuthVariables } from './mw.auth';
 import { mwRate } from './mw.rate';
 import { createAlertSubscription, createSavedQuery, deleteSavedQuery, getSavedQuery } from './saved';
+import { getUtcDayStart, getUtcMonthStart } from './time';
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
@@ -181,8 +182,8 @@ app.get('/v1/usage/me', async (c) => {
   if (!auth) return c.json({ error: 'unauthorized' }, 401);
   const now = new Date();
   const nowSeconds = Math.floor(now.getTime() / 1000);
-  const dayStart = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 1000);
-  const monthStart = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1) / 1000);
+  const dayStart = getUtcDayStart(now);
+  const monthStart = getUtcMonthStart(now);
 
   const [dayUsage, monthUsage] = await Promise.all([
     c.env.DB.prepare('SELECT COALESCE(SUM(cost), 0) as total FROM usage_events WHERE api_key_id = ? AND ts >= ?')
