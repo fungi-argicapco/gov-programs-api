@@ -154,6 +154,11 @@ function computeTimingScore(profile: Profile, program: ProgramRecord): number {
   const profileDuration = profileEnd - profileStart;
   const programDuration = programEnd - programStart;
 
+  // The overlap ratio is measured against the shortest finite duration so that
+  // a full overlap of a short window is rewarded just as much as a long window.
+  // Using the smaller bound also guards against overstating alignment when one
+  // side has an open-ended range (treated as infinite) by falling back to the
+  // finite period that is actually constrained.
   const reference = [profileDuration, programDuration]
     .filter((value) => Number.isFinite(value) && value > 0)
     .sort((a, b) => a - b)[0];
@@ -290,14 +295,13 @@ export async function suggestStack(
   const capexUsd = capexCents > 0 ? capexCents / 100 : null;
   let totalValueUsd = 0;
 
+  let capexLimitReached = false;
+
   for (const raw of sorted) {
-    let remainingCapex: number | null = null;
-    if (capexUsd) {
-      remainingCapex = capexUsd - totalValueUsd;
-      if (remainingCapex <= 0) {
-        constraints.add('capex_exhausted');
-        break;
-      }
+    const remainingCapexUsd = capexUsd ? capexUsd - totalValueUsd : null;
+    if (remainingCapexUsd !== null && remainingCapexUsd <= 0) {
+      constraints.add('capex_exhausted');
+      break;
     }
 
     const program = cloneProgram(raw);
@@ -340,8 +344,8 @@ export async function suggestStack(
     if (valueUsd <= 0) continue;
     let adjustedValueUsd = valueUsd;
     const capTags = tags.map((tag) => ({ tag, pct: parseCapPercentage(tag) })).filter((item) => item.pct);
-    if (capTags.length && capexUsd) {
-      let capLimit = capexUsd;
+    if (capTags.length && remainingCapexUsd !== null) {
+      let capLimit = remainingCapexUsd;
       for (const item of capTags) {
         if (!item.pct) continue;
         const limit = capexUsd * item.pct;
@@ -350,10 +354,8 @@ export async function suggestStack(
       }
       adjustedValueUsd = Math.min(adjustedValueUsd, capLimit);
     }
-    if (capexUsd && remainingCapex !== null) {
-      if (adjustedValueUsd > remainingCapex) {
-        adjustedValueUsd = remainingCapex;
-      }
+    if (remainingCapexUsd !== null && adjustedValueUsd > remainingCapexUsd) {
+      adjustedValueUsd = remainingCapexUsd;
     }
     if (adjustedValueUsd <= 0) continue;
 
@@ -371,9 +373,14 @@ export async function suggestStack(
     selected.push({ ...program, stack_value_usd: adjustedValueUsd });
     totalValueUsd += adjustedValueUsd;
 
-    if (capexUsd && totalValueUsd >= capexUsd) {
+    if (capexUsd !== null && totalValueUsd >= capexUsd) {
+      capexLimitReached = true;
       break;
     }
+  }
+
+  if (capexLimitReached) {
+    constraints.add('capex_exhausted');
   }
 
   const denominator = capexUsd && capexUsd > 0 ? capexUsd : totalValueUsd || 1;

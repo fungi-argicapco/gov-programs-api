@@ -13,6 +13,8 @@ const DEFAULT_MATCH_RESPONSE_LIMIT = 50;
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
+const MATCH_RESULT_LIMIT = 50;
+
 function parseIndustryCodes(raw: string | null | undefined): string[] {
   if (!raw) return [];
   try {
@@ -281,7 +283,7 @@ app.post('/v1/match', async (c) => {
   const now = Date.now();
   const scored = await getScoredPrograms(c.env, profile, filters, filters.limit ?? 100, weights, fxRates, now);
   return c.json({
-    data: scored.slice(0, DEFAULT_MATCH_RESPONSE_LIMIT).map((entry) => ({
+    data: scored.slice(0, MATCH_RESULT_LIMIT).map((entry) => ({
       program: entry.payload,
       score: entry.score,
       reasons: entry.reasons

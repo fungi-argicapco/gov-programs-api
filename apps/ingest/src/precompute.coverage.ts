@@ -8,15 +8,14 @@ type IngestEnv = {
   LOOKUPS_KV?: KVNamespace;
 };
 
-type DeadlinkMetricsRecord = {
+type DeadlinkMetrics = {
   rate: number;
 };
 
-function extractDeadlinkRate(value: unknown): number | null {
-  if (!value || typeof value !== 'object') return null;
-  const candidate = (value as Partial<DeadlinkMetricsRecord>).rate;
-  const numeric = typeof candidate === 'number' ? candidate : Number(candidate);
-  return Number.isFinite(numeric) ? numeric : null;
+function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<DeadlinkMetrics>;
+  return typeof candidate.rate === 'number' && Number.isFinite(candidate.rate);
 }
 
 export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promise<void> {
@@ -37,10 +36,9 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
   if (env.LOOKUPS_KV) {
     try {
       const key = `metrics:deadlinks:${day}`;
-      const stored = await env.LOOKUPS_KV.get(key, 'json');
-      const parsed = extractDeadlinkRate(stored);
-      if (parsed !== null) {
-        deadlinkRate = parsed;
+      const stored = await env.LOOKUPS_KV.get<DeadlinkMetrics>(key, 'json');
+      if (isDeadlinkMetrics(stored)) {
+        deadlinkRate = stored.rate;
       }
     } catch (err) {
       console.warn('daily_coverage_deadlinks_lookup_failed', err);
