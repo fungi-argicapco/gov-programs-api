@@ -18,6 +18,7 @@ function getEventDate(event: ScheduledEvent): Date {
 function shouldRunOutbox(event: ScheduledEvent): boolean {
   const cron = (event as any)?.cron;
   const when = getEventDate(event);
+
   if (typeof cron === 'string' && cron.trim()) {
     const minuteToken = cron.trim().split(/\s+/)[0];
     const parsed = Number(minuteToken);

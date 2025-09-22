@@ -5,6 +5,12 @@ type IngestEnv = {
   LOOKUPS_KV?: KVNamespace;
 };
 
+export type DeadlinkMetricsRecord = {
+  rate: number;
+  n: number;
+  bad: Array<{ id: number; url: string }>;
+};
+
 function formatDay(now: number): string {
   const date = new Date(now);
   const year = date.getUTCFullYear();
@@ -49,9 +55,10 @@ export async function checkDeadlinks(env: IngestEnv, opts?: { fetchImpl?: typeof
   if (!env.LOOKUPS_KV) return;
   const now = Date.now();
   const key = `metrics:deadlinks:${formatDay(now)}`;
+  const metrics: DeadlinkMetricsRecord = { rate, n: total, bad };
   await env.LOOKUPS_KV.put(
     key,
-    JSON.stringify({ rate, n: total, bad }),
+    JSON.stringify(metrics),
     { expirationTtl: 7 * 24 * 60 * 60 }
   );
 }
