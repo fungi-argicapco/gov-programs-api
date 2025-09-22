@@ -17,20 +17,20 @@ function getEventDate(event: ScheduledEvent): Date {
 
 function shouldRunOutbox(event: ScheduledEvent): boolean {
   const cron = (event as any)?.cron;
+  const when = getEventDate(event);
   if (typeof cron === 'string' && cron.trim()) {
     const minuteToken = cron.trim().split(/\s+/)[0];
     const parsed = Number(minuteToken);
     if (Number.isInteger(parsed)) {
-      return parsed % 10 === 0;
+      return when.getUTCMinutes() === parsed;
     }
     if (minuteToken.startsWith('*/')) {
       const interval = Number(minuteToken.slice(2));
       if (Number.isInteger(interval) && interval > 0) {
-        return interval % 10 === 0;
+        return when.getUTCMinutes() % interval === 0;
       }
     }
   }
-  const when = getEventDate(event);
   return when.getUTCMinutes() % 10 === 0;
 }
 
