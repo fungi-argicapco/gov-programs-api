@@ -156,6 +156,23 @@ function aggregate(outcomes: UpsertOutcome[]) {
   return { inserted, updated, unchanged };
 }
 
+function deriveFailureStatus({
+  fetched,
+  inserted,
+  updated
+}: {
+  fetched: number;
+  inserted: number;
+  updated: number;
+}): RunStatus {
+  const fetchedAnyRecords = fetched > 0;
+  const persistedAnyChanges = inserted > 0 || updated > 0;
+  if (fetchedAnyRecords && persistedAnyChanges) {
+    return 'partial';
+  }
+  return 'error';
+}
+
 export async function runCatalogOnce(env: IngestEnv, now: Date = new Date()): Promise<CatalogRunMetrics[]> {
   const metrics: CatalogRunMetrics[] = [];
   for (const source of SOURCES) {
@@ -238,7 +255,7 @@ export async function runCatalogOnce(env: IngestEnv, now: Date = new Date()): Pr
           throw new Error(`unsupported_parser:${source.parser}`);
       }
     } catch (err: any) {
-      status = fetched > 0 && (inserted > 0 || updated > 0) ? 'partial' : 'error';
+      status = deriveFailureStatus({ fetched, inserted, updated });
       errors += 1;
       message = err?.message ? String(err.message) : String(err);
     }
