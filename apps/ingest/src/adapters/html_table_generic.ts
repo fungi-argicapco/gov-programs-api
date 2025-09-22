@@ -1,20 +1,37 @@
 import * as cheerio from 'cheerio';
 import { upsertPrograms } from '../upsert';
 
-type IngestEnv = { DB: D1Database; RAW_R2?: R2Bucket };
+type IngestEnv = { DB: D1Database; RAW_R2?: R2Bucket; LOOKUPS_KV?: KVNamespace };
+
+type HtmlResult = {
+  attempted: number;
+  outcomes: Awaited<ReturnType<typeof upsertPrograms>>;
+};
 
 export async function ingestHtmlTableGeneric(env: IngestEnv, opts: {
-  url: string; tableSelector: string; html?: string;
-  columns: { title: string; url?: string; summary?: string; start?: string; end?: string; status?: string };
-  country: 'US'|'CA'; authority: string; jurisdiction: string; limit?: number;
+  url: string;
+  tableSelector: string;
+  html?: string;
+  columns: {
+    title: string;
+    url?: string;
+    summary?: string;
+    start?: string;
+    end?: string;
+    status?: string;
+  };
+  country: 'US' | 'CA';
+  authority: string;
+  jurisdiction: string;
+  limit?: number;
   sourceId?: number;
-}) {
+}): Promise<HtmlResult> {
   const html = opts.html ?? await (await fetch(opts.url)).text();
   const $ = cheerio.load(html);
-  const rows = $(`${opts.tableSelector} tr`).toArray().slice(1, (opts.limit ?? 200)+1);
+  const rows = $(`${opts.tableSelector} tr`).toArray().slice(1, (opts.limit ?? 200) + 1);
 
-  const get = (row: any, sel?: string) => sel ? $(row).find(sel).text().trim() : undefined;
-  const aHref = (row: any, sel?: string) => sel ? ($(row).find(sel).attr('href') || '').trim() : undefined;
+  const get = (row: any, sel?: string) => (sel ? $(row).find(sel).text().trim() : undefined);
+  const aHref = (row: any, sel?: string) => (sel ? ($(row).find(sel).attr('href') || '').trim() : undefined);
 
   const payload = rows.map((r) => {
     const title = get(r, opts.columns.title) || 'Untitled';
@@ -45,5 +62,6 @@ export async function ingestHtmlTableGeneric(env: IngestEnv, opts: {
       }
     };
   });
-  await upsertPrograms(env, payload as any);
+  const outcomes = await upsertPrograms(env, payload as any);
+  return { attempted: payload.length, outcomes };
 }

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { Env } from './db';
 import { buildProgramsQuery } from './query';
+import { listSourcesWithMetrics, buildCoverageResponse } from './coverage';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -118,19 +119,25 @@ app.get('/v1/programs/:id', async (c) => {
 });
 
 app.get('/v1/sources', async (c) => {
-  const rows = await c.env.DB.prepare(`SELECT * FROM sources ORDER BY jurisdiction_code, name`).all<any>();
-  return c.json({ data: rows.results ?? [] });
+  const rows = await listSourcesWithMetrics(c.env);
+  return c.json({
+    data: rows.map((row) => ({
+      id: row.id,
+      source_id: row.source_id,
+      authority: row.authority,
+      jurisdiction_code: row.jurisdiction_code,
+      url: row.url,
+      license: row.license,
+      tos_url: row.tos_url,
+      last_success_at: row.last_success_at,
+      success_rate_7d: row.success_rate_7d
+    }))
+  });
 });
 
 app.get('/v1/stats/coverage', async (c) => {
-  const byJur = await c.env.DB.prepare(`
-    SELECT country_code, jurisdiction_code, count(*) as n
-    FROM programs GROUP BY country_code, jurisdiction_code
-  `).all<any>();
-  const byBenefit = await c.env.DB.prepare(`
-    SELECT benefit_type, count(*) as n FROM programs GROUP BY benefit_type
-  `).all<any>();
-  return c.json({ byJurisdiction: byJur.results ?? [], byBenefit: byBenefit.results ?? [] });
+  const payload = await buildCoverageResponse(c.env);
+  return c.json(payload);
 });
 
 export default app;
