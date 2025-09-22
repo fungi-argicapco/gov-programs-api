@@ -44,8 +44,11 @@ const normalizeGuid = (guid: RssItemT['guid']): string | undefined => {
     return guid.trim() || undefined;
   }
 
-  if (typeof guid.value === 'string' && guid.value.trim().length > 0) {
-    return guid.value.trim();
+  if (typeof guid.value === 'string') {
+    const trimmed = guid.value.trim();
+    if (trimmed.length > 0) {
+      return trimmed;
+    }
   }
 
   return undefined;
