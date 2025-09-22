@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Sample Programs Feed</title>
+    <item>
+      <title>Clean Tech Grant</title>
+      <link>https://example.org/programs/clean-tech</link>
+      <description>Funding to support clean technology pilots.</description>
+    </item>
+  </channel>
+</rss>

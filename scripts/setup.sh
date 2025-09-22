@@ -10,6 +10,24 @@ DO_CLASS="RateLimiter"
 DO_BINDING="RATE_LIMITER"
 TEMPLATE="wrangler.template.toml"
 OUTPUT="wrangler.toml"
+MODE="remote"
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --local)
+      MODE="local"
+      shift
+      ;;
+    --remote)
+      MODE="remote"
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      exit 1
+      ;;
+  esac
+done
 
 command -v bun >/dev/null || { echo "❌ bun not found in PATH"; exit 1; }
 export PATH="$HOME/.bun/bin:$PATH"
@@ -17,8 +35,7 @@ export PATH="$HOME/.bun/bin:$PATH"
 mkdir -p scripts .env.d
 
 echo "➡️ Installing runtime & dev deps with bun (no npm/pnpm/yarn)…"
-bun add hono drizzle-orm @cloudflare/d1 better-sqlite3 zod cheerio pdf-parse-lite date-fns node-fetch currency.js
-bun add -d typescript wrangler vitest miniflare ts-to-openapi @types/node @cloudflare/workers-types
+bun install
 
 [ -f tsconfig.json ] || bunx tsc --init --rootDir . --outDir dist --target ES2022 --module ESNext --moduleResolution Bundler --esModuleInterop true
 
@@ -44,29 +61,37 @@ writeFileSync(path, JSON.stringify(data, null, 2));
 ' || true
 fi
 
-echo "➡️ Creating Cloudflare resources via wrangler (bunx)…"
-# D1
-DB_JSON="$(bunx wrangler d1 create "$DB_NAME" --json || true)"
-if [ -n "${DB_JSON}" ] && echo "$DB_JSON" | grep -q '"uuid"'; then
-  D1_ID="$(echo "$DB_JSON" | bun -e 'process.stdin.once("data",d=>{try{console.log(JSON.parse(d).uuid)}catch{}})')"
+if [ "${MODE}" = "local" ]; then
+  echo "➡️ Local mode: skipping Cloudflare resource creation."
+  D1_ID="local"
+  LOOKUPS_ID="local"
+  APIKEYS_ID="local"
+  R2_BUCKET="${R2_BUCKET}-local"
 else
-  D1_ID="$(bunx wrangler d1 list --json | bun -e "process.stdin.once('data',d=>{const a=JSON.parse(d);const m=a.find(x=>x.name==='${DB_NAME}');console.log(m?m.uuid:'')} )")"
+  echo "➡️ Creating Cloudflare resources via wrangler (bunx)…"
+  # D1
+  DB_JSON="$(bunx wrangler d1 create "$DB_NAME" --json || true)"
+  if [ -n "${DB_JSON}" ] && echo "$DB_JSON" | grep -q '"uuid"'; then
+    D1_ID="$(echo "$DB_JSON" | bun -e 'process.stdin.once("data",d=>{try{console.log(JSON.parse(d).uuid)}catch{}})')"
+  else
+    D1_ID="$(bunx wrangler d1 list --json | bun -e "process.stdin.once('data',d=>{const a=JSON.parse(d);const m=a.find(x=>x.name=='${DB_NAME}');console.log(m?m.uuid:'')} )")"
+  fi
+  [ -n "${D1_ID:-}" ] || { echo "❌ Could not determine D1 database id"; exit 1; }
+
+  # KV namespaces
+  LOOKUPS_JSON="$(bunx wrangler kv:namespace create ${KV_LOOKUPS} --json || true)"
+  APIKEYS_JSON="$(bunx wrangler kv:namespace create ${KV_API_KEYS} --json || true)"
+  LOOKUPS_ID="$( [ -n "$LOOKUPS_JSON" ] && echo "$LOOKUPS_JSON" | bun -e 'process.stdin.once("data",d=>{try{console.log(JSON.parse(d).id)}catch{}})' || true )"
+  APIKEYS_ID="$( [ -n "$APIKEYS_JSON" ] && echo "$APIKEYS_JSON" | bun -e 'process.stdin.once("data",d=>{try{console.log(JSON.parse(d).id)}catch{}})' || true )"
+  [ -n "${LOOKUPS_ID:-}" ] || LOOKUPS_ID="$(bunx wrangler kv:namespace list --json | bun -e "process.stdin.once('data',d=>{const a=JSON.parse(d);const m=a.find(x=>x.title==='${KV_LOOKUPS}');console.log(m?m.id:'')} )")"
+  [ -n "${APIKEYS_ID:-}" ] || APIKEYS_ID="$(bunx wrangler kv:namespace list --json | bun -e "process.stdin.once('data',d=>{const a=JSON.parse(d);const m=a.find(x=>x.title==='${KV_API_KEYS}');console.log(m?m.id:'')} )")"
+
+  [ -n "${LOOKUPS_ID:-}" ] || { echo "❌ Could not determine ${KV_LOOKUPS} KV id"; exit 1; }
+  [ -n "${APIKEYS_ID:-}" ] || { echo "❌ Could not determine ${KV_API_KEYS} KV id"; exit 1; }
+
+  # R2 bucket
+  bunx wrangler r2 bucket create "${R2_BUCKET}" >/dev/null 2>&1 || true
 fi
-[ -n "${D1_ID:-}" ] || { echo "❌ Could not determine D1 database id"; exit 1; }
-
-# KV namespaces
-LOOKUPS_JSON="$(bunx wrangler kv:namespace create ${KV_LOOKUPS} --json || true)"
-APIKEYS_JSON="$(bunx wrangler kv:namespace create ${KV_API_KEYS} --json || true)"
-LOOKUPS_ID="$( [ -n "$LOOKUPS_JSON" ] && echo "$LOOKUPS_JSON" | bun -e 'process.stdin.once("data",d=>{try{console.log(JSON.parse(d).id)}catch{}})' || true )"
-APIKEYS_ID="$( [ -n "$APIKEYS_JSON" ] && echo "$APIKEYS_JSON" | bun -e 'process.stdin.once("data",d=>{try{console.log(JSON.parse(d).id)}catch{}})' || true )"
-[ -n "${LOOKUPS_ID:-}" ] || LOOKUPS_ID="$(bunx wrangler kv:namespace list --json | bun -e "process.stdin.once('data',d=>{const a=JSON.parse(d);const m=a.find(x=>x.title==='${KV_LOOKUPS}');console.log(m?m.id:'')} )")"
-[ -n "${APIKEYS_ID:-}" ] || APIKEYS_ID="$(bunx wrangler kv:namespace list --json | bun -e "process.stdin.once('data',d=>{const a=JSON.parse(d);const m=a.find(x=>x.title==='${KV_API_KEYS}');console.log(m?m.id:'')} )")"
-
-[ -n "${LOOKUPS_ID:-}" ] || { echo "❌ Could not determine ${KV_LOOKUPS} KV id"; exit 1; }
-[ -n "${APIKEYS_ID:-}" ] || { echo "❌ Could not determine ${KV_API_KEYS} KV id"; exit 1; }
-
-# R2 bucket
-bunx wrangler r2 bucket create "${R2_BUCKET}" >/dev/null 2>&1 || true
 
 echo "➡️ Writing .env with resolved identifiers…"
 ENV_FILE=".env"
@@ -146,7 +171,7 @@ writeFileSync(process.argv[2], s);
 echo "✅ Generated ${OUTPUT}"
 
 echo "🔐 (Optional) set secrets via wrangler:"
-echo "   echo $OPENAI_API_KEY | bunx wrangler secret put OPENAI_API_KEY"
-echo "   echo $GITHUB_TOKEN   | bunx wrangler secret put GITHUB_TOKEN"
+echo "   echo \$OPENAI_API_KEY | bunx wrangler secret put OPENAI_API_KEY"
+echo "   echo \$GITHUB_TOKEN   | bunx wrangler secret put GITHUB_TOKEN"
 
 echo "🎉 Setup complete."
