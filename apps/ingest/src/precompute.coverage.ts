@@ -5,8 +5,6 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 type DeadlinkMetrics = {
   rate: number;
-  n: number;
-  bad: Array<{ id: number; url: string }>;
 };
 
 type IngestEnv = {
