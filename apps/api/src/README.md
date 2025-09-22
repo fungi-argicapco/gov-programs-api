@@ -13,7 +13,7 @@ This document describes the government programs API that powers program discover
 
 - **API keys:** Mutating and sensitive routes require an `x-api-key` header. Keys are SHA-256 hashed and stored in the `api_keys` table, so rotated secrets are fully opaque to the service.
 - **Roles:** Keys carry a `role` (`admin`, `partner`, or `read`) that gates access to privileged routes. Admin-only routes are explicitly called out in the reference section.
-- **Quota enforcement:** Every authenticated request writes `usage_events` (route, timestamp, cost=1). The middleware compares recent usage against `quota_daily` and `quota_monthly` columns before invoking business logic. When the quota is exceeded the API returns `429 { "error": "quota_exceeded", "scope": "daily" | "monthly" }`.
+- **Quota enforcement:** Every authenticated request writes `usage_events` (route, timestamp, cost=1). The middleware compares recent usage against `quota_daily` and `quota_monthly` columns before invoking business logic. When the quota exceeds the API returns `429 { "error": "quota_exceeded", "scope": "daily" | "monthly" }`.
 - **Rate limiting:** During local development a per-key token bucket allows 60 requests/minute (`apps/api/src/mw.rate.ts`). In production Cloudflare edge rules apply the external rate policy; the Worker middleware still records usage events.
 - **Self-service usage:** `GET /v1/usage/me` exposes day/month counters, window start timestamps, and configured quota ceilings so clients can proactively stay below limits.
 
