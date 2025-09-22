@@ -23,7 +23,7 @@ async function stableUID(input: string): Promise<string> {
     // Try Node.js crypto module if available
     try {
       const { createHash } = await import('node:crypto').catch(async () => {
-        return await import('crypto');
+        return import('crypto');
       });
       const hash = createHash('sha256').update(input).digest('hex');
       return `p-${hash.slice(0, 32)}`; // 16 bytes = 32 hex chars
