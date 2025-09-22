@@ -2,8 +2,10 @@ import { load, type Cheerio, type CheerioAPI } from 'cheerio';
 import { parseISO } from 'date-fns';
 import { Program, type Adapter, type AdapterContext, type AdapterResult, type ProgramT } from '@common/types';
 
-export const generateSlug = (label: string): string =>
-  label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+export const generateSlug = (label: string): string => {
+  const normalized = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return normalized.length > 0 ? normalized : '-';
+};
 
 const parseItem = (item: Cheerio<any>, $: CheerioAPI): ProgramT | null => {
   const title = item.find('title').first().text().trim();
