@@ -366,6 +366,7 @@ export async function suggestStack(
 
     if (capexUsd !== null && totalValueUsd >= capexUsd) {
       capexLimitReached = true;
+      break;
     }
   }
 
