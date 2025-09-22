@@ -20,14 +20,39 @@ const parseItem = (item: Cheerio<any>, $: CheerioAPI): ProgramT | null => {
       startDate = parsed.toISOString();
     }
   }
-  const categories = item
-    .find('category')
-    .map((_, node) => $(node).text().trim())
-    .get()
-    .filter((value): value is string => value.length > 0);
+
+  return undefined;
+};
+
+const hashId = (input: string): string => {
+  return createHash('sha256').update(input).digest('hex');
+};
+
+export const deriveProgramId = (item: Pick<RssItemT, 'guid' | 'link' | 'title'>): string => {
+  const guid = normalizeGuid(item.guid);
+  if (guid) {
+    return hashId(guid);
+  }
+
+  const link = item.link?.trim();
+  if (link) {
+    return hashId(link);
+  }
+
+  const title = item.title.trim();
+  const fallbackSeed = `${title}|${item.link ?? ''}`;
+  return hashId(fallbackSeed);
+};
+
+export const adaptRssItemToProgram = (raw: RssItemT): ProgramT => {
+  const item = RssItem.parse(raw);
+  const { title, summary, link, isoDate } = item;
+  const categories = item.categories ?? [];
+
+  const programId = deriveProgramId(item);
 
   const program: ProgramT = Program.parse({
-    id: crypto.randomUUID(),
+    id: programId,
     title,
     summary: summary || undefined,
     websiteUrl: link || undefined,
@@ -41,26 +66,3 @@ const parseItem = (item: Cheerio<any>, $: CheerioAPI): ProgramT | null => {
 
   return program;
 };
-
-const execute = async (sourceUrl: string, context: AdapterContext): Promise<AdapterResult> => {
-  const response = await context.fetch(sourceUrl);
-  const xml = await response.text();
-  const $ = load(xml, { xml: true });
-  const items = $('item').toArray();
-  const programs: ProgramT[] = [];
-  for (const node of items) {
-    const parsed = parseItem($(node), $);
-    if (parsed) {
-      programs.push(parsed);
-    }
-  }
-  return { programs, raw: xml };
-};
-
-export const rssGenericAdapter: Adapter = {
-  name: 'rss_generic',
-  supports: (url: string) => url.includes('rss') || url.endsWith('.xml'),
-  execute
-};
-
-export default rssGenericAdapter;
