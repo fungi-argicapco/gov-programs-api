@@ -30,5 +30,5 @@ Git Workflow (conflict-proof)
   # Create and push a fresh branch based on current local HEAD
   BR="codex/$(date -u +%Y%m%d-%H%M%S)-$$"
   git branch -M "$BR"
-  git push -u origin "$BR" 2>/dev/null || true
+  git push -u origin "$BR" || echo "Warning: Failed to push branch $BR"
   ```
