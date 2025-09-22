@@ -1,5 +1,12 @@
 import { runCatalogOnce } from './catalog';
 import { runOutbox } from './alerts.outbox';
+import { checkDeadlinks, formatDay } from './deadlinks';
+import { writeDailyCoverage } from './precompute.coverage';
+
+function getScheduledDate(event: ScheduledEvent): Date {
+  const scheduled = (event as any)?.scheduledTime;
+  return scheduled ? new Date(scheduled) : new Date();
+}
 
 function shouldRunOutbox(event: ScheduledEvent): boolean {
   const cron = (event as any)?.cron;
@@ -10,9 +17,13 @@ function shouldRunOutbox(event: ScheduledEvent): boolean {
       return parsed % 10 === 0;
     }
   }
-  const scheduled = (event as any)?.scheduledTime;
-  const when = scheduled ? new Date(scheduled) : new Date();
+  const when = getScheduledDate(event);
   return when.getUTCMinutes() % 10 === 0;
+}
+
+function shouldRunDailyMetrics(event: ScheduledEvent): boolean {
+  const when = getScheduledDate(event);
+  return when.getUTCHours() === 0 && when.getUTCMinutes() === 0;
 }
 
 export default {
@@ -20,6 +31,10 @@ export default {
     await runCatalogOnce(env);
     if (shouldRunOutbox(_event)) {
       await runOutbox(env);
+    }
+    if (shouldRunDailyMetrics(_event)) {
+      const when = getScheduledDate(_event);
+      await Promise.all([checkDeadlinks(env), writeDailyCoverage(env, formatDay(when.getTime()))]);
     }
   }
 };
