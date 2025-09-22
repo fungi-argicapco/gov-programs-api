@@ -1,3 +1,5 @@
+const MAX_INDUSTRY_CODES = 100;
+
 type Filters = {
   q?: string;
   country?: string;
@@ -25,11 +27,10 @@ export function buildProgramsQuery(f: Filters) {
 
   if (Array.isArray(f.industry) && f.industry.length > 0) {
     // Limit the number of industry codes to prevent excessively large queries
-    const maxIndustryCodes = 100;
-    if (f.industry.length > maxIndustryCodes) {
-      throw new Error(`Too many industry codes: received ${f.industry.length}, maximum allowed is ${maxIndustryCodes}`);
+    if (f.industry.length > MAX_INDUSTRY_CODES) {
+      throw new Error(`Too many industry codes: received ${f.industry.length}, maximum allowed is ${MAX_INDUSTRY_CODES}`);
     }
-    const industryCodes = f.industry.slice(0, maxIndustryCodes);
+    const industryCodes = f.industry.slice(0, MAX_INDUSTRY_CODES);
     if (industryCodes.length > 0) {
       where.push(`EXISTS (SELECT 1 FROM json_each(programs.industry_codes) WHERE value IN (${industryCodes.map(() => '?').join(',')}))`);
       params.push(...industryCodes);
