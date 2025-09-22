@@ -1,5 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import { formatDay } from './deadlinks';
+import { formatDay, type DeadlinkMetricsRecord } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -7,6 +7,29 @@ type IngestEnv = {
   DB: D1Database;
   LOOKUPS_KV?: KVNamespace;
 };
+
+function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const record = value as Partial<DeadlinkMetricsRecord> & { bad?: unknown };
+  if (!Number.isFinite(Number(record.rate)) || typeof record.n !== 'number') {
+    return false;
+  }
+
+  if (!Array.isArray(record.bad)) {
+    return false;
+  }
+
+  return record.bad.every((entry) => {
+    if (!entry || typeof entry !== 'object') {
+      return false;
+    }
+    const { id, url } = entry as { id: unknown; url: unknown };
+    return Number.isFinite(Number(id)) && typeof url === 'string';
+  });
+}
 
 export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promise<void> {
   const now = Date.now();
@@ -26,9 +49,9 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
   if (env.LOOKUPS_KV) {
     try {
       const key = `metrics:deadlinks:${day}`;
-      const stored = await env.LOOKUPS_KV.get(key, 'json');
-      if (stored && typeof stored === 'object' && 'rate' in stored) {
-        const parsed = Number((stored as any).rate);
+      const stored = await env.LOOKUPS_KV.get<DeadlinkMetricsRecord>(key, 'json');
+      if (isDeadlinkMetricsRecord(stored)) {
+        const parsed = Number(stored.rate);
         if (Number.isFinite(parsed)) {
           deadlinkRate = parsed;
         }
