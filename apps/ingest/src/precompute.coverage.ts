@@ -14,7 +14,7 @@ function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord
   }
 
   const record = value as Partial<DeadlinkMetricsRecord> & { bad?: unknown };
-  if (!Number.isFinite(Number(record.rate)) || typeof record.n !== 'number') {
+  if (!Number.isFinite(Number(record.rate)) || !Number.isFinite(Number(record.n))) {
     return false;
   }
 
