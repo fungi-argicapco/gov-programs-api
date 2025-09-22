@@ -23,11 +23,12 @@ export function buildProgramsQuery(f: Filters) {
   if (f.country) { where.push(`country_code = ?`); params.push(f.country); }
   if (f.jurisdiction) { where.push(`jurisdiction_code = ?`); params.push(f.jurisdiction); }
 
-  if (f.industry?.length) {
-    // json_each requires JSON1 (available in D1); match ANY industry code
-    const ors = f.industry.map(() => `value = ?`).join(' OR ');
-    where.push(`EXISTS (SELECT 1 FROM json_each(programs.industry_codes) WHERE ${ors})`);
-    params.push(...f.industry);
+  if (Array.isArray(f.industry) && f.industry.length > 0) {
+    // Limit the number of industry codes to prevent excessively large queries
+    const maxIndustryCodes = 100;
+    const industryCodes = f.industry.slice(0, maxIndustryCodes);
+    where.push(`EXISTS (SELECT 1 FROM json_each(programs.industry_codes) WHERE value IN (${industryCodes.map(() => '?').join(',')}))`);
+    params.push(...industryCodes);
   }
   if (f.benefitType?.length) {
     where.push(`benefit_type IN (${f.benefitType.map(()=>'?').join(',')})`);
