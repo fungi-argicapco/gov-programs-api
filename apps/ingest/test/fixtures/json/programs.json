@@ -1,0 +1,14 @@
+{
+  "data": [
+    {
+      "title": "Manufacturing Expansion",
+      "summary": "Capital grants for expanding facilities.",
+      "url": "https://example.org/programs/manufacturing",
+      "status": "open",
+      "benefit_type": "grant",
+      "industry_codes": ["334"],
+      "start_date": "2025-01-01",
+      "end_date": "2025-12-31"
+    }
+  ]
+}
