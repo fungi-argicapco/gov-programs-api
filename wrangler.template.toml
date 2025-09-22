@@ -30,8 +30,5 @@ class_name = "__DO_CLASS__"
 tag = "v1"
 new_classes = ["__DO_CLASS__"]
 
-[migrations]
-dir = "migrations"
-
 [triggers]
 crons = ["0 */4 * * *"]
