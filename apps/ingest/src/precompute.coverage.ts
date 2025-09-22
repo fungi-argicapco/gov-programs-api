@@ -27,7 +27,7 @@ function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord
       return false;
     }
     const { id, url } = entry as { id: unknown; url: unknown };
-    return Number.isFinite(Number(id)) && typeof url === 'string';
+    return Number.isInteger(Number(id)) && typeof url === 'string';
   });
 }
 
