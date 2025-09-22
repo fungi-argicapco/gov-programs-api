@@ -5,7 +5,10 @@ import { jsonApiGenericAdapter } from './json_api_generic';
 
 const mockUuid = (): (() => `${string}-${string}-${string}-${string}-${string}`) => {
   let counter = 0;
-  return () => `00000000-0000-0000-0000-${(counter++).toString().padStart(12, '0')}` as `${string}-${string}-${string}-${string}-${string}`;
+  return () => {
+    const suffix = (counter++).toString(16).padStart(12, '0');
+    return `00000000-0000-4000-8000-${suffix}` as `${string}-${string}-${string}-${string}-${string}`;
+  };
 };
 
 const createFetch = (body: string, contentType = 'application/xml') =>
@@ -25,9 +28,9 @@ describe('rssGenericAdapter', () => {
   });
 
   test('parses RSS items into programs', async () => {
-    const xml = `<?xml version="1.0"?><rss><channel><item><title>Program A</title><link>https://example.com/a</link><description>A summary</description><category>Energy</category><pubDate>2024-01-01</pubDate></item></channel></rss>`;
+    const xml = `<?xml version="1.0"?><rss><channel><item><title>Program A</title><link>https://calosba.ca.gov/program-a</link><description>A summary</description><category>Energy</category><pubDate>2024-01-01</pubDate></item></channel></rss>`;
     const fetch = createFetch(xml);
-    const result = await rssGenericAdapter.execute('https://example.com/rss.xml', { fetch });
+    const result = await rssGenericAdapter.execute('https://calosba.ca.gov/rss.xml', { fetch });
     expect(result.programs).toHaveLength(1);
     expect(result.programs[0].title).toBe('Program A');
     expect(result.programs[0].tags[0].label).toBe('Energy');
@@ -44,9 +47,9 @@ describe('htmlTableGenericAdapter', () => {
   });
 
   test('parses HTML table rows into programs', async () => {
-    const html = `<table><thead><tr><th>Title</th><th>Summary</th><th>Status</th><th>Tags</th></tr></thead><tbody><tr><td><a href="https://example.com">Program B</a></td><td>Summary B</td><td>Open</td><td>Manufacturing, Export</td></tr></tbody></table>`;
+    const html = `<table><thead><tr><th>Title</th><th>Summary</th><th>Status</th><th>Tags</th></tr></thead><tbody><tr><td><a href="https://calosba.ca.gov/program-b">Program B</a></td><td>Summary B</td><td>Open</td><td>Manufacturing, Export</td></tr></tbody></table>`;
     const fetch = createFetch(html, 'text/html');
-    const result = await htmlTableGenericAdapter.execute('https://example.com/table.html', { fetch });
+    const result = await htmlTableGenericAdapter.execute('https://calosba.ca.gov/table.html', { fetch });
     expect(result.programs).toHaveLength(1);
     expect(result.programs[0].title).toBe('Program B');
     expect(result.programs[0].status).toBe('open');
@@ -66,7 +69,7 @@ describe('jsonApiGenericAdapter', () => {
   test('parses JSON array into programs', async () => {
     const payload = [{ id: 'program-c', title: 'Program C', tags: ['Tech'], industries: ['54'] }];
     const fetch = vi.fn(async () => new Response(JSON.stringify(payload), { headers: { 'content-type': 'application/json' } }));
-    const result = await jsonApiGenericAdapter.execute('https://example.com/api.json', { fetch });
+    const result = await jsonApiGenericAdapter.execute('https://calosba.ca.gov/api.json', { fetch });
     expect(result.programs).toHaveLength(1);
     expect(result.programs[0].id).toMatch(/^[0-9a-f-]{36}$/);
     expect(result.programs[0].industries).toEqual(['54']);
