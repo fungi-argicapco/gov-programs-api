@@ -1,56 +1,75 @@
 import { z } from 'zod';
 
-export const ProgramTag = z.object({
-  id: z.string().uuid().optional(),
-  slug: z.string().min(1),
-  label: z.string().min(1)
-});
+export const CountryCode = z.enum(['US', 'CA']);
+export type CountryCode = z.infer<typeof CountryCode>;
 
-export const ProgramCriterion = z.object({
-  id: z.string().uuid().optional(),
-  programId: z.string().uuid().optional(),
-  category: z.enum(['eligibility', 'application', 'award', 'other']).default('other'),
-  label: z.string().min(1),
-  value: z.string().optional(),
+export const AuthorityLevel = z.enum([
+  'federal',
+  'state',
+  'prov',
+  'territory',
+  'regional',
+  'municipal'
+]);
+export type AuthorityLevel = z.infer<typeof AuthorityLevel>;
+
+export const ProgramStatus = z.enum(['open', 'scheduled', 'closed', 'unknown']);
+export type ProgramStatus = z.infer<typeof ProgramStatus>;
+
+export const BenefitType = z.enum([
+  'grant',
+  'rebate',
+  'tax_credit',
+  'loan',
+  'guarantee',
+  'voucher',
+  'other'
+]);
+export type BenefitType = z.infer<typeof BenefitType>;
+
+export const ProgramBenefit = z.object({
+  type: z.string().min(1),
+  min_amount_cents: z.number().int().nullable().optional(),
+  max_amount_cents: z.number().int().nullable().optional(),
+  currency_code: z
+    .string()
+    .length(3)
+    .optional(),
   notes: z.string().optional()
 });
+export type ProgramBenefit = z.infer<typeof ProgramBenefit>;
 
-export const Program = z.object({
-  id: z.string().uuid().optional(),
-  sourceId: z.string().optional(),
-  sourceName: z.string().optional(),
-  sourceUrl: z.string().url().optional(),
-  title: z.string().min(1),
-  summary: z.string().optional(),
-  authorityLevel: z.enum(['local', 'regional', 'state', 'federal']).optional(),
-  stateCode: z.string().length(2).optional(),
-  industries: z.array(z.string()).default([]),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  status: z.enum(['open', 'scheduled', 'closed', 'unknown']).default('unknown'),
-  benefitType: z.enum(['grant', 'rebate', 'tax_credit', 'loan', 'guarantee', 'voucher', 'other']).optional(),
-  websiteUrl: z.string().url().optional(),
-  applicationUrl: z.string().url().optional(),
-  tags: z.array(ProgramTag).default([]),
-  criteria: z.array(ProgramCriterion).default([]),
-  lastIndexedAt: z.string().optional()
+export const ProgramCriterion = z.object({
+  kind: z.string().min(1),
+  operator: z.enum(['=', '!=', '>', '>=', '<', '<=', 'in', 'contains', 'exists', 'not_exists']),
+  value: z.string().min(1)
 });
+export type ProgramCriterion = z.infer<typeof ProgramCriterion>;
 
-export type ProgramT = z.infer<typeof Program>;
-export type ProgramTagT = z.infer<typeof ProgramTag>;
-export type ProgramCriterionT = z.infer<typeof ProgramCriterion>;
+export const ProgramTag = z.string().min(1);
+export type ProgramTag = z.infer<typeof ProgramTag>;
 
-export interface AdapterContext {
-  readonly fetch: typeof fetch;
-}
+const IsoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .optional();
 
-export interface AdapterResult {
-  programs: ProgramT[];
-  raw: unknown;
-}
-
-export interface Adapter {
-  name: string;
-  supports: (sourceUrl: string) => boolean;
-  execute: (sourceUrl: string, context: AdapterContext) => Promise<AdapterResult>;
-}
+export const NormalizedProgramSchema = z.object({
+  country_code: CountryCode,
+  authority_level: AuthorityLevel,
+  jurisdiction_code: z.string().min(2),
+  title: z.string().min(1),
+  summary: z.string().trim().min(1).optional(),
+  benefit_type: BenefitType.optional(),
+  status: ProgramStatus.default('unknown'),
+  industry_codes: z.array(z.string().min(2)).default([]),
+  start_date: IsoDate,
+  end_date: IsoDate,
+  url: z.string().url().optional(),
+  source_id: z.number().int().positive().optional(),
+  benefits: z.array(ProgramBenefit).default([]),
+  criteria: z.array(ProgramCriterion).default([]),
+  tags: z.array(ProgramTag).default([])
+});
+export type NormalizedProgramInput = z.input<typeof NormalizedProgramSchema>;
+export type NormalizedProgram = z.infer<typeof NormalizedProgramSchema>;

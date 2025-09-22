@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@common": ["packages/common/src/index.ts"],
+      "@common/*": ["packages/common/src/*"]
+    }
+  },
+  "include": [
+    "apps/api/src/types.ts",
+    "packages/common/src/**/*.ts"
+  ]
+}

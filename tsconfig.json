@@ -8,17 +8,39 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "lib": ["ES2022", "WebWorker"],
-    "types": ["@cloudflare/workers-types", "vitest/globals"],
+    "lib": [
+      "ES2022",
+      "WebWorker"
+    ],
+    "types": [
+      "@cloudflare/workers-types",
+      "vitest/globals"
+    ],
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@common": ["packages/common/src/index.ts"],
-      "@common/*": ["packages/common/src/*"],
-      "@db": ["packages/db/src/index.ts"],
-      "@db/*": ["packages/db/src/*"]
+      "@common": [
+        "packages/common/src/index.ts"
+      ],
+      "@common/*": [
+        "packages/common/src/*"
+      ],
+      "@db": [
+        "packages/db/src/index.ts"
+      ],
+      "@db/*": [
+        "packages/db/src/*"
+      ]
     }
   },
-  "include": ["apps", "packages", "scripts", "vitest.config.ts"],
-  "exclude": ["dist"]
+  "include": [
+    "apps",
+    "packages",
+    "data",
+    "scripts",
+    "vitest.config.ts"
+  ],
+  "exclude": [
+    "dist"
+  ]
 }

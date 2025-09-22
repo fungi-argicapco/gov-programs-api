@@ -1,0 +1,800 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Government Programs API",
+    "version": "1.0.0",
+    "description": "Phase 1 public API for discovering government incentive programs."
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com",
+      "description": "Production (example placeholder)"
+    }
+  ],
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "summary": "Service health check",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Successful health response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/programs": {
+      "get": {
+        "summary": "List programs",
+        "operationId": "listPrograms",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Full-text search query"
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "US",
+                "CA"
+              ]
+            }
+          },
+          {
+            "name": "state_province",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "State or province code (e.g., WA)"
+          },
+          {
+            "name": "industry[]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "benefit_type[]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "status[]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "updated_at",
+                "-updated_at",
+                "title",
+                "-title"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Programs response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/programs/{id}": {
+      "get": {
+        "summary": "Get a program by ID or UID",
+        "operationId": "getProgram",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Program UID or numeric identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Program detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Program not found"
+          }
+        }
+      }
+    },
+    "/v1/sources": {
+      "get": {
+        "summary": "List ingestion sources",
+        "operationId": "listSources",
+        "responses": {
+          "200": {
+            "description": "Sources response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/stats/coverage": {
+      "get": {
+        "summary": "Coverage statistics",
+        "operationId": "getCoverageStats",
+        "responses": {
+          "200": {
+            "description": "Coverage summary grouped by jurisdiction and benefit type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoverageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProgramBenefitResponse": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "min_amount_cents": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max_amount_cents": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "min_amount_cents",
+          "max_amount_cents",
+          "currency_code",
+          "notes"
+        ],
+        "additionalProperties": false
+      },
+      "ProgramCriterionResponse": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "operator",
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "ProgramResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "country_code": {
+            "type": "string",
+            "enum": [
+              "US",
+              "CA"
+            ]
+          },
+          "authority_level": {
+            "type": "string",
+            "enum": [
+              "federal",
+              "state",
+              "prov",
+              "territory",
+              "regional",
+              "municipal"
+            ]
+          },
+          "jurisdiction_code": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "benefit_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiBenefitType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ApiProgramStatus"
+          },
+          "industry_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "number"
+          },
+          "updated_at": {
+            "type": "number"
+          },
+          "benefits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramBenefitResponse"
+            }
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramCriterionResponse"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "uid",
+          "country_code",
+          "authority_level",
+          "jurisdiction_code",
+          "title",
+          "status",
+          "industry_codes",
+          "created_at",
+          "updated_at",
+          "benefits",
+          "criteria",
+          "tags"
+        ],
+        "additionalProperties": false
+      },
+      "ApiBenefitType": {
+        "type": "string",
+        "enum": [
+          "grant",
+          "rebate",
+          "tax_credit",
+          "loan",
+          "guarantee",
+          "voucher",
+          "other"
+        ]
+      },
+      "ApiProgramStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "scheduled",
+          "closed",
+          "unknown"
+        ]
+      },
+      "ProgramListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramResponse"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number"
+              },
+              "page": {
+                "type": "number"
+              },
+              "pageSize": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "total",
+              "page",
+              "pageSize"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "additionalProperties": false
+      },
+      "ProgramDetailResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "country_code": {
+            "type": "string",
+            "enum": [
+              "US",
+              "CA"
+            ]
+          },
+          "authority_level": {
+            "type": "string",
+            "enum": [
+              "federal",
+              "state",
+              "prov",
+              "territory",
+              "regional",
+              "municipal"
+            ]
+          },
+          "jurisdiction_code": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "benefit_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiBenefitType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ApiProgramStatus"
+          },
+          "industry_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "number"
+          },
+          "updated_at": {
+            "type": "number"
+          },
+          "benefits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramBenefitResponse"
+            }
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramCriterionResponse"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "authority_level",
+          "benefits",
+          "country_code",
+          "created_at",
+          "criteria",
+          "id",
+          "industry_codes",
+          "jurisdiction_code",
+          "status",
+          "tags",
+          "title",
+          "uid",
+          "updated_at"
+        ]
+      },
+      "SourceResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "license": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tos_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "authority_level": {
+            "type": "string"
+          },
+          "jurisdiction_code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "url",
+          "license",
+          "tos_url",
+          "authority_level",
+          "jurisdiction_code"
+        ],
+        "additionalProperties": false
+      },
+      "SourcesResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceResponse"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "CoverageResponse": {
+        "type": "object",
+        "properties": {
+          "byJurisdiction": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoverageByJurisdiction"
+            }
+          },
+          "byBenefit": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoverageByBenefitType"
+            }
+          }
+        },
+        "required": [
+          "byJurisdiction",
+          "byBenefit"
+        ],
+        "additionalProperties": false
+      },
+      "CoverageByJurisdiction": {
+        "type": "object",
+        "properties": {
+          "country_code": {
+            "type": "string"
+          },
+          "jurisdiction_code": {
+            "type": "string"
+          },
+          "n": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "country_code",
+          "jurisdiction_code",
+          "n"
+        ],
+        "additionalProperties": false
+      },
+      "CoverageByBenefitType": {
+        "type": "object",
+        "properties": {
+          "benefit_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiBenefitType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "n": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "benefit_type",
+          "n"
+        ],
+        "additionalProperties": false
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "service": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "service"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

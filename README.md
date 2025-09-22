@@ -26,7 +26,15 @@ GET /v1/sources
 
 Adapters: rss_generic, html_table_generic, json_api_generic
 
-Normalization → upsertPrograms (idempotent), snapshots → R2 (hook in future PR)
+Phase 1 ships with fixture-backed sources for U.S. federal, U.S. state, and Canadian provincial programs under `data/sources/phase1.ts`. These populate D1 along with R2 snapshots and drive `/v1/sources` coverage data.
+
+Normalization → upsertPrograms (idempotent), snapshots now persist raw payloads to R2 and catalog entries in the `snapshots` table.
+
+## OpenAPI
+
+```bash
+bun run openapi   # emits openapi.json via ts-to-openapi
+```
 
 ## Next (U.K.)
 

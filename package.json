@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "setup": "bash scripts/setup.sh",
     "typecheck": "bunx tsc -p tsconfig.json",
-    "lint": "bun run typecheck"
+    "lint": "bun run typecheck",
+    "openapi": "bun run scripts/generate-openapi.ts"
   },
   "dependencies": {
     "@cloudflare/d1": "^1.4.1",
