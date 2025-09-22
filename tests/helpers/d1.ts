@@ -29,7 +29,7 @@ function createPreparedStatement(stmt: any, params: any[] = []): Prepared {
         meta: {
           changes: Number(info.changes ?? 0),
           duration: 0,
-          last_row_id: typeof info.lastInsertRowid === 'bigint' ? Number(info.lastInsertRowid) : Number(info.lastInsertRowid ?? 0)
+          last_row_id: Number(info.lastInsertRowid ?? 0)
         }
       };
     },
