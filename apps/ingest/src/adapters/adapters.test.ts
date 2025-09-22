@@ -43,6 +43,10 @@ describe('generateSlug', () => {
   test('trims repeated separators from ends', () => {
     expect(generateSlug('--Already--Normalized--')).toBe('already-normalized');
   });
+
+  test('falls back to hyphen when label lacks alphanumerics', () => {
+    expect(generateSlug('###')).toBe('-');
+  });
 });
 
 describe('htmlTableGenericAdapter', () => {
