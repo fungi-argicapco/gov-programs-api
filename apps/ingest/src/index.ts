@@ -1,73 +1,28 @@
-import type { Adapter, ProgramT } from '@common/types';
-import { createDb } from '@db';
-import { htmlTableGenericAdapter, jsonApiGenericAdapter, rssGenericAdapter } from './adapters';
-import { persistProgram } from './persistence';
-
-export interface SourceConfig {
-  id: string;
-  url: string;
-  adapter?: Adapter['name'];
-  metadata?: Record<string, unknown>;
-}
-
-export interface Env {
-  DB: D1Database;
-  RAW_R2: R2Bucket;
-}
-
-const adapters: Adapter[] = [rssGenericAdapter, htmlTableGenericAdapter, jsonApiGenericAdapter];
-
-const adapterByName = new Map(adapters.map((adapter) => [adapter.name, adapter] as const));
-
-const SOURCES: SourceConfig[] = [];
-export const sources = SOURCES;
-
-export const registerSource = (source: SourceConfig) => {
-  SOURCES.push(source);
-};
-
-export const clearSources = () => {
-  SOURCES.splice(0, SOURCES.length);
-};
-
-const resolveAdapter = (source: SourceConfig) => {
-  if (source.adapter) {
-    return adapterByName.get(source.adapter) ?? null;
-  }
-  return adapters.find((adapter) => adapter.supports(source.url)) ?? null;
-};
-
-const putRawSnapshot = async (env: Env, source: SourceConfig, payload: unknown) => {
-  const key = `${source.id}/${Date.now()}.json`;
-  await env.RAW_R2.put(key, JSON.stringify(payload, null, 2), {
-    httpMetadata: { contentType: 'application/json' }
-  });
-};
-
-const upsertPrograms = async (env: Env, source: SourceConfig, programs: ProgramT[], raw: unknown) => {
-  const db = createDb(env.DB);
-  for (const program of programs) {
-    await persistProgram(env, program, db);
-  }
-  await putRawSnapshot(env, source, raw);
-};
+import { ingestRssGeneric } from './adapters/rss_generic';
+import { ingestHtmlTableGeneric } from './adapters/html_table_generic';
+import { ingestJsonApiGeneric } from './adapters/json_api_generic';
 
 export default {
-  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
-    for (const source of SOURCES) {
-      const adapter = resolveAdapter(source);
-      if (!adapter) {
-        console.warn(`No adapter found for source ${source.id}`);
-        continue;
-      }
-      ctx.waitUntil((async () => {
-        try {
-          const { programs, raw } = await adapter.execute(source.url, { fetch });
-          await upsertPrograms(env, source, programs, raw);
-        } catch (error) {
-          console.error(`Failed to ingest ${source.id}`, error);
-        }
-      })());
-    }
+  async scheduled(_event: ScheduledEvent, env: { DB: D1Database }, _ctx: ExecutionContext) {
+    // Example stubs (safe no-op if unreachable); replace with real sources.
+    try {
+      await ingestRssGeneric(env, {
+        url: 'https://example.org/feed', country: 'US', authority: 'state', jurisdiction: 'US-WA', limit: 0
+      });
+    } catch {}
+    try {
+      await ingestHtmlTableGeneric(env, {
+        url: 'https://example.org/table', tableSelector: 'table.programs',
+        columns: { title: 'td:nth-child(1) a', url: 'td:nth-child(1) a', summary: 'td:nth-child(2)' },
+        country: 'US', authority: 'state', jurisdiction: 'US-CA', limit: 0
+      });
+    } catch {}
+    try {
+      await ingestJsonApiGeneric(env, {
+        url: 'https://example.org/api/programs', path: 'data',
+        map: (r:any)=>({ title: r.title, summary: r.summary, url: r.url }),
+        country: 'CA', authority: 'prov', jurisdiction: 'CA-ON', limit: 0
+      });
+    } catch {}
   }
 };

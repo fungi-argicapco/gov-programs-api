@@ -1,3 +1,3 @@
-export { rssGenericAdapter } from './rss_generic';
-export { htmlTableGenericAdapter } from './html_table_generic';
-export { jsonApiGenericAdapter } from './json_api_generic';
+export { ingestRssGeneric } from './rss_generic';
+export { ingestHtmlTableGeneric } from './html_table_generic';
+export { ingestJsonApiGeneric } from './json_api_generic';

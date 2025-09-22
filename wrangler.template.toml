@@ -26,10 +26,12 @@ bucket_name = "__R2_BUCKET__"
 name = "__DO_BINDING__"
 class_name = "__DO_CLASS__"
 
+[[migrations]]
+tag = "v1"
+new_classes = ["__DO_CLASS__"]
+
 [migrations]
-dir = "packages/db/migrations"
-migrations = [
-  { tag = "v1", new_classes = ["__DO_CLASS__"] }
-]
+dir = "migrations"
+
 [triggers]
 crons = ["0 */4 * * *"]

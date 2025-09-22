@@ -1,82 +1,64 @@
-import { relations } from 'drizzle-orm';
-import { integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
-import { sql } from 'drizzle-orm';
+import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
 
 export const programs = sqliteTable('programs', {
-  id: text('id').primaryKey(),
-  sourceId: text('source_id'),
-  sourceName: text('source_name'),
-  sourceUrl: text('source_url'),
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uid: text('uid').notNull().unique(),                                     // stable deterministic id
+  countryCode: text('country_code', { length: 2 }).notNull(),              // 'US' | 'CA'
+  authorityLevel: text('authority_level').notNull(),                       // federal|state|prov|territory|regional|municipal
+  jurisdictionCode: text('jurisdiction_code').notNull(),                   // e.g., US-WA, US-CA, CA-ON, CA-BC
   title: text('title').notNull(),
   summary: text('summary'),
-  authorityLevel: text('authority_level'),
-  stateCode: text('state_code'),
-  industries: text('industries').notNull().default('[]'),
-  startDate: text('start_date'),
-  endDate: text('end_date'),
-  status: text('status').notNull().default('unknown'),
-  benefitType: text('benefit_type'),
-  websiteUrl: text('website_url'),
-  applicationUrl: text('application_url'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`)
+  benefitType: text('benefit_type'),                                       // grant|rebate|tax_credit|loan|guarantee|voucher|other
+  status: text('status').notNull(),                                        // open|scheduled|closed|unknown
+  industryCodes: text('industry_codes'),                                   // JSON array of NAICS strings
+  startDate: text('start_date'),                                           // YYYY-MM-DD
+  endDate: text('end_date'),                                               // YYYY-MM-DD
+  url: text('url'),
+  sourceId: integer('source_id'),
+  createdAt: integer('created_at'),                                        // epoch ms
+  updatedAt: integer('updated_at'),                                        // epoch ms
 });
 
-export const programCriteria = sqliteTable('program_criteria', {
-  id: text('id').primaryKey(),
-  programId: text('program_id').notNull().references(() => programs.id, {
-    onDelete: 'cascade'
-  }),
-  category: text('category').notNull().default('other'),
-  label: text('label').notNull(),
-  value: text('value'),
-  notes: text('notes'),
-  position: integer('position').notNull().default(0)
+export const benefits = sqliteTable('benefits', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  programId: integer('program_id').notNull(),
+  type: text('type').notNull(),                                            // aligns with benefitType enums
+  minAmountCents: integer('min_amount_cents'),
+  maxAmountCents: integer('max_amount_cents'),
+  currencyCode: text('currency_code', { length: 3 }),                      // USD, CAD
+  notes: text('notes')
+});
+
+export const criteria = sqliteTable('criteria', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  programId: integer('program_id').notNull(),
+  kind: text('kind').notNull(),                                            // e.g., industry|company_size|location|other
+  operator: text('operator').notNull(),                                    // eq|in|gte|lte|contains|regex|jsonpath
+  value: text('value').notNull()                                           // JSON-encoded payload
 });
 
 export const tags = sqliteTable('tags', {
-  id: text('id').primaryKey(),
-  slug: text('slug').notNull(),
-  label: text('label').notNull(),
-  description: text('description')
-}, (table) => ({
-  slugUnique: uniqueIndex('tags_slug_unique').on(table.slug)
-}));
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  programId: integer('program_id').notNull(),
+  tag: text('tag').notNull()
+});
 
-export const programTags = sqliteTable('program_tags', {
-  programId: text('program_id').notNull().references(() => programs.id, {
-    onDelete: 'cascade'
-  }),
-  tagId: text('tag_id').notNull().references(() => tags.id, {
-    onDelete: 'cascade'
-  })
-}, (table) => ({
-  pk: primaryKey({ columns: [table.programId, table.tagId] })
-}));
+export const sources = sqliteTable('sources', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  url: text('url'),
+  license: text('license'),
+  tosUrl: text('tos_url'),
+  authorityLevel: text('authority_level').notNull(),
+  jurisdictionCode: text('jurisdiction_code').notNull()
+});
 
-export const programsRelations = relations(programs, ({ many }) => ({
-  criteria: many(programCriteria),
-  programTags: many(programTags)
-}));
-
-export const tagsRelations = relations(tags, ({ many }) => ({
-  programTags: many(programTags)
-}));
-
-export const programCriteriaRelations = relations(programCriteria, ({ one }) => ({
-  program: one(programs, {
-    fields: [programCriteria.programId],
-    references: [programs.id]
-  })
-}));
-
-export const programTagsRelations = relations(programTags, ({ one }) => ({
-  program: one(programs, {
-    fields: [programTags.programId],
-    references: [programs.id]
-  }),
-  tag: one(tags, {
-    fields: [programTags.tagId],
-    references: [tags.id]
-  })
-}));
+export const snapshots = sqliteTable('snapshots', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  programId: integer('program_id'),
+  rawKey: text('raw_key').notNull(),                                       // R2 key
+  rawHash: text('raw_hash'),
+  fetchedAt: integer('fetched_at').notNull(),                              // epoch ms
+  adapter: text('adapter').notNull(),
+  sourceUrl: text('source_url')
+});
