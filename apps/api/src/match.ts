@@ -335,7 +335,7 @@ export async function suggestStack(
     if (valueUsd <= 0) continue;
     let adjustedValueUsd = valueUsd;
     const capTags = tags.map((tag) => ({ tag, pct: parseCapPercentage(tag) })).filter((item) => item.pct);
-    if (capTags.length && remainingCapexUsd !== null && capexUsd !== null) {
+    if (capTags.length && remainingCapexUsd !== null) {
       let capLimit = remainingCapexUsd;
       for (const item of capTags) {
         if (!item.pct) continue;
