@@ -127,6 +127,14 @@ function parseDate(value?: string | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/**
+ * Computes the temporal overlap between a business profile and a program.
+ *
+ * The overlap ratio divides the shared active duration by the shortest finite
+ * window between the profile and the program. Using the shorter period rewards
+ * tight alignment and prevents artificially high scores when one side has an
+ * open-ended range.
+ */
 function computeTimingScore(profile: Profile, program: ProgramRecord): number {
   const profileStart = parseDate(profile.start_date) ?? Number.NEGATIVE_INFINITY;
   const profileEnd = parseDate(profile.end_date) ?? Number.POSITIVE_INFINITY;
@@ -277,13 +285,16 @@ export async function suggestStack(
   const bannedTags = new Set<string>();
   const selectedTags = new Set<string>();
   const seenSources = new Set<number>();
-  const seenProgramIds = new Set<number>();
-  const seenProgramUids = new Set<string>();
   const capexCents = profile.capex_cents ?? 0;
   const capexUsd = capexCents > 0 ? capexCents / 100 : null;
   let totalValueUsd = 0;
 
   for (const raw of sorted) {
+    if (capexUsd && totalValueUsd >= capexUsd) {
+      constraints.add('capex_exhausted');
+      break;
+    }
+
     const program = cloneProgram(raw);
     if (program.country_code !== profile.country_code) {
       constraints.add('jurisdiction');
@@ -295,14 +306,6 @@ export async function suggestStack(
     }
     if (program.source_id && seenSources.has(program.source_id)) {
       constraints.add(`duplicate_source:${program.source_id}`);
-      continue;
-    }
-    if (program.id && seenProgramIds.has(program.id)) {
-      constraints.add(`duplicate_program:${program.id}`);
-      continue;
-    }
-    if (program.uid && seenProgramUids.has(program.uid)) {
-      constraints.add(`duplicate_uid:${program.uid}`);
       continue;
     }
     const tags = Array.isArray(program.tags) ? program.tags : [];
@@ -364,13 +367,12 @@ export async function suggestStack(
     }
 
     if (program.source_id) seenSources.add(program.source_id);
-    if (program.id) seenProgramIds.add(program.id);
-    if (program.uid) seenProgramUids.add(program.uid);
 
     selected.push({ ...program, stack_value_usd: adjustedValueUsd });
     totalValueUsd += adjustedValueUsd;
 
     if (capexUsd && totalValueUsd >= capexUsd) {
+      constraints.add('capex_exhausted');
       break;
     }
   }
