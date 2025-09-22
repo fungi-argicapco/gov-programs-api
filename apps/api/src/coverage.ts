@@ -33,25 +33,7 @@ type CoverageResponse = {
   };
   naics_density: number;
   deadlink_rate: number | null;
-  metrics: CoverageSummary;
 };
-
-type CoverageSummary = {
-  fresh_sources: number;
-  completeness: number;
-  naics_density: number;
-  deadlink_rate: number | null;
-};
-
-function formatDay(now: number): string {
-  const date = new Date(now);
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-const COVERAGE_TARGET = 1000;
 
 const toMap = <T extends { [key: string]: any }>(rows: T[], key: keyof T) => {
   const map = new Map<any, T>();
@@ -101,8 +83,7 @@ export async function listSourcesWithMetrics(env: Env): Promise<SourceMetrics[]>
 }
 
 export async function buildCoverageResponse(env: Env): Promise<CoverageResponse> {
-  const now = Date.now();
-  const [byJur, byBenefit, naicsRows, sourceMetrics, snapshotRow] = await Promise.all([
+  const [byJur, byBenefit, naicsRows, sourceMetrics] = await Promise.all([
     env.DB.prepare(
       `SELECT country_code, jurisdiction_code, COUNT(*) as n FROM programs GROUP BY country_code, jurisdiction_code`
     ).all<{ country_code: string; jurisdiction_code: string; n: number }>(),
@@ -113,16 +94,14 @@ export async function buildCoverageResponse(env: Env): Promise<CoverageResponse>
     env.DB.prepare(
       `SELECT COUNT(*) as total, SUM(CASE WHEN industry_codes IS NOT NULL AND industry_codes != '[]' THEN 1 ELSE 0 END) as with_codes FROM programs`
     ).first<{ total: number; with_codes: number }>(),
-    listSourcesWithMetrics(env),
-    env.DB.prepare(`SELECT day, n_programs, fresh_sources, naics_density, deadlink_rate FROM daily_coverage_stats WHERE day = ? LIMIT 1`)
-      .bind(formatDay(now))
-      .first<{ day: string; n_programs: number; fresh_sources: number; naics_density: number; deadlink_rate: number | null }>()
+    listSourcesWithMetrics(env)
   ]);
 
   const totalPrograms = Number(naicsRows?.total ?? 0);
   const withCodes = Number(naicsRows?.with_codes ?? 0);
   const naicsDensity = totalPrograms > 0 ? withCodes / totalPrograms : 0;
 
+  const now = Date.now();
   const freshSources = sourceMetrics.filter((metric) => {
     const def = SOURCES.find((s) => s.id === metric.id);
     if (!def) return false;
@@ -145,28 +124,6 @@ export async function buildCoverageResponse(env: Env): Promise<CoverageResponse>
     `SELECT COUNT(DISTINCT jurisdiction_code) as n FROM programs WHERE country_code = 'CA' AND authority_level = 'prov'`
   ).first<{ n: number }>();
 
-  const fallbackMetrics: CoverageSummary = {
-    fresh_sources: freshSources.length,
-    completeness: Math.min(totalPrograms / COVERAGE_TARGET, 1),
-    naics_density: naicsDensity,
-    deadlink_rate: 0
-  };
-
-  const metrics: CoverageSummary = snapshotRow
-    ? {
-        fresh_sources: Number(snapshotRow.fresh_sources ?? 0),
-        completeness: Math.min(Number(snapshotRow.n_programs ?? 0) / COVERAGE_TARGET, 1),
-        naics_density:
-          typeof snapshotRow.naics_density === 'number' && !Number.isNaN(snapshotRow.naics_density)
-            ? snapshotRow.naics_density
-            : naicsDensity,
-        deadlink_rate:
-          typeof snapshotRow.deadlink_rate === 'number' && !Number.isNaN(snapshotRow.deadlink_rate)
-            ? snapshotRow.deadlink_rate
-            : null
-      }
-    : fallbackMetrics;
-
   return {
     byJurisdiction: byJur.results ?? [],
     byBenefit: byBenefit.results ?? [],
@@ -175,8 +132,7 @@ export async function buildCoverageResponse(env: Env): Promise<CoverageResponse>
       US: { federal: Number(usFederal?.n ?? 0) > 0, states: Number(usStates?.n ?? 0) },
       CA: { federal: Number(caFederal?.n ?? 0) > 0, provinces: Number(caProvinces?.n ?? 0) }
     },
-    naics_density: metrics.naics_density,
-    deadlink_rate: metrics.deadlink_rate,
-    metrics
+    naics_density: naicsDensity,
+    deadlink_rate: 0
   };
 }
