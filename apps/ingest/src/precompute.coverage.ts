@@ -4,23 +4,46 @@ import { type DeadlinkMetricsRecord } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-/**
- * Minimal snapshot of the deadlink metrics stored in `LOOKUPS_KV`.
- *
- * - `rate` tracks the fraction of checked program URLs that failed.
- *
- * Only the `rate` value is consumed during coverage precomputation; the other
- * fields remain available on {@link DeadlinkMetricsRecord} for debugging and
- * visibility in the stored JSON payload.
- */
-type DeadlinkMetrics = Pick<DeadlinkMetricsRecord, 'rate'>;
+type DeadlinkRecord = { id: number; url: string };
+
+function isDeadlinkRecord(entry: unknown): entry is DeadlinkRecord {
+  if (!entry || typeof entry !== 'object') return false;
+  const record = entry as { id?: unknown; url?: unknown };
+  return typeof record.id === 'number' && Number.isFinite(record.id) && record.id >= 0 && typeof record.url === 'string';
+}
+
+export function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as { rate?: unknown; n?: unknown; bad?: unknown };
+  return (
+    typeof record.rate === 'number' &&
+    Number.isFinite(record.rate) &&
+    typeof record.n === 'number' &&
+    Number.isFinite(record.n) &&
+    record.n >= 0 &&
+    Array.isArray(record.bad) &&
+    record.bad.every(isDeadlinkRecord)
+  );
+}
 
 export function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
   if (value === null || typeof value !== 'object') return false;
+  const candidate = value as { rate?: unknown; n?: unknown; bad?: unknown };
 
-  const candidate = value as Partial<DeadlinkMetrics>;
+  if (typeof candidate.rate !== 'number' || !Number.isFinite(candidate.rate)) {
+    return false;
+  }
 
-  return typeof candidate.rate === 'number' && Number.isFinite(candidate.rate);
+  // Validate that n is a non-negative finite number
+  if (typeof candidate.n !== 'number' || !Number.isFinite(candidate.n) || candidate.n < 0) {
+    return false;
+  }
+
+  if (!Array.isArray(candidate.bad)) {
+    return false;
+  }
+
+  return candidate.bad.every(isDeadlinkRecord);
 }
 
 type IngestEnv = {
