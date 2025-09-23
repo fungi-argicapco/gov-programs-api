@@ -13,7 +13,11 @@ function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord
     return false;
   }
 
-  if (typeof candidate.n !== 'number' || !Number.isFinite(candidate.n) || candidate.n < 0) {
+  // Validate that n is a non-negative finite number
+  const isNNumber = typeof candidate.n === 'number';
+  const isNFinite = Number.isFinite(candidate.n);
+  const isNNonNegative = isNNumber && candidate.n >= 0;
+  if (!isNNumber || !isNFinite || !isNNonNegative) {
     return false;
   }
 
