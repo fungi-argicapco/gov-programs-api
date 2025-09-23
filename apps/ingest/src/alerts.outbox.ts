@@ -3,6 +3,7 @@ import type { D1Database } from '@cloudflare/workers-types';
 type IngestEnv = {
   DB: D1Database;
   LOOKUPS_KV?: KVNamespace;
+
   ALERTS_MAX_DELIVERY_ATTEMPTS?: string;
 };
 

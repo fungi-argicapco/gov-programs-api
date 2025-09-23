@@ -34,6 +34,7 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
 
   let deadlinkRate: number | null = null;
   if (env.LOOKUPS_KV) {
+
     try {
       const key = `metrics:deadlinks:${day}`;
       const stored = await env.LOOKUPS_KV.get(key, 'json');
