@@ -1,3 +1,4 @@
+import { formatDay } from '@common/date';
 import type { D1Database } from '@cloudflare/workers-types';
 
 type IngestEnv = {
@@ -10,14 +11,6 @@ export type DeadlinkMetricsRecord = {
   n: number;
   bad: Array<{ id: number; url: string }>;
 };
-
-function formatDay(now: number): string {
-  const date = new Date(now);
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 async function probeUrl(fetchImpl: typeof fetch, url: string): Promise<boolean> {
   try {
@@ -63,4 +56,3 @@ export async function checkDeadlinks(env: IngestEnv, opts?: { fetchImpl?: typeof
   );
 }
 
-export { formatDay };
