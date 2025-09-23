@@ -4,32 +4,23 @@ import { type DeadlinkMetricsRecord } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
+/**
+ * Minimal snapshot of the deadlink metrics stored in `LOOKUPS_KV`.
+ *
+ * - `rate` tracks the fraction of checked program URLs that failed.
+ *
+ * Only the `rate` value is consumed during coverage precomputation; the other
+ * fields remain available on {@link DeadlinkMetricsRecord} for debugging and
+ * visibility in the stored JSON payload.
+ */
+type DeadlinkMetrics = Pick<DeadlinkMetricsRecord, 'rate'>;
 
-  if (!value || typeof value !== 'object') return false;
-  const candidate = value as Partial<DeadlinkMetricsRecord>;
+export function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
+  if (value === null || typeof value !== 'object') return false;
 
-  if (typeof candidate.rate !== 'number' || !Number.isFinite(candidate.rate)) {
-    return false;
-  }
+  const candidate = value as Partial<DeadlinkMetrics>;
 
-  // Validate that n is a non-negative finite number
-  const isNNumber = typeof candidate.n === 'number';
-  const isNFinite = Number.isFinite(candidate.n);
-  const isNNonNegative = isNNumber && candidate.n >= 0;
-  if (!isNNumber || !isNFinite || !isNNonNegative) {
-    return false;
-  }
-
-  if (!Array.isArray(candidate.bad)) {
-    return false;
-  }
-
-  return candidate.bad.every((entry) => {
-    if (!entry || typeof entry !== 'object') return false;
-    const record = entry as { id?: unknown; url?: unknown };
-    return typeof record.id === 'number' && Number.isFinite(record.id) && typeof record.url === 'string';
-  });
+  return typeof candidate.rate === 'number' && Number.isFinite(candidate.rate);
 }
 
 type IngestEnv = {
@@ -57,7 +48,7 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
     try {
       const key = `metrics:deadlinks:${day}`;
       const stored = await env.LOOKUPS_KV.get(key, 'json');
-      if (isDeadlinkMetricsRecord(stored)) {
+      if (isDeadlinkMetrics(stored)) {
         deadlinkRate = stored.rate;
       }
     } catch (err) {
