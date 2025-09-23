@@ -3,9 +3,11 @@ import type { D1Database } from '@cloudflare/workers-types';
 type IngestEnv = {
   DB: D1Database;
   LOOKUPS_KV?: KVNamespace;
+
+  ALERTS_MAX_DELIVERY_ATTEMPTS?: string;
 };
 
-const MAX_DELIVERY_ATTEMPTS = 10;
+export const DEFAULT_MAX_DELIVERY_ATTEMPTS = 10;
 
 async function loadSigningSecret(env: IngestEnv): Promise<string> {
   if (env.LOOKUPS_KV) {
@@ -37,10 +39,13 @@ async function signPayload(secret: string, payload: string): Promise<string> {
 
 export async function runOutbox(
   env: IngestEnv,
-  opts?: { fetchImpl?: typeof fetch; now?: number }
+  opts?: { fetchImpl?: typeof fetch; now?: number; maxAttempts?: number }
 ): Promise<void> {
   const fetchImpl = opts?.fetchImpl ?? fetch;
   const now = opts?.now ?? Date.now();
+  const envMax = Number(env.ALERTS_MAX_DELIVERY_ATTEMPTS);
+  const maxAttempts = opts?.maxAttempts
+    ?? (Number.isFinite(envMax) && envMax > 0 ? Math.floor(envMax) : DEFAULT_MAX_DELIVERY_ATTEMPTS);
   const secret = await loadSigningSecret(env);
   const queued = await env.DB.prepare(
     `SELECT id, subscription_id, payload_json, attempts FROM alert_outbox WHERE status = 'queued' ORDER BY queued_at ASC LIMIT 50`
@@ -80,11 +85,11 @@ export async function runOutbox(
         status = 'ok';
         deliveredAt = now;
       } else {
-        status = attempts >= MAX_DELIVERY_ATTEMPTS ? 'error' : 'queued';
+        status = attempts >= maxAttempts ? 'error' : 'queued';
       }
     } catch (err) {
       console.warn('alerts_outbox_delivery_error', err);
-      status = attempts >= MAX_DELIVERY_ATTEMPTS ? 'error' : 'queued';
+      status = attempts >= maxAttempts ? 'error' : 'queued';
     }
     await env.DB.prepare(
       `UPDATE alert_outbox SET status = ?, attempts = ?, delivered_at = ? WHERE id = ?`

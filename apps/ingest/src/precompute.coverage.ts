@@ -4,33 +4,20 @@ import { type DeadlinkMetricsRecord } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
+type DeadlinkMetrics = {
+  rate: number;
+};
+
+function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as DeadlinkMetrics;
+  return typeof candidate.rate === 'number' && Number.isFinite(candidate.rate);
+}
+
 type IngestEnv = {
   DB: D1Database;
   LOOKUPS_KV?: KVNamespace;
 };
-
-function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const record = value as Partial<DeadlinkMetricsRecord> & { bad?: unknown };
-  if (!Number.isFinite(Number(record.rate)) || !Number.isFinite(Number(record.n))) {
-    return false;
-  }
-
-  if (!Array.isArray(record.bad)) {
-    return false;
-  }
-
-  return record.bad.every((entry) => {
-    if (!entry || typeof entry !== 'object') {
-      return false;
-    }
-    const { id, url } = entry as { id: unknown; url: unknown };
-    return Number.isInteger(Number(id)) && typeof url === 'string';
-  });
-}
 
 export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promise<void> {
   const now = Date.now();
@@ -48,15 +35,12 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
 
   let deadlinkRate: number | null = null;
   if (env.LOOKUPS_KV) {
+
     try {
       const key = `metrics:deadlinks:${day}`;
-      const stored = await env.LOOKUPS_KV.get<DeadlinkMetricsRecord>(key, 'json');
-      if (isDeadlinkMetricsRecord(stored)) {
-        const parsed = Number(stored.rate);
-
-        if (Number.isFinite(parsed)) {
-          deadlinkRate = parsed;
-        }
+      const stored = await env.LOOKUPS_KV.get(key, 'json');
+      if (isDeadlinkMetrics(stored)) {
+        deadlinkRate = stored.rate;
       }
     } catch (err) {
       console.warn('daily_coverage_deadlinks_lookup_failed', err);

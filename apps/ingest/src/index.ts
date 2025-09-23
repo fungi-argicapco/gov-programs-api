@@ -3,6 +3,7 @@ import { runOutbox } from './alerts.outbox';
 
 function shouldRunOutbox(event: ScheduledEvent): boolean {
   const cron = (event as any)?.cron;
+
   if (typeof cron === 'string' && cron.trim()) {
     const minuteToken = cron.trim().split(/\s+/)[0];
     const parsed = Number(minuteToken);
@@ -16,7 +17,7 @@ function shouldRunOutbox(event: ScheduledEvent): boolean {
 }
 
 export default {
-  async scheduled(_event: ScheduledEvent, env: { DB: D1Database; RAW_R2?: R2Bucket; LOOKUPS_KV?: KVNamespace; [key: string]: unknown }, _ctx: ExecutionContext) {
+  async scheduled(event: ScheduledEvent, env: IngestEnv, _ctx: ExecutionContext) {
     await runCatalogOnce(env);
     if (shouldRunOutbox(_event)) {
       await runOutbox(env);
