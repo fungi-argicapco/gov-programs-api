@@ -4,46 +4,57 @@ import { type DeadlinkMetricsRecord } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-type DeadlinkRecord = { id: number; url: string };
+type DeadlinkRecord = DeadlinkMetricsRecord['bad'][number];
+export type DeadlinkMetrics = { rate: number } & Partial<DeadlinkMetricsRecord>;
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isNonNegativeFiniteNumber(value: unknown): value is number {
+  return isFiniteNumber(value) && value >= 0;
+}
 
 function isDeadlinkRecord(entry: unknown): entry is DeadlinkRecord {
   if (!entry || typeof entry !== 'object') return false;
-  const record = entry as { id?: unknown; url?: unknown };
-  return typeof record.id === 'number' && Number.isFinite(record.id) && record.id >= 0 && typeof record.url === 'string';
-}
-
-export function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
-  if (!value || typeof value !== 'object') return false;
-  const record = value as { rate?: unknown; n?: unknown; bad?: unknown };
-  return (
-    typeof record.rate === 'number' &&
-    Number.isFinite(record.rate) &&
-    typeof record.n === 'number' &&
-    Number.isFinite(record.n) &&
-    record.n >= 0 &&
-    Array.isArray(record.bad) &&
-    record.bad.every(isDeadlinkRecord)
-  );
+  const record = entry as Partial<DeadlinkRecord>;
+  return isNonNegativeFiniteNumber(record.id) && typeof record.url === 'string';
 }
 
 export function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
-  if (value === null || typeof value !== 'object') return false;
-  const candidate = value as { rate?: unknown; n?: unknown; bad?: unknown };
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<DeadlinkMetricsRecord>;
 
-  if (typeof candidate.rate !== 'number' || !Number.isFinite(candidate.rate)) {
+  if (!isFiniteNumber(candidate.rate)) {
     return false;
   }
 
-  // Validate that n is a non-negative finite number
-  if (typeof candidate.n !== 'number' || !Number.isFinite(candidate.n) || candidate.n < 0) {
+  if (candidate.n !== undefined && !isNonNegativeFiniteNumber(candidate.n)) {
     return false;
   }
 
-  if (!Array.isArray(candidate.bad)) {
+  if (candidate.bad !== undefined) {
+    if (!Array.isArray(candidate.bad) || !candidate.bad.every(isDeadlinkRecord)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
+  if (!isDeadlinkMetrics(value)) return false;
+  const candidate = value as DeadlinkMetricsRecord;
+
+  if (!isNonNegativeFiniteNumber(candidate.n)) {
     return false;
   }
 
-  return candidate.bad.every(isDeadlinkRecord);
+  if (!Array.isArray(candidate.bad) || !candidate.bad.every(isDeadlinkRecord)) {
+    return false;
+  }
+
+  return true;
 }
 
 type IngestEnv = {

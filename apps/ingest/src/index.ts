@@ -14,11 +14,24 @@ type IngestEnv = {
   [key: string]: unknown;
 };
 
+type ScheduledTimeCandidate = number | string | Date;
+
+type ScheduledEventWithTime = { scheduledTime?: ScheduledTimeCandidate };
+type ScheduledEventWithCron = { cron?: unknown };
+
+function hasScheduledTime(value: unknown): value is ScheduledEventWithTime {
+  return typeof value === 'object' && value !== null && 'scheduledTime' in value;
+}
+
+function hasCronExpression(value: unknown): value is ScheduledEventWithCron {
+  return typeof value === 'object' && value !== null && 'cron' in value;
+}
+
 function getScheduledTime(event: ScheduledEvent): number {
-  const scheduled =
-    typeof event === 'object' && event !== null
-      ? (event as { scheduledTime?: unknown }).scheduledTime
-      : undefined;
+  let scheduled: ScheduledTimeCandidate | undefined;
+  if (hasScheduledTime(event)) {
+    scheduled = event.scheduledTime;
+  }
   if (typeof scheduled === 'number') {
     return scheduled;
   }
@@ -36,8 +49,8 @@ function getScheduledTime(event: ScheduledEvent): number {
 
 function getCronExpression(event: ScheduledEvent): string | undefined {
   let candidate: unknown = undefined;
-  if (typeof event === 'object' && event !== null && 'cron' in event) {
-    candidate = (event as Record<string, unknown>).cron;
+  if (hasCronExpression(event)) {
+    candidate = event.cron;
   }
   if (typeof candidate === 'string' && candidate.trim()) {
     return candidate.trim();
