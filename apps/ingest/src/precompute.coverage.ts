@@ -4,7 +4,15 @@ import { type DeadlinkMetricsRecord } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
+type DeadlinkRecord = { id: number; url: string };
+
+function isDeadlinkRecord(entry: unknown): entry is DeadlinkRecord {
+  if (!entry || typeof entry !== 'object') return false;
+  const record = entry as { id?: unknown; url?: unknown };
+  return typeof record.id === 'number' && Number.isFinite(record.id) && typeof record.url === 'string';
+}
+
+export function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
 
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<DeadlinkMetricsRecord>;
@@ -14,10 +22,7 @@ function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord
   }
 
   // Validate that n is a non-negative finite number
-  const isNNumber = typeof candidate.n === 'number';
-  const isNFinite = Number.isFinite(candidate.n);
-  const isNNonNegative = isNNumber && candidate.n >= 0;
-  if (!isNNumber || !isNFinite || !isNNonNegative) {
+  if (typeof candidate.n !== 'number' || !Number.isFinite(candidate.n) || candidate.n < 0) {
     return false;
   }
 
@@ -25,11 +30,7 @@ function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord
     return false;
   }
 
-  return candidate.bad.every((entry) => {
-    if (!entry || typeof entry !== 'object') return false;
-    const record = entry as { id?: unknown; url?: unknown };
-    return typeof record.id === 'number' && Number.isFinite(record.id) && typeof record.url === 'string';
-  });
+  return candidate.bad.every(isDeadlinkRecord);
 }
 
 type IngestEnv = {
