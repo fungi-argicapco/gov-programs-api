@@ -9,7 +9,7 @@ type DeadlinkRecord = { id: number; url: string };
 function isDeadlinkRecord(entry: unknown): entry is DeadlinkRecord {
   if (!entry || typeof entry !== 'object') return false;
   const record = entry as { id?: unknown; url?: unknown };
-  return typeof record.id === 'number' && Number.isFinite(record.id) && typeof record.url === 'string';
+  return typeof record.id === 'number' && Number.isFinite(record.id) && record.id >= 0 && typeof record.url === 'string';
 }
 
 export function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
