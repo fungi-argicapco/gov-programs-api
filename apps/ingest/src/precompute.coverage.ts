@@ -1,5 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import { formatDay } from '@common/date';
+import { formatDay } from '@common/dates';
 import { type DeadlinkMetricsRecord } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;

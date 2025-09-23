@@ -1,5 +1,6 @@
 import { formatDay } from '@common/date';
 import type { Env } from './db';
+import { formatDay } from '@common/dates';
 import { SOURCES } from '../../../data/sources/phase2';
 
 type SourceRow = {
