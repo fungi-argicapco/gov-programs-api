@@ -128,12 +128,10 @@ function parseDate(value?: string | null): number | null {
 }
 
 /**
- * Computes the temporal overlap between a business profile and a program.
- *
- * The overlap ratio divides the shared active duration by the shortest finite
- * window between the profile and the program. Using the shorter period rewards
- * tight alignment and prevents artificially high scores when one side has an
- * open-ended range.
+ * Determine how well the profile and program timelines align by comparing the duration of
+ * their overlap against the shortest finite duration between them. The overlap ratio is
+ * capped at 1, so a program that fully covers the shorter window achieves the maximum score
+ * while partial overlaps degrade proportionally.
  */
 function computeTimingScore(profile: Profile, program: ProgramRecord): number {
   const profileStart = parseDate(profile.start_date) ?? Number.NEGATIVE_INFINITY;
@@ -290,11 +288,6 @@ export async function suggestStack(
   let totalValueUsd = 0;
 
   for (const raw of sorted) {
-    if (capexUsd && totalValueUsd >= capexUsd) {
-      constraints.add('capex_exhausted');
-      break;
-    }
-
     const program = cloneProgram(raw);
     if (program.country_code !== profile.country_code) {
       constraints.add('jurisdiction');
@@ -331,6 +324,15 @@ export async function suggestStack(
     }
     if (blocked) continue;
 
+    let remainingCapex: number | null = null;
+    if (capexUsd) {
+      remainingCapex = capexUsd - totalValueUsd;
+      if (remainingCapex <= 0) {
+        constraints.add('capex_exhausted');
+        break;
+      }
+    }
+
     const valueUsd = computeProgramValueUsd(program, fxRates);
     if (valueUsd <= 0) continue;
     let adjustedValueUsd = valueUsd;
@@ -345,14 +347,9 @@ export async function suggestStack(
       }
       adjustedValueUsd = Math.min(adjustedValueUsd, capLimit);
     }
-    if (capexUsd) {
-      const remaining = capexUsd - totalValueUsd;
-      if (remaining <= 0) {
-        constraints.add('capex_exhausted');
-        break;
-      }
-      if (adjustedValueUsd > remaining) {
-        adjustedValueUsd = remaining;
+    if (capexUsd && remainingCapex !== null) {
+      if (adjustedValueUsd > remainingCapex) {
+        adjustedValueUsd = remainingCapex;
       }
     }
     if (adjustedValueUsd <= 0) continue;
@@ -372,7 +369,6 @@ export async function suggestStack(
     totalValueUsd += adjustedValueUsd;
 
     if (capexUsd && totalValueUsd >= capexUsd) {
-      constraints.add('capex_exhausted');
       break;
     }
   }
