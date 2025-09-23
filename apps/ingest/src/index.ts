@@ -14,37 +14,11 @@ type IngestEnv = {
   [key: string]: unknown;
 };
 
-type ScheduledEventWithTime = ScheduledEvent & {
-  scheduledTime?: number | string | Date;
-};
-
-type ScheduledEventWithCron = ScheduledEvent & {
-  cron?: unknown;
-};
-
-function hasScheduledTime(event: ScheduledEvent): event is ScheduledEventWithTime {
-  return 'scheduledTime' in event;
-}
-
-function hasCron(event: ScheduledEvent): event is ScheduledEventWithCron {
-  return 'cron' in event;
-}
-
-function getCron(event: ScheduledEvent): string | undefined {
-  if (hasCron(event)) {
-    const cron = event.cron;
-    if (typeof cron === 'string') {
-      return cron;
-    }
-  }
-  return undefined;
-}
-
 function getScheduledTime(event: ScheduledEvent): number {
-  let scheduled: number | string | Date | undefined;
-  if (hasScheduledTime(event)) {
-    scheduled = event.scheduledTime;
-  }
+  const scheduled =
+    typeof event === 'object' && event !== null
+      ? (event as { scheduledTime?: unknown }).scheduledTime
+      : undefined;
   if (typeof scheduled === 'number') {
     return scheduled;
   }
@@ -60,11 +34,22 @@ function getScheduledTime(event: ScheduledEvent): number {
   return Date.now();
 }
 
-function shouldRunOutbox(event: ScheduledEvent): boolean {
-  const cron = getCron(event);
+function getCronExpression(event: ScheduledEvent): string | undefined {
+  let candidate: unknown = undefined;
+  if (typeof event === 'object' && event !== null && 'cron' in event) {
+    candidate = (event as Record<string, unknown>).cron;
+  }
+  if (typeof candidate === 'string' && candidate.trim()) {
+    return candidate.trim();
+  }
+  return undefined;
+}
 
-  if (typeof cron === 'string' && cron.trim()) {
-    const minuteToken = cron.trim().split(/\s+/)[0];
+function shouldRunOutbox(event: ScheduledEvent): boolean {
+  const cron = getCronExpression(event);
+
+  if (cron) {
+    const minuteToken = cron.split(/\s+/)[0];
     const parsed = Number(minuteToken);
     if (Number.isInteger(parsed)) {
       return parsed % 10 === 0;
@@ -76,9 +61,9 @@ function shouldRunOutbox(event: ScheduledEvent): boolean {
 }
 
 function shouldRunDailyMetrics(event: ScheduledEvent): boolean {
-  const cron = getCron(event);
-  if (typeof cron === 'string' && cron.trim()) {
-    const normalized = cron.trim().toLowerCase();
+  const cron = getCronExpression(event);
+  if (cron) {
+    const normalized = cron.toLowerCase();
     if (normalized === '@daily') {
       return true;
     }
