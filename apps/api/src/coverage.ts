@@ -1,4 +1,5 @@
 import type { Env } from './db';
+import { formatDay } from '@common/dates';
 import { SOURCES } from '../../../data/sources/phase2';
 
 type SourceRow = {
@@ -42,14 +43,6 @@ type CoverageSummary = {
   naics_density: number;
   deadlink_rate: number | null;
 };
-
-function formatDay(now: number): string {
-  const date = new Date(now);
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 const COVERAGE_TARGET = 1000;
 
