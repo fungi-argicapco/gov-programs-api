@@ -4,6 +4,17 @@ import { type DeadlinkMetricsRecord } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
+/**
+ * Minimal snapshot of the deadlink metrics stored in `LOOKUPS_KV`.
+ *
+ * - `rate` tracks the fraction of checked program URLs that failed.
+ * - `n` captures the number of program URLs checked when the rate was computed.
+ * - `bad` lists the specific program identifiers and URLs that were unreachable.
+ *
+ * Only the `rate` value is consumed during coverage precomputation; the other
+ * fields remain available on {@link DeadlinkMetricsRecord} for debugging and
+ * visibility in the stored JSON payload.
+ */
 type DeadlinkMetrics = {
   rate: number;
 };
