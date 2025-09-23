@@ -1,5 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types';
 
+import { formatDay } from '@common/dates';
+
 import { runCatalogOnce } from './catalog';
 import { runOutbox } from './alerts.outbox';
 import { checkDeadlinks } from './deadlinks';
@@ -12,12 +14,30 @@ type IngestEnv = {
   [key: string]: unknown;
 };
 
-interface ScheduledEventWithTime extends ScheduledEvent {
+type ScheduledEventWithTime = ScheduledEvent & {
   scheduledTime?: number | string | Date;
-}
+};
+
+type ScheduledEventWithCron = ScheduledEvent & {
+  cron?: unknown;
+};
 
 function hasScheduledTime(event: ScheduledEvent): event is ScheduledEventWithTime {
   return 'scheduledTime' in event;
+}
+
+function hasCron(event: ScheduledEvent): event is ScheduledEventWithCron {
+  return 'cron' in event;
+}
+
+function getCron(event: ScheduledEvent): string | undefined {
+  if (hasCron(event)) {
+    const cron = event.cron;
+    if (typeof cron === 'string') {
+      return cron;
+    }
+  }
+  return undefined;
 }
 
 function getScheduledTime(event: ScheduledEvent): number {
@@ -40,15 +60,8 @@ function getScheduledTime(event: ScheduledEvent): number {
   return Date.now();
 }
 
-type IngestEnv = {
-  DB: D1Database;
-  RAW_R2?: R2Bucket;
-  LOOKUPS_KV?: KVNamespace;
-  [key: string]: unknown;
-};
-
 function shouldRunOutbox(event: ScheduledEvent): boolean {
-  const cron = (event as any)?.cron;
+  const cron = getCron(event);
 
   if (typeof cron === 'string' && cron.trim()) {
     const minuteToken = cron.trim().split(/\s+/)[0];
@@ -63,7 +76,7 @@ function shouldRunOutbox(event: ScheduledEvent): boolean {
 }
 
 function shouldRunDailyMetrics(event: ScheduledEvent): boolean {
-  const cron = (event as any)?.cron;
+  const cron = getCron(event);
   if (typeof cron === 'string' && cron.trim()) {
     const normalized = cron.trim().toLowerCase();
     if (normalized === '@daily') {
