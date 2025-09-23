@@ -14,8 +14,8 @@ function isDeadlinkRecord(entry: unknown): entry is DeadlinkRecord {
 
 export function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
 
-  if (!value || typeof value !== 'object') return false;
-  const candidate = value as Partial<DeadlinkMetricsRecord>;
+export function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
+  if (value === null || typeof value !== 'object') return false;
 
   if (typeof candidate.rate !== 'number' || !Number.isFinite(candidate.rate)) {
     return false;
@@ -58,7 +58,7 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
     try {
       const key = `metrics:deadlinks:${day}`;
       const stored = await env.LOOKUPS_KV.get(key, 'json');
-      if (isDeadlinkMetricsRecord(stored)) {
+      if (isDeadlinkMetrics(stored)) {
         deadlinkRate = stored.rate;
       }
     } catch (err) {

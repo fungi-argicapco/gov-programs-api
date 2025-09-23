@@ -1,5 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types';
 
+import { formatDay } from '@common/dates';
+
 import { runCatalogOnce } from './catalog';
 import { runOutbox } from './alerts.outbox';
 import { checkDeadlinks } from './deadlinks';
@@ -12,19 +14,11 @@ type IngestEnv = {
   [key: string]: unknown;
 };
 
-interface ScheduledEventWithTime extends ScheduledEvent {
-  scheduledTime?: number | string | Date;
-}
-
-function hasScheduledTime(event: ScheduledEvent): event is ScheduledEventWithTime {
-  return 'scheduledTime' in event;
-}
-
 function getScheduledTime(event: ScheduledEvent): number {
-  let scheduled: number | string | Date | undefined;
-  if (hasScheduledTime(event)) {
-    scheduled = event.scheduledTime;
-  }
+  const scheduled =
+    typeof event === 'object' && event !== null
+      ? (event as { scheduledTime?: unknown }).scheduledTime
+      : undefined;
   if (typeof scheduled === 'number') {
     return scheduled;
   }
@@ -40,18 +34,22 @@ function getScheduledTime(event: ScheduledEvent): number {
   return Date.now();
 }
 
-type IngestEnv = {
-  DB: D1Database;
-  RAW_R2?: R2Bucket;
-  LOOKUPS_KV?: KVNamespace;
-  [key: string]: unknown;
-};
+function getCronExpression(event: ScheduledEvent): string | undefined {
+  let candidate: unknown = undefined;
+  if (typeof event === 'object' && event !== null && 'cron' in event) {
+    candidate = (event as Record<string, unknown>).cron;
+  }
+  if (typeof candidate === 'string' && candidate.trim()) {
+    return candidate.trim();
+  }
+  return undefined;
+}
 
 function shouldRunOutbox(event: ScheduledEvent): boolean {
-  const cron = (event as any)?.cron;
+  const cron = getCronExpression(event);
 
-  if (typeof cron === 'string' && cron.trim()) {
-    const minuteToken = cron.trim().split(/\s+/)[0];
+  if (cron) {
+    const minuteToken = cron.split(/\s+/)[0];
     const parsed = Number(minuteToken);
     if (Number.isInteger(parsed)) {
       return parsed % 10 === 0;
@@ -63,9 +61,9 @@ function shouldRunOutbox(event: ScheduledEvent): boolean {
 }
 
 function shouldRunDailyMetrics(event: ScheduledEvent): boolean {
-  const cron = (event as any)?.cron;
-  if (typeof cron === 'string' && cron.trim()) {
-    const normalized = cron.trim().toLowerCase();
+  const cron = getCronExpression(event);
+  if (cron) {
+    const normalized = cron.toLowerCase();
     if (normalized === '@daily') {
       return true;
     }
