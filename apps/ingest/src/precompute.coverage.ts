@@ -7,6 +7,12 @@ type DeadlinkMetrics = {
   rate: number;
 };
 
+function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as DeadlinkMetrics;
+  return typeof candidate.rate === 'number' && Number.isFinite(candidate.rate);
+}
+
 type IngestEnv = {
   DB: D1Database;
   LOOKUPS_KV?: KVNamespace;
@@ -18,9 +24,8 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
   const thirtyDaysAgo = now - THIRTY_DAYS_MS;
 
   const programsRow = await env.DB.prepare(
-    `SELECT COUNT(*) as total, SUM(CASE WHEN industry_codes IS NOT NULL AND json_array_length(industry_codes) > 0 THEN 1 ELSE 0 END) as with_codes FROM programs`
-  ).first<{ total: number; with_codes: number }>();
-
+    `SELECT COUNT(*) as total, SUM(CASE WHEN industry_codes IS NOT NULL THEN json_array_length(industry_codes) ELSE 0 END) as total_codes FROM programs`
+  ).first<{ total: number; total_codes: number }>();
   const freshSourcesRow = await env.DB.prepare(
     `SELECT COUNT(DISTINCT source_id) as fresh FROM programs WHERE source_id IS NOT NULL AND updated_at >= ?`
   )
@@ -29,17 +34,15 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
 
   let deadlinkRate: number | null = null;
   if (env.LOOKUPS_KV) {
-    const key = `metrics:deadlinks:${day}`;
+
     try {
-      const stored = await env.LOOKUPS_KV.get<DeadlinkMetrics>(key, 'json');
-      if (stored && typeof stored === 'object' && 'rate' in stored) {
-        const parsed = Number(stored.rate);
-        if (Number.isFinite(parsed)) {
-          deadlinkRate = parsed;
-        }
+      const key = `metrics:deadlinks:${day}`;
+      const stored = await env.LOOKUPS_KV.get(key, 'json');
+      if (isDeadlinkMetrics(stored)) {
+        deadlinkRate = stored.rate;
       }
     } catch (err) {
-      console.warn('daily_coverage_deadlinks_lookup_failed', { key, err });
+      console.warn('daily_coverage_deadlinks_lookup_failed', err);
     }
   }
 
