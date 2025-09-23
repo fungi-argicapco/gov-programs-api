@@ -35,10 +35,10 @@ function getScheduledTime(event: ScheduledEvent): number {
 }
 
 function getCronExpression(event: ScheduledEvent): string | undefined {
-  const candidate =
-    typeof event === 'object' && event !== null
-      ? (event as { cron?: unknown }).cron
-      : undefined;
+  let candidate: unknown = undefined;
+  if (typeof event === 'object' && event !== null && 'cron' in event) {
+    candidate = (event as Record<string, unknown>).cron;
+  }
   if (typeof candidate === 'string' && candidate.trim()) {
     return candidate.trim();
   }
