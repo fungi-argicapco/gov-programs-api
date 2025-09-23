@@ -13,9 +13,22 @@ function isDeadlinkRecord(entry: unknown): entry is DeadlinkRecord {
 }
 
 export function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as { rate?: unknown; n?: unknown; bad?: unknown };
+  return (
+    typeof record.rate === 'number' &&
+    Number.isFinite(record.rate) &&
+    typeof record.n === 'number' &&
+    Number.isFinite(record.n) &&
+    record.n >= 0 &&
+    Array.isArray(record.bad) &&
+    record.bad.every(isDeadlinkRecord)
+  );
+}
 
 export function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
   if (value === null || typeof value !== 'object') return false;
+  const candidate = value as { rate?: unknown; n?: unknown; bad?: unknown };
 
   if (typeof candidate.rate !== 'number' || !Number.isFinite(candidate.rate)) {
     return false;
