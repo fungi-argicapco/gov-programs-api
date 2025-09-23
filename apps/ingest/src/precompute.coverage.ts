@@ -44,7 +44,7 @@ export function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
 
 export function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
   if (!isDeadlinkMetrics(value)) return false;
-  const candidate = value as Partial<DeadlinkMetricsRecord>;
+  const candidate = value as DeadlinkMetricsRecord;
 
   if (!isNonNegativeFiniteNumber(candidate.n)) {
     return false;
