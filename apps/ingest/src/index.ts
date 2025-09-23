@@ -12,8 +12,19 @@ type IngestEnv = {
   [key: string]: unknown;
 };
 
+interface ScheduledEventWithTime extends ScheduledEvent {
+  scheduledTime?: number | string | Date;
+}
+
+function hasScheduledTime(event: ScheduledEvent): event is ScheduledEventWithTime {
+  return 'scheduledTime' in event;
+}
+
 function getScheduledTime(event: ScheduledEvent): number {
-  const scheduled = (event as any)?.scheduledTime;
+  let scheduled: number | string | Date | undefined;
+  if (hasScheduledTime(event)) {
+    scheduled = event.scheduledTime;
+  }
   if (typeof scheduled === 'number') {
     return scheduled;
   }
