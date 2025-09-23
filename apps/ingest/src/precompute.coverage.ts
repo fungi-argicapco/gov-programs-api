@@ -5,6 +5,7 @@ import { type DeadlinkMetricsRecord } from './deadlinks';
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
+
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<DeadlinkMetricsRecord>;
 
