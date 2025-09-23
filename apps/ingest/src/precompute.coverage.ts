@@ -4,25 +4,32 @@ import { type DeadlinkMetricsRecord } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-/**
- * Minimal snapshot of the deadlink metrics stored in `LOOKUPS_KV`.
- *
- * - `rate` tracks the fraction of checked program URLs that failed.
- * - `n` captures the number of program URLs checked when the rate was computed.
- * - `bad` lists the specific program identifiers and URLs that were unreachable.
- *
- * Only the `rate` value is consumed during coverage precomputation; the other
- * fields remain available on {@link DeadlinkMetricsRecord} for debugging and
- * visibility in the stored JSON payload.
- */
-type DeadlinkMetrics = {
-  rate: number;
-};
+function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
 
-function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
   if (!value || typeof value !== 'object') return false;
-  const candidate = value as DeadlinkMetrics;
-  return typeof candidate.rate === 'number' && Number.isFinite(candidate.rate);
+  const candidate = value as Partial<DeadlinkMetricsRecord>;
+
+  if (typeof candidate.rate !== 'number' || !Number.isFinite(candidate.rate)) {
+    return false;
+  }
+
+  // Validate that n is a non-negative finite number
+  const isNNumber = typeof candidate.n === 'number';
+  const isNFinite = Number.isFinite(candidate.n);
+  const isNNonNegative = isNNumber && candidate.n >= 0;
+  if (!isNNumber || !isNFinite || !isNNonNegative) {
+    return false;
+  }
+
+  if (!Array.isArray(candidate.bad)) {
+    return false;
+  }
+
+  return candidate.bad.every((entry) => {
+    if (!entry || typeof entry !== 'object') return false;
+    const record = entry as { id?: unknown; url?: unknown };
+    return typeof record.id === 'number' && Number.isFinite(record.id) && typeof record.url === 'string';
+  });
 }
 
 type IngestEnv = {
@@ -50,7 +57,7 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
     try {
       const key = `metrics:deadlinks:${day}`;
       const stored = await env.LOOKUPS_KV.get(key, 'json');
-      if (isDeadlinkMetrics(stored)) {
+      if (isDeadlinkMetricsRecord(stored)) {
         deadlinkRate = stored.rate;
       }
     } catch (err) {

@@ -1,5 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import { formatDay } from '@common/dates';
+
 import { runCatalogOnce } from './catalog';
 import { runOutbox } from './alerts.outbox';
 import { checkDeadlinks } from './deadlinks';
@@ -39,6 +39,13 @@ function getScheduledTime(event: ScheduledEvent): number {
   }
   return Date.now();
 }
+
+type IngestEnv = {
+  DB: D1Database;
+  RAW_R2?: R2Bucket;
+  LOOKUPS_KV?: KVNamespace;
+  [key: string]: unknown;
+};
 
 function shouldRunOutbox(event: ScheduledEvent): boolean {
   const cron = (event as any)?.cron;
