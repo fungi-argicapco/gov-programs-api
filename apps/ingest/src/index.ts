@@ -1,5 +1,14 @@
+import type { D1Database } from '@cloudflare/workers-types';
+
 import { runCatalogOnce } from './catalog';
 import { runOutbox } from './alerts.outbox';
+
+type IngestEnv = {
+  DB: D1Database;
+  RAW_R2?: R2Bucket;
+  LOOKUPS_KV?: KVNamespace;
+  [key: string]: unknown;
+};
 
 function shouldRunOutbox(event: ScheduledEvent): boolean {
   const cron = (event as any)?.cron;
@@ -19,7 +28,7 @@ function shouldRunOutbox(event: ScheduledEvent): boolean {
 export default {
   async scheduled(event: ScheduledEvent, env: IngestEnv, _ctx: ExecutionContext) {
     await runCatalogOnce(env);
-    if (shouldRunOutbox(_event)) {
+    if (shouldRunOutbox(event)) {
       await runOutbox(env);
     }
   }

@@ -4,14 +4,27 @@ import { type DeadlinkMetricsRecord } from './deadlinks';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-type DeadlinkMetrics = {
-  rate: number;
-};
-
-function isDeadlinkMetrics(value: unknown): value is DeadlinkMetrics {
+export function isDeadlinkMetricsRecord(value: unknown): value is DeadlinkMetricsRecord {
   if (!value || typeof value !== 'object') return false;
-  const candidate = value as DeadlinkMetrics;
-  return typeof candidate.rate === 'number' && Number.isFinite(candidate.rate);
+  const candidate = value as Partial<DeadlinkMetricsRecord>;
+
+  if (typeof candidate.rate !== 'number' || !Number.isFinite(candidate.rate)) {
+    return false;
+  }
+
+  if (typeof candidate.n !== 'number' || !Number.isFinite(candidate.n) || candidate.n < 0) {
+    return false;
+  }
+
+  if (!Array.isArray(candidate.bad)) {
+    return false;
+  }
+
+  return candidate.bad.every((entry) => {
+    if (!entry || typeof entry !== 'object') return false;
+    const record = entry as { id?: unknown; url?: unknown };
+    return typeof record.id === 'number' && Number.isFinite(record.id) && typeof record.url === 'string';
+  });
 }
 
 type IngestEnv = {
@@ -39,7 +52,7 @@ export async function writeDailyCoverage(env: IngestEnv, dayStr?: string): Promi
     try {
       const key = `metrics:deadlinks:${day}`;
       const stored = await env.LOOKUPS_KV.get(key, 'json');
-      if (isDeadlinkMetrics(stored)) {
+      if (isDeadlinkMetricsRecord(stored)) {
         deadlinkRate = stored.rate;
       }
     } catch (err) {
