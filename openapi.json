@@ -134,6 +134,26 @@
               "minimum": 1,
               "maximum": 100
             }
+          },
+          {
+            "name": "rank",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ltr"
+              ]
+            },
+            "description": "Optional learning-to-rank strategy"
+          },
+          {
+            "name": "rank_n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Number of candidates to rerank before paging"
           }
         ],
         "responses": {
@@ -482,6 +502,9 @@
               },
               "pageSize": {
                 "type": "number"
+              },
+              "ranking": {
+                "type": "string"
               }
             },
             "required": [

@@ -54,7 +54,7 @@ export function buildProgramsQuery(f: Filters) {
   if (f.sort === 'updated_at') orderBy = `ORDER BY updated_at ASC`;
   if (f.sort === '-updated_at') orderBy = `ORDER BY updated_at DESC`;
 
-  const limit = Math.max(1, Math.min(f.limit ?? 25, 100));
+  const limit = Math.max(1, Math.min(f.limit ?? 25, 500));
   const offset = Math.max(0, f.offset ?? 0);
 
   const sql = `

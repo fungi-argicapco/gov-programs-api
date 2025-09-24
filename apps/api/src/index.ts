@@ -7,9 +7,100 @@ import { mwRate } from './mw.rate';
 import { createAlertSubscription, createSavedQuery, deleteSavedQuery, getSavedQuery } from './saved';
 import { scoreProgramWithReasons, suggestStack, loadWeights, type Profile as MatchProfile, type ProgramRecord } from './match';
 import { loadFxToUSD } from '@common/lookups';
+import { loadLtrWeights, rerank, textSim } from '@ml';
+import { loadSynonyms } from './synonyms';
 import { getUtcDayStart, getUtcMonthStart } from './time';
 
 const MATCH_RESPONSE_LIMIT = 50;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+function safeNumber(value: any): number | null {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
+function computeFreshnessFeature(updatedAt: any, now: number): number {
+  const ts = safeNumber(updatedAt);
+  if (ts === null) return 0;
+  const ageDays = (now - ts) / ONE_DAY_MS;
+  if (!Number.isFinite(ageDays) || ageDays < 0) return 1;
+  if (ageDays <= 7) return 1;
+  if (ageDays >= 180) return 0;
+  return Math.min(1, Math.max(0, (180 - ageDays) / (180 - 7)));
+}
+
+function computeJurisdictionFeature(
+  rowCountry: string | null | undefined,
+  rowJurisdiction: string | null | undefined,
+  filterCountry?: string,
+  filterJurisdiction?: string
+): number {
+  if (filterJurisdiction) {
+    return rowJurisdiction === filterJurisdiction ? 1 : 0;
+  }
+  if (filterCountry) {
+    return rowCountry?.toUpperCase() === filterCountry.toUpperCase() ? 1 : 0;
+  }
+  return 0.5;
+}
+
+function computeIndustryFeature(rowCodes: string[], filterCodes: string[]): number {
+  if (!filterCodes.length) {
+    return 0.5;
+  }
+  const rowSet = new Set(rowCodes);
+  const filterSet = new Set(filterCodes);
+  let overlap = 0;
+  for (const code of filterSet) {
+    if (rowSet.has(code)) {
+      overlap += 1;
+    }
+  }
+  const union = new Set([...rowSet, ...filterSet]);
+  if (union.size === 0) return 0;
+  return overlap / union.size;
+}
+
+function toTimestamp(value?: string | null): number | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function computeTimingFeature(
+  programStart: string | null | undefined,
+  programEnd: string | null | undefined,
+  filterFrom?: string,
+  filterTo?: string
+): number {
+  if (!filterFrom && !filterTo) {
+    return 0.5;
+  }
+  const profileStart = filterFrom ? toTimestamp(filterFrom) ?? Number.NEGATIVE_INFINITY : Number.NEGATIVE_INFINITY;
+  const profileEnd = filterTo ? toTimestamp(filterTo) ?? Number.POSITIVE_INFINITY : Number.POSITIVE_INFINITY;
+  const programStartTs = toTimestamp(programStart) ?? Number.NEGATIVE_INFINITY;
+  const programEndTs = toTimestamp(programEnd) ?? Number.POSITIVE_INFINITY;
+
+  const overlapStart = Math.max(profileStart, programStartTs);
+  const overlapEnd = Math.min(profileEnd, programEndTs);
+  if (overlapStart > overlapEnd) return 0;
+
+  const overlapDuration = overlapEnd - overlapStart;
+  if (!Number.isFinite(overlapDuration) || overlapDuration <= 0) {
+    return 1;
+  }
+
+  const profileDuration = profileEnd - profileStart;
+  const programDuration = programEndTs - programStartTs;
+  const finiteDurations = [profileDuration, programDuration]
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .sort((a, b) => a - b);
+  const reference = finiteDurations[0];
+  if (!reference || reference <= 0) {
+    return 1;
+  }
+  return Math.min(1, Math.max(0, overlapDuration / reference));
+}
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
@@ -220,7 +311,11 @@ app.get('/v1/programs', async (c) => {
   const country = qp.get('country') || undefined; // 'US'|'CA'
   const state = qp.get('state') || qp.get('province') || undefined;
   const jurisdiction = state ? `${country || 'US'}-${state}` : undefined;
-  const industry = qp.getAll('industry[]').concat(qp.getAll('industry'));
+  const industry = qp
+    .getAll('industry[]')
+    .concat(qp.getAll('industry'))
+    .map((code) => code.trim())
+    .filter((code) => code.length > 0);
   const benefitType = qp.getAll('benefit_type[]').concat(qp.getAll('benefit_type'));
   const status = qp.getAll('status[]').concat(qp.getAll('status'));
   const from = qp.get('from') || undefined;
@@ -229,26 +324,76 @@ app.get('/v1/programs', async (c) => {
   const page = parseInt(qp.get('page') || '1', 10);
   const pageSize = Math.min(parseInt(qp.get('page_size') || '25', 10), 100);
   const offset = (page - 1) * pageSize;
+  const rankMode = qp.get('rank');
+  const isLtr = rankMode === 'ltr';
+  const requestedWindow = offset + pageSize;
+  const rawRank = Number(qp.get('rank_n'));
+  let rankLimit = Number.isFinite(rawRank) && rawRank > 0 ? Math.floor(rawRank) : 200;
+  rankLimit = Math.max(pageSize, Math.min(rankLimit, 500));
+  const fetchLimit = isLtr ? Math.max(rankLimit, requestedWindow) : pageSize;
 
   const { sql, countSql, params } = buildProgramsQuery({
     q: qp.get('q') || undefined,
     country, jurisdiction, industry, benefitType, status, from, to, sort,
-    limit: pageSize, offset
+    limit: fetchLimit,
+    offset: isLtr ? 0 : offset
   });
 
-  const data = await c.env.DB.prepare(sql).bind(...params).all<any>();
-  const count = await c.env.DB.prepare(countSql).bind(...params).first<{ total: number }>();
+  const [data, count] = await Promise.all([
+    c.env.DB.prepare(sql).bind(...params).all<any>(),
+    c.env.DB.prepare(countSql).bind(...params).first<{ total: number }>()
+  ]);
   const rows = data.results ?? [];
-  const relations = await fetchProgramRelations(c.env, rows.map((r: any) => Number(r.id))); 
-  const enriched = rows.map((row: any) => ({
-    ...row,
-    industry_codes: parseIndustryCodes(row.industry_codes),
-    benefits: relations.benefits.get(row.id) ?? [],
-    criteria: relations.criteria.get(row.id) ?? [],
-    tags: relations.tags.get(row.id) ?? []
-  }));
+  const total = Number(count?.total ?? 0);
 
-  return c.json({ data: enriched, meta: { total: Number(count?.total ?? 0), page, pageSize } });
+  if (!isLtr) {
+    const relations = await fetchProgramRelations(c.env, rows.map((r: any) => Number(r.id)));
+    const enriched = rows.map((row: any) => ({
+      ...row,
+      industry_codes: parseIndustryCodes(row.industry_codes),
+      benefits: relations.benefits.get(row.id) ?? [],
+      criteria: relations.criteria.get(row.id) ?? [],
+      tags: relations.tags.get(row.id) ?? []
+    }));
+
+    return c.json({ data: enriched, meta: { total, page, pageSize } });
+  }
+
+  const [weights, synonyms] = await Promise.all([loadLtrWeights(c.env), loadSynonyms(c.env)]);
+  const searchQuery = qp.get('q') || '';
+  const now = Date.now();
+  const ranked = rerank(
+    rows.map((row: any) => {
+      const codes = parseIndustryCodes(row.industry_codes);
+      return {
+        row,
+        feats: {
+          jur: computeJurisdictionFeature(row.country_code, row.jurisdiction_code, country, jurisdiction),
+          ind: computeIndustryFeature(codes, industry),
+          time: computeTimingFeature(row.start_date ?? null, row.end_date ?? null, from ?? undefined, to ?? undefined),
+          size: 0.5,
+          fresh: computeFreshnessFeature(row.updated_at, now),
+          text: textSim(searchQuery, row.title ?? '', row.summary ?? undefined, synonyms)
+        }
+      };
+    }),
+    weights
+  );
+  const paged = ranked.slice(offset, offset + pageSize);
+  const selectedRows = paged.map((entry) => Number(entry.row.id));
+  const relations = await fetchProgramRelations(c.env, selectedRows);
+  const enriched = paged.map((entry) => {
+    const row = entry.row;
+    return {
+      ...row,
+      industry_codes: parseIndustryCodes(row.industry_codes),
+      benefits: relations.benefits.get(row.id) ?? [],
+      criteria: relations.criteria.get(row.id) ?? [],
+      tags: relations.tags.get(row.id) ?? []
+    };
+  });
+
+  return c.json({ data: enriched, meta: { total, page, pageSize, ranking: 'ltr' as const } });
 });
 
 app.use('/v1/saved-queries', mwRate, mwAuth);

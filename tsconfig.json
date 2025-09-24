@@ -30,13 +30,18 @@
       ],
       "@db/*": [
         "packages/db/src/*"
+      ],
+      "@ml": [
+        "packages/ml/src/index.ts"
+      ],
+      "@ml/*": [
+        "packages/ml/src/*"
       ]
     }
   },
   "include": [
     "apps",
     "packages",
-    "data",
     "scripts",
     "vitest.config.ts"
   ],
