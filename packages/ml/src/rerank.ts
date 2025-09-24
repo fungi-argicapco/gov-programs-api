@@ -18,8 +18,13 @@ const DEFAULT_WEIGHTS: LtrWeights = {
   w_text: 0.8
 };
 
+const SIGMOID_CLAMP_MIN = -20;
+const SIGMOID_CLAMP_MAX = 20;
+const TOKEN_SCORE_WEIGHT = 0.6;
+const BIGRAM_SCORE_WEIGHT = 0.4;
+
 function sigmoid(value: number): number {
-  const clamped = Math.max(-20, Math.min(20, value));
+  const clamped = Math.max(SIGMOID_CLAMP_MIN, Math.min(SIGMOID_CLAMP_MAX, value));
   return 1 / (1 + Math.exp(-clamped));
 }
 
@@ -114,7 +119,7 @@ export function textSim(
   const bigramScore = overlapScore(qBigrams, docBigrams);
 
   return Number.isFinite(tokenScore + bigramScore)
-    ? Math.min(1, Math.max(0, 0.6 * tokenScore + 0.4 * bigramScore))
+    ? Math.min(1, Math.max(0, TOKEN_SCORE_WEIGHT * tokenScore + BIGRAM_SCORE_WEIGHT * bigramScore))
     : 0;
 }
 

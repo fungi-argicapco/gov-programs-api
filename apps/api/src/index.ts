@@ -13,6 +13,7 @@ import { getUtcDayStart, getUtcMonthStart } from './time';
 
 const MATCH_RESPONSE_LIMIT = 50;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_RANK_LIMIT = 200;
 
 function safeNumber(value: any): number | null {
   const num = Number(value);
@@ -87,7 +88,7 @@ function computeTimingFeature(
 
   const overlapDuration = overlapEnd - overlapStart;
   if (!Number.isFinite(overlapDuration) || overlapDuration <= 0) {
-    return 1;
+    return 0;
   }
 
   const profileDuration = profileEnd - profileStart;
@@ -328,7 +329,7 @@ app.get('/v1/programs', async (c) => {
   const isLtr = rankMode === 'ltr';
   const requestedWindow = offset + pageSize;
   const rawRank = Number(qp.get('rank_n'));
-  let rankLimit = Number.isFinite(rawRank) && rawRank > 0 ? Math.floor(rawRank) : 200;
+  let rankLimit = Number.isFinite(rawRank) && rawRank > 0 ? Math.floor(rawRank) : DEFAULT_RANK_LIMIT;
   rankLimit = Math.max(pageSize, Math.min(rankLimit, 500));
   const fetchLimit = isLtr ? Math.max(rankLimit, requestedWindow) : pageSize;
 
