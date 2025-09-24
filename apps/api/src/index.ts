@@ -88,7 +88,7 @@ function computeTimingFeature(
 
   const overlapDuration = overlapEnd - overlapStart;
   if (!Number.isFinite(overlapDuration) || overlapDuration <= 0) {
-    return 0;
+    return 0.5;
   }
 
   const profileDuration = profileEnd - profileStart;
