@@ -10,6 +10,8 @@ import { loadFxToUSD } from '@common/lookups';
 import { loadLtrWeights, rerank, textSim } from '@ml';
 import { loadSynonyms } from './synonyms';
 import { getUtcDayStart, getUtcMonthStart } from './time';
+import { buildCacheKey, cacheGet, cachePut, computeEtag } from './cache';
+import { apiError } from './errors';
 
 const MATCH_RESPONSE_LIMIT = 50;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -101,6 +103,18 @@ function computeTimingFeature(
     return 1;
   }
   return Math.min(1, Math.max(0, overlapDuration / reference));
+}
+
+function etagMatches(header: string | null | undefined, etag: string): boolean {
+  if (!header) return false;
+  const candidates = header
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+  if (candidates.includes('*')) {
+    return true;
+  }
+  return candidates.includes(etag);
 }
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
@@ -307,6 +321,22 @@ async function getScoredPrograms(
 app.get('/v1/health', (c) => c.json({ ok: true, service: 'gov-programs-api' }));
 
 app.get('/v1/programs', async (c) => {
+  const cacheKey = buildCacheKey(c.req.url);
+  const ifNoneMatch = c.req.header('if-none-match');
+  const cached = await cacheGet(c, cacheKey);
+  if (cached) {
+    const cachedEtag = cached.headers.get('ETag');
+    if (cachedEtag && etagMatches(ifNoneMatch, cachedEtag)) {
+      const headers = new Headers();
+      headers.set('X-Cache', 'HIT');
+      headers.set('ETag', cachedEtag);
+      const cachedControl = cached.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300';
+      headers.set('Cache-Control', cachedControl);
+      return new Response(null, { status: 304, headers });
+    }
+    return cached;
+  }
+
   const url = new URL(c.req.url);
   const qp = url.searchParams;
   const country = qp.get('country') || undefined; // 'US'|'CA'
@@ -335,66 +365,110 @@ app.get('/v1/programs', async (c) => {
 
   const { sql, countSql, params } = buildProgramsQuery({
     q: qp.get('q') || undefined,
-    country, jurisdiction, industry, benefitType, status, from, to, sort,
+    country,
+    jurisdiction,
+    industry,
+    benefitType,
+    status,
+    from,
+    to,
+    sort,
     limit: fetchLimit,
-    offset: isLtr ? 0 : offset
+    offset: isLtr ? 0 : offset,
   });
 
   const [data, count] = await Promise.all([
     c.env.DB.prepare(sql).bind(...params).all<any>(),
-    c.env.DB.prepare(countSql).bind(...params).first<{ total: number }>()
+    c.env.DB.prepare(countSql).bind(...params).first<{ total: number }>(),
   ]);
   const rows = data.results ?? [];
   const total = Number(count?.total ?? 0);
+  const maxUpdatedAtRaw = rows.reduce(
+    (latest, row) => Math.max(latest, Number(row?.updated_at ?? 0)),
+    0
+  );
+  const maxUpdatedAt = Number.isFinite(maxUpdatedAtRaw) && maxUpdatedAtRaw > 0 ? maxUpdatedAtRaw : null;
+
+  const baseMeta: {
+    total: number;
+    page: number;
+    pageSize: number;
+    ranking?: { mode: 'ltr'; window: number };
+  } = { total, page, pageSize };
+  let payloadData: any[] = [];
 
   if (!isLtr) {
     const relations = await fetchProgramRelations(c.env, rows.map((r: any) => Number(r.id)));
-    const enriched = rows.map((row: any) => ({
+    payloadData = rows.map((row: any) => ({
       ...row,
       industry_codes: parseIndustryCodes(row.industry_codes),
       benefits: relations.benefits.get(row.id) ?? [],
       criteria: relations.criteria.get(row.id) ?? [],
-      tags: relations.tags.get(row.id) ?? []
+      tags: relations.tags.get(row.id) ?? [],
     }));
-
-    return c.json({ data: enriched, meta: { total, page, pageSize } });
+  } else {
+    const [weights, synonyms] = await Promise.all([loadLtrWeights(c.env), loadSynonyms(c.env)]);
+    const searchQuery = qp.get('q') || '';
+    const now = Date.now();
+    const ranked = rerank(
+      rows.map((row: any) => {
+        const codes = parseIndustryCodes(row.industry_codes);
+        return {
+          row,
+          feats: {
+            jur: computeJurisdictionFeature(row.country_code, row.jurisdiction_code, country, jurisdiction),
+            ind: computeIndustryFeature(codes, industry),
+            time: computeTimingFeature(
+              row.start_date ?? null,
+              row.end_date ?? null,
+              from ?? undefined,
+              to ?? undefined
+            ),
+            size: 0.5,
+            fresh: computeFreshnessFeature(row.updated_at, now),
+            text: textSim(searchQuery, row.title ?? '', row.summary ?? undefined, synonyms),
+          },
+        };
+      }),
+      weights
+    );
+    const paged = ranked.slice(offset, offset + pageSize);
+    const selectedRows = paged.map((entry) => Number(entry.row.id));
+    const relations = await fetchProgramRelations(c.env, selectedRows);
+    payloadData = paged.map((entry) => {
+      const row = entry.row;
+      return {
+        ...row,
+        industry_codes: parseIndustryCodes(row.industry_codes),
+        benefits: relations.benefits.get(row.id) ?? [],
+        criteria: relations.criteria.get(row.id) ?? [],
+        tags: relations.tags.get(row.id) ?? [],
+      };
+    });
+    baseMeta.ranking = { mode: 'ltr', window: rankLimit };
   }
 
-  const [weights, synonyms] = await Promise.all([loadLtrWeights(c.env), loadSynonyms(c.env)]);
-  const searchQuery = qp.get('q') || '';
-  const now = Date.now();
-  const ranked = rerank(
-    rows.map((row: any) => {
-      const codes = parseIndustryCodes(row.industry_codes);
-      return {
-        row,
-        feats: {
-          jur: computeJurisdictionFeature(row.country_code, row.jurisdiction_code, country, jurisdiction),
-          ind: computeIndustryFeature(codes, industry),
-          time: computeTimingFeature(row.start_date ?? null, row.end_date ?? null, from ?? undefined, to ?? undefined),
-          size: 0.5,
-          fresh: computeFreshnessFeature(row.updated_at, now),
-          text: textSim(searchQuery, row.title ?? '', row.summary ?? undefined, synonyms)
-        }
-      };
-    }),
-    weights
-  );
-  const paged = ranked.slice(offset, offset + pageSize);
-  const selectedRows = paged.map((entry) => Number(entry.row.id));
-  const relations = await fetchProgramRelations(c.env, selectedRows);
-  const enriched = paged.map((entry) => {
-    const row = entry.row;
-    return {
-      ...row,
-      industry_codes: parseIndustryCodes(row.industry_codes),
-      benefits: relations.benefits.get(row.id) ?? [],
-      criteria: relations.criteria.get(row.id) ?? [],
-      tags: relations.tags.get(row.id) ?? []
-    };
-  });
+  const payload = { data: payloadData, meta: baseMeta };
+  const responseIds = payloadData.map((row: any) => Number(row.id));
+  const etagValue = `"${await computeEtag(payload, responseIds, maxUpdatedAt)}"`;
 
-  return c.json({ data: enriched, meta: { total, page, pageSize, ranking: 'ltr' as const } });
+  if (etagMatches(ifNoneMatch, etagValue)) {
+    const res = c.json(payload);
+    res.headers.set('ETag', etagValue);
+    await cachePut(c, cacheKey, res);
+    const headers = new Headers({
+      ETag: etagValue,
+      'Cache-Control': res.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300',
+      'X-Cache': 'MISS',
+    });
+    return new Response(null, { status: 304, headers });
+  }
+
+  const res = c.json(payload);
+  res.headers.set('ETag', etagValue);
+  await cachePut(c, cacheKey, res);
+  res.headers.set('X-Cache', 'MISS');
+  return res;
 });
 
 app.use('/v1/saved-queries', mwRate, mwAuth);
@@ -409,16 +483,16 @@ app.use('/v1/admin/*', mwRate, mwAuth);
 
 app.post('/v1/match', async (c) => {
   const auth = c.get('auth');
-  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
   let body: any;
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: 'invalid_json' }, 400);
+    return apiError(c, 400, 'invalid_json', 'Request body must be valid JSON.');
   }
   const profile = sanitizeProfile(body?.profile);
   if (!profile) {
-    return c.json({ error: 'invalid_profile' }, 400);
+    return apiError(c, 400, 'invalid_profile', 'Provided profile is invalid.');
   }
   const filters = sanitizeFilters(body?.filters);
   const weights = await loadWeights(c.env);
@@ -437,16 +511,16 @@ app.post('/v1/match', async (c) => {
 
 app.post('/v1/stacks/suggest', async (c) => {
   const auth = c.get('auth');
-  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
   let body: any;
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: 'invalid_json' }, 400);
+    return apiError(c, 400, 'invalid_json', 'Request body must be valid JSON.');
   }
   const profile = sanitizeProfile(body?.profile);
   if (!profile) {
-    return c.json({ error: 'invalid_profile' }, 400);
+    return apiError(c, 400, 'invalid_profile', 'Provided profile is invalid.');
   }
   const filters = sanitizeFilters(body?.filters);
   const weights = await loadWeights(c.env);
@@ -466,8 +540,10 @@ app.post('/v1/stacks/suggest', async (c) => {
 
 app.get('/v1/admin/sources/health', async (c) => {
   const auth = c.get('auth');
-  if (!auth) return c.json({ error: 'unauthorized' }, 401);
-  if (auth.role !== 'admin') return c.json({ error: 'forbidden' }, 403);
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
   const metrics = await listSourcesWithMetrics(c.env);
   const errorRows = await c.env.DB.prepare(
     `SELECT source_id, message FROM ingestion_runs WHERE status = 'error' AND message IS NOT NULL ORDER BY ended_at DESC`
@@ -492,18 +568,20 @@ app.get('/v1/admin/sources/health', async (c) => {
 
 app.post('/v1/admin/ingest/retry', async (c) => {
   const auth = c.get('auth');
-  if (!auth) return c.json({ error: 'unauthorized' }, 401);
-  if (auth.role !== 'admin') return c.json({ error: 'forbidden' }, 403);
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
   const url = new URL(c.req.url);
   const sourceId = Number(url.searchParams.get('source'));
   if (!Number.isInteger(sourceId) || sourceId <= 0) {
-    return c.json({ error: 'invalid_source' }, 400);
+    return apiError(c, 400, 'invalid_source', 'Source identifier is invalid.');
   }
   const exists = await c.env.DB.prepare('SELECT id FROM sources WHERE id = ? LIMIT 1')
     .bind(sourceId)
     .first<{ id: number }>();
   if (!exists) {
-    return c.json({ error: 'not_found' }, 404);
+    return apiError(c, 404, 'not_found', 'Requested resource was not found.');
   }
   const nowSeconds = Math.floor(Date.now() / 1000);
   await c.env.DB.prepare(
@@ -517,17 +595,17 @@ app.post('/v1/admin/ingest/retry', async (c) => {
 
 app.post('/v1/saved-queries', async (c) => {
   const auth = c.get('auth');
-  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
   let body: any;
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: 'invalid_json' }, 400);
+    return apiError(c, 400, 'invalid_json', 'Request body must be valid JSON.');
   }
   const name = typeof body?.name === 'string' ? body.name.trim() : '';
   const queryJson = typeof body?.query_json === 'string' ? body.query_json : '';
   if (!name || !queryJson) {
-    return c.json({ error: 'invalid_payload' }, 400);
+    return apiError(c, 400, 'invalid_payload', 'Saved query payload is invalid.');
   }
   const id = await createSavedQuery(c.env, auth.apiKeyId, { name, query_json: queryJson });
   return c.json({ id });
@@ -535,50 +613,50 @@ app.post('/v1/saved-queries', async (c) => {
 
 app.get('/v1/saved-queries/:id', async (c) => {
   const auth = c.get('auth');
-  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id)) {
-    return c.json({ error: 'not_found' }, 404);
+    return apiError(c, 404, 'not_found', 'Requested resource was not found.');
   }
   const row = await getSavedQuery(c.env, auth.apiKeyId, id);
   if (!row) {
-    return c.json({ error: 'not_found' }, 404);
+    return apiError(c, 404, 'not_found', 'Requested resource was not found.');
   }
   return c.json(row);
 });
 
 app.delete('/v1/saved-queries/:id', async (c) => {
   const auth = c.get('auth');
-  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id)) {
-    return c.json({ error: 'not_found' }, 404);
+    return apiError(c, 404, 'not_found', 'Requested resource was not found.');
   }
   const deleted = await deleteSavedQuery(c.env, auth.apiKeyId, id);
   if (!deleted) {
-    return c.json({ error: 'not_found' }, 404);
+    return apiError(c, 404, 'not_found', 'Requested resource was not found.');
   }
   return c.json({ ok: true });
 });
 
 app.post('/v1/alerts', async (c) => {
   const auth = c.get('auth');
-  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
   let body: any;
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: 'invalid_json' }, 400);
+    return apiError(c, 400, 'invalid_json', 'Request body must be valid JSON.');
   }
   const savedQueryId = Number(body?.saved_query_id);
   const sink = typeof body?.sink === 'string' ? body.sink : '';
   const target = typeof body?.target === 'string' ? body.target : '';
   if (!Number.isInteger(savedQueryId) || !sink || !target) {
-    return c.json({ error: 'invalid_payload' }, 400);
+    return apiError(c, 400, 'invalid_payload', 'Alert payload is invalid.');
   }
   const savedQuery = await getSavedQuery(c.env, auth.apiKeyId, savedQueryId);
   if (!savedQuery) {
-    return c.json({ error: 'not_found' }, 404);
+    return apiError(c, 404, 'not_found', 'Requested resource was not found.');
   }
   const id = await createAlertSubscription(c.env, {
     saved_query_id: savedQuery.id,
@@ -590,7 +668,7 @@ app.post('/v1/alerts', async (c) => {
 
 app.get('/v1/usage/me', async (c) => {
   const auth = c.get('auth');
-  if (!auth) return c.json({ error: 'unauthorized' }, 401);
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
   const now = new Date();
   const nowSeconds = Math.floor(now.getTime() / 1000);
   const dayStart = getUtcDayStart(now);
@@ -617,31 +695,90 @@ app.get('/v1/usage/me', async (c) => {
 });
 
 app.get('/v1/programs/:id', async (c) => {
+  const cacheKey = buildCacheKey(c.req.url);
+  const ifNoneMatch = c.req.header('if-none-match');
+  const cached = await cacheGet(c, cacheKey);
+  if (cached) {
+    const cachedEtag = cached.headers.get('ETag');
+    if (cachedEtag && etagMatches(ifNoneMatch, cachedEtag)) {
+      const headers = new Headers();
+      headers.set('X-Cache', 'HIT');
+      headers.set('ETag', cachedEtag);
+      const cachedControl = cached.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300';
+      headers.set('Cache-Control', cachedControl);
+      return new Response(null, { status: 304, headers });
+    }
+    return cached;
+  }
+
   const id = c.req.param('id');
   // Try lookup by uid first
   let row = await c.env.DB.prepare(
     `SELECT * FROM programs WHERE uid = ? LIMIT 1`
-  ).bind(id).first<any>();
+  )
+    .bind(id)
+    .first<any>();
   // If not found, and id is an integer, try lookup by id
   if (!row && /^\d+$/.test(id)) {
     row = await c.env.DB.prepare(
       `SELECT * FROM programs WHERE id = ? LIMIT 1`
-    ).bind(Number(id)).first<any>();
+    )
+      .bind(Number(id))
+      .first<any>();
   }
-  if (!row) return c.json({ error: 'not_found' }, 404);
+  if (!row) {
+    return apiError(c, 404, 'not_found', 'Requested resource was not found.');
+  }
   const relations = await fetchProgramRelations(c.env, [Number(row.id)]);
-  return c.json({
+  const payload = {
     ...row,
     industry_codes: parseIndustryCodes(row.industry_codes),
     benefits: relations.benefits.get(row.id) ?? [],
     criteria: relations.criteria.get(row.id) ?? [],
-    tags: relations.tags.get(row.id) ?? []
-  });
+    tags: relations.tags.get(row.id) ?? [],
+  };
+  const updatedAtRaw = Number(row?.updated_at ?? 0);
+  const updatedAt = Number.isFinite(updatedAtRaw) && updatedAtRaw > 0 ? updatedAtRaw : null;
+  const etagValue = `"${await computeEtag(payload, [Number(row.id)], updatedAt)}"`;
+
+  if (etagMatches(ifNoneMatch, etagValue)) {
+    const res = c.json(payload);
+    res.headers.set('ETag', etagValue);
+    await cachePut(c, cacheKey, res);
+    const headers = new Headers({
+      ETag: etagValue,
+      'Cache-Control': res.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300',
+      'X-Cache': 'MISS',
+    });
+    return new Response(null, { status: 304, headers });
+  }
+
+  const res = c.json(payload);
+  res.headers.set('ETag', etagValue);
+  await cachePut(c, cacheKey, res);
+  res.headers.set('X-Cache', 'MISS');
+  return res;
 });
 
 app.get('/v1/sources', async (c) => {
+  const cacheKey = buildCacheKey(c.req.url);
+  const ifNoneMatch = c.req.header('if-none-match');
+  const cached = await cacheGet(c, cacheKey);
+  if (cached) {
+    const cachedEtag = cached.headers.get('ETag');
+    if (cachedEtag && etagMatches(ifNoneMatch, cachedEtag)) {
+      const headers = new Headers();
+      headers.set('X-Cache', 'HIT');
+      headers.set('ETag', cachedEtag);
+      const cachedControl = cached.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300';
+      headers.set('Cache-Control', cachedControl);
+      return new Response(null, { status: 304, headers });
+    }
+    return cached;
+  }
+
   const rows = await listSourcesWithMetrics(c.env);
-  return c.json({
+  const payload = {
     data: rows.map((row) => ({
       id: row.id,
       source_id: row.source_id,
@@ -651,14 +788,73 @@ app.get('/v1/sources', async (c) => {
       license: row.license,
       tos_url: row.tos_url,
       last_success_at: row.last_success_at,
-      success_rate_7d: row.success_rate_7d
-    }))
-  });
+      success_rate_7d: row.success_rate_7d,
+    })),
+  };
+  const ids = payload.data.map((row) => Number(row.id));
+  const bucket = Math.floor(Date.now() / 60000);
+  const etagValue = `"${await computeEtag(payload, ids, bucket)}"`;
+
+  if (etagMatches(ifNoneMatch, etagValue)) {
+    const res = c.json(payload);
+    res.headers.set('ETag', etagValue);
+    await cachePut(c, cacheKey, res);
+    const headers = new Headers({
+      ETag: etagValue,
+      'Cache-Control': res.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300',
+      'X-Cache': 'MISS',
+    });
+    return new Response(null, { status: 304, headers });
+  }
+
+  const res = c.json(payload);
+  res.headers.set('ETag', etagValue);
+  await cachePut(c, cacheKey, res);
+  res.headers.set('X-Cache', 'MISS');
+  return res;
 });
 
 app.get('/v1/stats/coverage', async (c) => {
+  const cacheKey = buildCacheKey(c.req.url);
+  const ifNoneMatch = c.req.header('if-none-match');
+  const cached = await cacheGet(c, cacheKey);
+  if (cached) {
+    const cachedEtag = cached.headers.get('ETag');
+    if (cachedEtag && etagMatches(ifNoneMatch, cachedEtag)) {
+      const headers = new Headers();
+      headers.set('X-Cache', 'HIT');
+      headers.set('ETag', cachedEtag);
+      const cachedControl = cached.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300';
+      headers.set('Cache-Control', cachedControl);
+      return new Response(null, { status: 304, headers });
+    }
+    return cached;
+  }
+
   const payload = await buildCoverageResponse(c.env);
-  return c.json(payload);
+  const ids = Array.isArray((payload as any)?.data)
+    ? ((payload as any).data as any[]).map((entry) => Number(entry.id ?? 0)).filter((id) => Number.isFinite(id))
+    : [];
+  const bucket = Math.floor(Date.now() / 60000);
+  const etagValue = `"${await computeEtag(payload, ids, bucket)}"`;
+
+  if (etagMatches(ifNoneMatch, etagValue)) {
+    const res = c.json(payload);
+    res.headers.set('ETag', etagValue);
+    await cachePut(c, cacheKey, res);
+    const headers = new Headers({
+      ETag: etagValue,
+      'Cache-Control': res.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300',
+      'X-Cache': 'MISS',
+    });
+    return new Response(null, { status: 304, headers });
+  }
+
+  const res = c.json(payload);
+  res.headers.set('ETag', etagValue);
+  await cachePut(c, cacheKey, res);
+  res.headers.set('X-Cache', 'MISS');
+  return res;
 });
 
 export default app;

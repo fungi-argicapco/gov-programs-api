@@ -125,7 +125,7 @@ describe('ltr reranker', () => {
       env
     );
     const ltrJson = await ltrRes.json<any>();
-    expect(ltrJson.meta.ranking).toBe('ltr');
+    expect(ltrJson.meta.ranking).toMatchObject({ mode: 'ltr' });
     expect(ltrJson.data[0].title).toContain('Car');
     expect(ltrJson.data[0].id).not.toBe(baseJson.data[0].id);
   });

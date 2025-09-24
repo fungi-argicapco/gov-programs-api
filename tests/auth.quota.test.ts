@@ -51,7 +51,7 @@ describe('mw.auth quota enforcement', () => {
     );
     expect(res2.status).toBe(429);
     const payload = await res2.json();
-    expect(payload.error).toBe('quota_exceeded');
-    expect(payload.scope).toBe('daily');
+    expect(payload.error.code).toBe('quota_exceeded');
+    expect(payload.error.details).toEqual({ scope: 'daily' });
   });
 });
