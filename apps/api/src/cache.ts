@@ -33,17 +33,17 @@ async function sha256Hex(input: string): Promise<string> {
 export function buildCacheKey(reqUrl: string): string {
   const url = new URL(reqUrl);
   const params = new URLSearchParams(url.search);
-  const entries = Array.from(params.entries()).sort(([aKey, aVal], [bKey, bVal]) => {
+  const entries = [];
+  for (const [key, value] of params) {
+    entries.push([key, value]);
+  }
+  entries.sort(([aKey, aVal], [bKey, bVal]) => {
     if (aKey === bKey) {
       return aVal.localeCompare(bVal);
     }
     return aKey.localeCompare(bKey);
   });
-  const normalized = new URLSearchParams();
-  for (const [key, value] of entries) {
-    normalized.append(key, value);
-  }
-  const search = normalized.toString();
+  const search = entries.map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join('&');
   url.search = search ? `?${search}` : '';
   url.hash = '';
   return url.toString();
