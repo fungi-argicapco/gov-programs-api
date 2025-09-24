@@ -165,6 +165,47 @@
                   "$ref": "#/components/schemas/ProgramListResponse"
                 }
               }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "Caching directives for clients and intermediaries.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Entity tag representing the current response state.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified",
+            "headers": {
+              "Cache-Control": {
+                "description": "Caching directives for clients and intermediaries.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Entity tag representing the cached response state.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
             }
           }
         }
@@ -194,10 +235,48 @@
                   "$ref": "#/components/schemas/ProgramDetailResponse"
                 }
               }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "Caching directives for clients and intermediaries.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Entity tag representing the current response state.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified",
+            "headers": {
+              "Cache-Control": {
+                "description": "Caching directives for clients and intermediaries.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Entity tag representing the cached response state.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
-            "description": "Program not found"
+            "description": "Program not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -213,6 +292,37 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SourcesResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "Caching directives for clients and intermediaries.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Entity tag representing the current response state.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified",
+            "headers": {
+              "Cache-Control": {
+                "description": "Caching directives for clients and intermediaries.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Entity tag representing the cached response state.",
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -233,6 +343,37 @@
                   "$ref": "#/components/schemas/CoverageResponse"
                 }
               }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "Caching directives for clients and intermediaries.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Entity tag representing the current response state.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified",
+            "headers": {
+              "Cache-Control": {
+                "description": "Caching directives for clients and intermediaries.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Entity tag representing the cached response state.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           }
         }
@@ -241,6 +382,42 @@
   },
   "components": {
     "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": [
+                  "object",
+                  "array",
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "details"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
       "ProgramBenefitResponse": {
         "type": "object",
         "properties": {
@@ -492,32 +669,55 @@
             }
           },
           "meta": {
-            "type": "object",
-            "properties": {
-              "total": {
-                "type": "number"
-              },
-              "page": {
-                "type": "number"
-              },
-              "pageSize": {
-                "type": "number"
-              },
-              "ranking": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "total",
-              "page",
-              "pageSize"
-            ],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/ProgramListMeta"
           }
         },
         "required": [
           "data",
           "meta"
+        ],
+        "additionalProperties": false
+      },
+      "ProgramListMeta": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "ranking": {
+            "$ref": "#/components/schemas/MetaRanking"
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "additionalProperties": false
+      },
+      "MetaRanking": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "ltr"
+            ]
+          },
+          "window": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "mode",
+          "window"
         ],
         "additionalProperties": false
       },

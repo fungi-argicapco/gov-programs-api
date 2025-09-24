@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
+import { apiError } from './errors';
 
 const RATE_LIMIT = 60;
 const WINDOW_MS = 60_000;
@@ -29,7 +30,7 @@ export const mwRate: MiddlewareHandler = async (c, next) => {
   const refilled = refillBucket(bucket, now);
   if (refilled.tokens < 1) {
     buckets.set(key, refilled);
-    return c.json({ error: 'rate_limited' }, 429);
+    return apiError(c, 429, 'rate_limited', 'Rate limit exceeded.');
   }
 
   buckets.set(key, { tokens: refilled.tokens - 1, lastRefill: refilled.lastRefill });

@@ -2,6 +2,7 @@ import type { MiddlewareHandler } from 'hono';
 import type { D1Database } from '@cloudflare/workers-types';
 import type { Env } from './db';
 import { getUtcDayStart, getUtcMonthStart } from './time';
+import { apiError } from './errors';
 
 type Role = 'admin' | 'partner' | 'read';
 
@@ -36,7 +37,7 @@ async function fetchUsage(env: Env, apiKeyId: number, startTs: number) {
 export const mwAuth: MiddlewareHandler<{ Bindings: Env; Variables: AuthVariables }> = async (c, next) => {
   const apiKey = c.req.header('x-api-key');
   if (!apiKey) {
-    return c.json({ error: 'missing_api_key' }, 401);
+    return apiError(c, 401, 'missing_api_key', 'An API key is required.');
   }
 
   const keyHash = await hashKey(apiKey);
@@ -47,7 +48,7 @@ export const mwAuth: MiddlewareHandler<{ Bindings: Env; Variables: AuthVariables
     .first<{ id: number; role: Role; quota_daily: number | null; quota_monthly: number | null }>();
 
   if (!record) {
-    return c.json({ error: 'forbidden' }, 403);
+    return apiError(c, 403, 'forbidden', 'API key is not authorized.');
   }
 
   const now = new Date();
@@ -61,11 +62,11 @@ export const mwAuth: MiddlewareHandler<{ Bindings: Env; Variables: AuthVariables
   ]);
 
   if (typeof record.quota_daily === 'number' && dayUsage >= record.quota_daily) {
-    return c.json({ error: 'quota_exceeded', scope: 'daily' }, 429);
+    return apiError(c, 429, 'quota_exceeded', 'Usage quota exceeded.', { scope: 'daily' });
   }
 
   if (typeof record.quota_monthly === 'number' && monthUsage >= record.quota_monthly) {
-    return c.json({ error: 'quota_exceeded', scope: 'monthly' }, 429);
+    return apiError(c, 429, 'quota_exceeded', 'Usage quota exceeded.', { scope: 'monthly' });
   }
 
   await Promise.all([
