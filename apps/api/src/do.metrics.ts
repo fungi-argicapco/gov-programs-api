@@ -131,12 +131,9 @@ class MetricsBuffer {
     if (statements.length > 0) {
       try {
         await this.db.batch([
-          this.db.prepare('BEGIN'),
-          ...statements,
-          this.db.prepare('COMMIT')
+          ...statements
         ]);
       } catch (error) {
-        await this.db.batch([this.db.prepare('ROLLBACK')]).catch(() => undefined);
         throw error;
       }
     }
