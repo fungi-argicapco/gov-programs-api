@@ -8,7 +8,7 @@ function resolveCacheControl(ttlSeconds?: number | null): string {
     return CACHE_CONTROL_VALUE;
   }
   const roundedTtl = Math.floor(ttlSeconds);
-  const sMaxAge = Math.max(roundedTtl, roundedTtl * 5);
+  const sMaxAge = roundedTtl * 5;
   return `public, max-age=${roundedTtl}, s-maxage=${sMaxAge}`;
 }
 
