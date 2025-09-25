@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { Hono } from 'hono';
-import { buildCacheKey, cacheGet, cachePut, computeEtag, etagMatches } from '../apps/api/src/cache';
+import { CACHE_CONTROL_VALUE, buildCacheKey, cacheGet, cachePut, computeEtag, etagMatches } from '../apps/api/src/cache';
 
 const memoryStore = new Map<string, { response: Response; expiresAt: number }>();
 
@@ -87,7 +87,7 @@ describe('Cache API integration', () => {
         await cachePut(c, cacheKey, res304);
         const headers = new Headers({
           ETag: etagValue,
-          'Cache-Control': res304.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300',
+          'Cache-Control': res304.headers.get('Cache-Control') ?? CACHE_CONTROL_VALUE,
           'X-Cache': 'MISS',
         });
         return new Response(null, { status: 304, headers });
