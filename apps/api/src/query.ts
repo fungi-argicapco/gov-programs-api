@@ -68,7 +68,7 @@ export function buildProgramsQuery(f: Filters) {
   `.trim();
 
   const countSql = `
-    SELECT count(*) as total FROM programs ${whereSql};
+    SELECT count(*) as total, MAX(updated_at) as max_updated_at FROM programs ${whereSql};
   `.trim();
 
   return { sql, countSql, params };

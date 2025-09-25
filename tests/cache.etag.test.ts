@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { Hono } from 'hono';
-import { buildCacheKey, cacheGet, cachePut, computeEtag } from '../apps/api/src/cache';
+import { buildCacheKey, cacheGet, cachePut, computeEtag, etagMatches } from '../apps/api/src/cache';
 
 const memoryStore = new Map<string, { response: Response; expiresAt: number }>();
 
@@ -59,22 +59,13 @@ describe('Cache API integration', () => {
     const app = new Hono();
     const generation = 42;
 
-    const matches = (header: string | null | undefined, etag: string) => {
-      if (!header) return false;
-      return header
-        .split(',')
-        .map((value) => value.trim())
-        .filter((value) => value.length > 0)
-        .includes(etag);
-    };
-
     app.get('/resource', async (c) => {
       const cacheKey = buildCacheKey(c.req.url);
       const ifNoneMatch = c.req.header('if-none-match');
       const cached = await cacheGet(c, cacheKey);
       if (cached) {
         const cachedEtag = cached.headers.get('ETag');
-        if (cachedEtag && matches(ifNoneMatch, cachedEtag)) {
+        if (cachedEtag && etagMatches(ifNoneMatch, cachedEtag)) {
           const headers = new Headers();
           headers.set('ETag', cachedEtag);
           headers.set('X-Cache', 'HIT');
@@ -90,7 +81,7 @@ describe('Cache API integration', () => {
       const payload = { data: ['alpha'], meta: { generation } };
       const etagValue = `"${await computeEtag(payload, [1], generation)}"`;
 
-      if (matches(ifNoneMatch, etagValue)) {
+      if (etagMatches(ifNoneMatch, etagValue)) {
         const res304 = c.json(payload);
         res304.headers.set('ETag', etagValue);
         await cachePut(c, cacheKey, res304);

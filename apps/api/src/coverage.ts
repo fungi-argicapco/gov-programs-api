@@ -24,7 +24,7 @@ type SourceMetrics = {
   success_rate_7d: number;
 };
 
-type CoverageResponse = {
+export type CoverageResponse = {
   byJurisdiction: Array<{ country_code: string; jurisdiction_code: string; n: number }>;
   byBenefit: Array<{ benefit_type: string | null; n: number }>;
   fresh_sources: Array<{ id: string; last_success_at: number | null }>;

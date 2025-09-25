@@ -95,3 +95,15 @@ export async function cachePut(
   clone.headers.set('Cache-Control', cacheControl);
   await cacheStorage.put(request, clone);
 }
+
+export function etagMatches(header: string | null | undefined, etag: string): boolean {
+  if (!header) return false;
+  const candidates = header
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+  if (candidates.includes('*')) {
+    return true;
+  }
+  return candidates.includes(etag);
+}
