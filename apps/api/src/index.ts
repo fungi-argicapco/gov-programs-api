@@ -3,6 +3,7 @@ import { Env } from './db';
 import { buildProgramsQuery } from './query';
 import { listSourcesWithMetrics, buildCoverageResponse, type CoverageResponse } from './coverage';
 import { mwAuth, type AuthVariables } from './mw.auth';
+import { mwMetrics } from './mw.metrics';
 import { mwRate } from './mw.rate';
 import { createAlertSubscription, createSavedQuery, deleteSavedQuery, getSavedQuery } from './saved';
 import { scoreProgramWithReasons, suggestStack, loadWeights, type Profile as MatchProfile, type ProgramRecord } from './match';
@@ -106,6 +107,8 @@ function computeTimingFeature(
 }
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
+
+app.use('*', mwMetrics);
 
 function parseIndustryCodes(raw: string | null | undefined): string[] {
   if (!raw) return [];
