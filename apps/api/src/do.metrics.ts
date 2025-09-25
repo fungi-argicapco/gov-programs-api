@@ -60,6 +60,7 @@ class MetricsBuffer {
   private currentBucket: number | null = null;
   private totalCount = 0;
   private readonly buffer = new Map<AggregationKey, Aggregation>();
+  private readonly accumulated = new Map<AggregationKey, { durations: number[]; bytesOut: number }>();
 
   constructor(db: D1Database, threshold = DEFAULT_THRESHOLD) {
     this.db = db;
@@ -96,7 +97,10 @@ class MetricsBuffer {
 
   public async flush(force: boolean) {
     if (this.totalCount === 0) {
-      this.currentBucket = null;
+      if (force) {
+        this.accumulated.clear();
+        this.currentBucket = null;
+      }
       return;
     }
     if (!force && this.totalCount < this.threshold) {
@@ -116,32 +120,63 @@ class MetricsBuffer {
     );
 
     const statements: ReturnType<D1Database['prepare']>[] = [];
-    for (const agg of this.buffer.values()) {
-      const durations = agg.durations.slice().sort((a, b) => a - b);
-      const count = durations.length;
-      const p50 = percentile(durations, 0.5);
-      const p95 = percentile(durations, 0.95);
-      const p99 = percentile(durations, 0.99);
-      const bytesOut = Math.max(0, Math.trunc(agg.bytesOut));
+    for (const [key, agg] of this.buffer.entries()) {
+      const batchDurations = agg.durations.slice().sort((a, b) => a - b);
+      const existing = this.accumulated.get(key);
+      const mergedDurations = existing
+        ? mergeSorted(existing.durations, batchDurations)
+        : batchDurations;
+      const bytesOut = (existing?.bytesOut ?? 0) + Math.max(0, Math.trunc(agg.bytesOut));
+      const count = mergedDurations.length;
+      const p50 = percentile(mergedDurations, 0.5);
+      const p95 = percentile(mergedDurations, 0.95);
+      const p99 = percentile(mergedDurations, 0.99);
+
       statements.push(
         stmt.bind(agg.bucket, agg.route, agg.statusClass, count, p50, p95, p99, bytesOut)
       );
+
+      this.accumulated.set(key, {
+        durations: mergedDurations,
+        bytesOut
+      });
     }
 
     if (statements.length > 0) {
-      try {
-        await this.db.batch([
-          ...statements
-        ]);
-      } catch (error) {
-        throw error;
-      }
+      await this.db.batch(statements);
     }
 
     this.buffer.clear();
     this.totalCount = 0;
-    this.currentBucket = null;
+
+    if (force) {
+      this.accumulated.clear();
+      this.currentBucket = null;
+    }
   }
+}
+
+function mergeSorted(a: number[], b: number[]): number[] {
+  if (a.length === 0) return b.slice();
+  if (b.length === 0) return a.slice();
+  const result = new Array<number>(a.length + b.length);
+  let i = 0;
+  let j = 0;
+  let k = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] <= b[j]) {
+      result[k++] = a[i++];
+    } else {
+      result[k++] = b[j++];
+    }
+  }
+  while (i < a.length) {
+    result[k++] = a[i++];
+  }
+  while (j < b.length) {
+    result[k++] = b[j++];
+  }
+  return result;
 }
 
 function hasDurableObjectNamespace(binding: unknown): binding is DurableObjectNamespace {
