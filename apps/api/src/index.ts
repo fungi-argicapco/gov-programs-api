@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { Env } from './db';
 import { buildProgramsQuery } from './query';
-import { listSourcesWithMetrics, buildCoverageResponse } from './coverage';
+import { listSourcesWithMetrics, buildCoverageResponse, type CoverageResponse } from './coverage';
 import { mwAuth, type AuthVariables } from './mw.auth';
 import { mwRate } from './mw.rate';
 import { createAlertSubscription, createSavedQuery, deleteSavedQuery, getSavedQuery } from './saved';
@@ -10,7 +10,7 @@ import { loadFxToUSD } from '@common/lookups';
 import { loadLtrWeights, rerank, textSim } from '@ml';
 import { loadSynonyms } from './synonyms';
 import { getUtcDayStart, getUtcMonthStart } from './time';
-import { buildCacheKey, cacheGet, cachePut, computeEtag } from './cache';
+import { buildCacheKey, cacheGet, cachePut, computeEtag, etagMatches } from './cache';
 import { apiError } from './errors';
 
 const MATCH_RESPONSE_LIMIT = 50;
@@ -103,18 +103,6 @@ function computeTimingFeature(
     return 1;
   }
   return Math.min(1, Math.max(0, overlapDuration / reference));
-}
-
-function etagMatches(header: string | null | undefined, etag: string): boolean {
-  if (!header) return false;
-  const candidates = header
-    .split(',')
-    .map((value) => value.trim())
-    .filter((value) => value.length > 0);
-  if (candidates.includes('*')) {
-    return true;
-  }
-  return candidates.includes(etag);
 }
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
@@ -377,17 +365,14 @@ app.get('/v1/programs', async (c) => {
     offset: isLtr ? 0 : offset,
   });
 
-  const [data, count] = await Promise.all([
+  const [data, stats] = await Promise.all([
     c.env.DB.prepare(sql).bind(...params).all<any>(),
-    c.env.DB.prepare(countSql).bind(...params).first<{ total: number }>(),
+    c.env.DB.prepare(countSql).bind(...params).first<{ total: number; max_updated_at: number | null }>(),
   ]);
   const rows = data.results ?? [];
-  const total = Number(count?.total ?? 0);
-  const maxUpdatedAtRaw = rows.reduce(
-    (latest, row) => Math.max(latest, Number(row?.updated_at ?? 0)),
-    0
-  );
-  const maxUpdatedAt = Number.isFinite(maxUpdatedAtRaw) && maxUpdatedAtRaw > 0 ? maxUpdatedAtRaw : null;
+  const total = Number(stats?.total ?? 0);
+  const maxUpdatedAtValue = safeNumber(stats?.max_updated_at ?? null);
+  const maxUpdatedAt = maxUpdatedAtValue && maxUpdatedAtValue > 0 ? maxUpdatedAtValue : null;
 
   const baseMeta: {
     total: number;
@@ -831,9 +816,11 @@ app.get('/v1/stats/coverage', async (c) => {
     return cached;
   }
 
-  const payload = await buildCoverageResponse(c.env);
-  const ids = Array.isArray((payload as any)?.data)
-    ? ((payload as any).data as any[]).map((entry) => Number(entry.id ?? 0)).filter((id) => Number.isFinite(id))
+  const payload: CoverageResponse = await buildCoverageResponse(c.env);
+  // Extract IDs from the payload for ETag computation
+  // Assumes payload has a property 'sources' which is an array of objects with an 'id' property
+  const ids: number[] = Array.isArray((payload as any).sources)
+    ? (payload as any).sources.map((s: any) => s.id).filter((id: any) => typeof id === 'number')
     : [];
   const bucket = Math.floor(Date.now() / 60000);
   const etagValue = `"${await computeEtag(payload, ids, bucket)}"`;
