@@ -112,6 +112,9 @@ describe('request metrics reporter', () => {
     expect(Number(row!.p95_ms)).toBe(238);
     expect(Number(row!.p99_ms)).toBe(248);
 
+    // Calculate the sum of bytes_out values: 100+0, 100+1, ..., 100+(total-1).
+    // This is an arithmetic sequence: total*100 + sum(0 to total-1) = total*100 + total*(total-1)/2.
+    // The formula below is mathematically equivalent: total * (200 + total - 1) / 2.
     const expectedBytes = total * (200 + total - 1) / 2;
     expect(Number(row!.bytes_out)).toBe(expectedBytes);
   });
