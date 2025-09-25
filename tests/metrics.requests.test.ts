@@ -68,4 +68,51 @@ describe('request metrics reporter', () => {
 
     expect(countSum).toBe(emitted);
   });
+
+  it('merges repeated flushes for the same bucket', async () => {
+    const db = createTestDB();
+    db.__db__.exec(readMigration('0007_ops_metrics.sql'));
+
+    const env = { DB: db } as any;
+    const reporter = getMetricsReporter(env);
+
+    const baseTs = Date.now();
+    const total = 250;
+    const route = '/v1/bulk';
+    const status = 200;
+
+    for (let i = 0; i < total; i += 1) {
+      await reporter.reportRequest({
+        route,
+        status,
+        dur_ms: i + 1,
+        bytes_out: 100 + i,
+        ts: baseTs
+      });
+    }
+
+    await reporter.flush();
+
+    const row = await db
+      .prepare(
+        'SELECT count, p50_ms, p95_ms, p99_ms, bytes_out FROM request_metrics_5m WHERE route = ? AND status_class = ?'
+      )
+      .bind(route, '2xx')
+      .first<{
+        count: number;
+        p50_ms: number;
+        p95_ms: number;
+        p99_ms: number;
+        bytes_out: number;
+      }>();
+
+    expect(row).toBeDefined();
+    expect(Number(row!.count)).toBe(total);
+    expect(Number(row!.p50_ms)).toBe(125);
+    expect(Number(row!.p95_ms)).toBe(238);
+    expect(Number(row!.p99_ms)).toBe(248);
+
+    const expectedBytes = total * (200 + total - 1) / 2;
+    expect(Number(row!.bytes_out)).toBe(expectedBytes);
+  });
 });

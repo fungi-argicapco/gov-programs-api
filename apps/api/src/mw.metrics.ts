@@ -52,6 +52,8 @@ async function estimateBytesOut(res: Response): Promise<number | null> {
   } catch {
     return null;
   }
+
+  return null;
 }
 
 export const mwMetrics: MiddlewareHandler<{ Bindings: MetricsBindings; Variables: AuthVariables }> = async (c, next) => {
