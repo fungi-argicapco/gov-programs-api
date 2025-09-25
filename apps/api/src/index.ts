@@ -10,7 +10,7 @@ import { loadFxToUSD } from '@common/lookups';
 import { loadLtrWeights, rerank, textSim } from '@ml';
 import { loadSynonyms } from './synonyms';
 import { getUtcDayStart, getUtcMonthStart } from './time';
-import { buildCacheKey, cacheGet, cachePut, computeEtag, etagMatches } from './cache';
+import { CACHE_CONTROL_VALUE, buildCacheKey, cacheGet, cachePut, computeEtag, etagMatches } from './cache';
 import { apiError } from './errors';
 
 const MATCH_RESPONSE_LIMIT = 50;
@@ -318,7 +318,7 @@ app.get('/v1/programs', async (c) => {
       const headers = new Headers();
       headers.set('X-Cache', 'HIT');
       headers.set('ETag', cachedEtag);
-      const cachedControl = cached.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300';
+      const cachedControl = cached.headers.get('Cache-Control') ?? CACHE_CONTROL_VALUE;
       headers.set('Cache-Control', cachedControl);
       return new Response(null, { status: 304, headers });
     }
@@ -443,7 +443,7 @@ app.get('/v1/programs', async (c) => {
     await cachePut(c, cacheKey, res);
     const headers = new Headers({
       ETag: etagValue,
-      'Cache-Control': res.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300',
+      'Cache-Control': res.headers.get('Cache-Control') ?? CACHE_CONTROL_VALUE,
       'X-Cache': 'MISS',
     });
     return new Response(null, { status: 304, headers });
@@ -689,7 +689,7 @@ app.get('/v1/programs/:id', async (c) => {
       const headers = new Headers();
       headers.set('X-Cache', 'HIT');
       headers.set('ETag', cachedEtag);
-      const cachedControl = cached.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300';
+      const cachedControl = cached.headers.get('Cache-Control') ?? CACHE_CONTROL_VALUE;
       headers.set('Cache-Control', cachedControl);
       return new Response(null, { status: 304, headers });
     }
@@ -732,7 +732,7 @@ app.get('/v1/programs/:id', async (c) => {
     await cachePut(c, cacheKey, res);
     const headers = new Headers({
       ETag: etagValue,
-      'Cache-Control': res.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300',
+      'Cache-Control': res.headers.get('Cache-Control') ?? CACHE_CONTROL_VALUE,
       'X-Cache': 'MISS',
     });
     return new Response(null, { status: 304, headers });
@@ -755,7 +755,7 @@ app.get('/v1/sources', async (c) => {
       const headers = new Headers();
       headers.set('X-Cache', 'HIT');
       headers.set('ETag', cachedEtag);
-      const cachedControl = cached.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300';
+      const cachedControl = cached.headers.get('Cache-Control') ?? CACHE_CONTROL_VALUE;
       headers.set('Cache-Control', cachedControl);
       return new Response(null, { status: 304, headers });
     }
@@ -786,7 +786,7 @@ app.get('/v1/sources', async (c) => {
     await cachePut(c, cacheKey, res);
     const headers = new Headers({
       ETag: etagValue,
-      'Cache-Control': res.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300',
+      'Cache-Control': res.headers.get('Cache-Control') ?? CACHE_CONTROL_VALUE,
       'X-Cache': 'MISS',
     });
     return new Response(null, { status: 304, headers });
@@ -809,7 +809,7 @@ app.get('/v1/stats/coverage', async (c) => {
       const headers = new Headers();
       headers.set('X-Cache', 'HIT');
       headers.set('ETag', cachedEtag);
-      const cachedControl = cached.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300';
+      const cachedControl = cached.headers.get('Cache-Control') ?? CACHE_CONTROL_VALUE;
       headers.set('Cache-Control', cachedControl);
       return new Response(null, { status: 304, headers });
     }
@@ -831,7 +831,7 @@ app.get('/v1/stats/coverage', async (c) => {
     await cachePut(c, cacheKey, res);
     const headers = new Headers({
       ETag: etagValue,
-      'Cache-Control': res.headers.get('Cache-Control') ?? 'public, max-age=60, s-maxage=300',
+      'Cache-Control': res.headers.get('Cache-Control') ?? CACHE_CONTROL_VALUE,
       'X-Cache': 'MISS',
     });
     return new Response(null, { status: 304, headers });

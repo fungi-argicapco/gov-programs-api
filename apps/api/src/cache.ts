@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 
 const encoder = new TextEncoder();
+export const CACHE_CONTROL_VALUE = 'public, max-age=60, s-maxage=300';
 
 function normalize(value: unknown): unknown {
   if (Array.isArray(value)) {
@@ -33,7 +34,7 @@ async function sha256Hex(input: string): Promise<string> {
 export function buildCacheKey(reqUrl: string): string {
   const url = new URL(reqUrl);
   const params = new URLSearchParams(url.search);
-  const entries = [];
+  const entries: Array<[string, string]> = [];
   for (const [key, value] of params) {
     entries.push([key, value]);
   }
@@ -49,11 +50,7 @@ export function buildCacheKey(reqUrl: string): string {
   return url.toString();
 }
 
-export async function computeEtag(
-  payload: unknown,
-  ids?: number[] | null,
-  maxUpdatedAt?: number | null
-): Promise<string> {
+export async function computeEtag(payload: unknown, ids?: number[] | null, maxUpdatedAt?: number | null): Promise<string> {
   const body = stableStringify({
     q: payload,
     ids: ids ?? null,
@@ -72,27 +69,22 @@ export async function cacheGet(_c: Context, key: string): Promise<Response | nul
     return null;
   }
   const res = new Response(cached.body, cached);
+  if (!res.headers.has('Cache-Control')) {
+    res.headers.set('Cache-Control', CACHE_CONTROL_VALUE);
+  }
   res.headers.set('X-Cache', 'HIT');
   return res;
 }
 
-export async function cachePut(
-  _c: Context,
-  key: string,
-  res: Response,
-  ttlSeconds = 60
-): Promise<void> {
-  const maxAge = Math.max(0, Math.floor(ttlSeconds));
-  const sMaxAge = Math.max(maxAge, maxAge * 5);
-  const cacheControl = `public, max-age=${maxAge}, s-maxage=${sMaxAge}`;
-  res.headers.set('Cache-Control', cacheControl);
+export async function cachePut(_c: Context, key: string, res: Response): Promise<void> {
+  res.headers.set('Cache-Control', CACHE_CONTROL_VALUE);
   const cacheStorage = (globalThis as any).caches?.default as Cache | undefined;
   if (!cacheStorage) {
     return;
   }
   const request = new Request(key, { method: 'GET' });
   const clone = res.clone();
-  clone.headers.set('Cache-Control', cacheControl);
+  clone.headers.set('Cache-Control', CACHE_CONTROL_VALUE);
   await cacheStorage.put(request, clone);
 }
 
