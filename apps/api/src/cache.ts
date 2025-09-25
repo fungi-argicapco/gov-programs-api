@@ -3,6 +3,15 @@ import type { Context } from 'hono';
 const encoder = new TextEncoder();
 export const CACHE_CONTROL_VALUE = 'public, max-age=60, s-maxage=300';
 
+function resolveCacheControl(ttlSeconds?: number | null): string {
+  if (typeof ttlSeconds !== 'number' || !Number.isFinite(ttlSeconds) || ttlSeconds <= 0) {
+    return CACHE_CONTROL_VALUE;
+  }
+  const roundedTtl = Math.floor(ttlSeconds);
+  const sMaxAge = Math.max(roundedTtl, roundedTtl * 5);
+  return `public, max-age=${roundedTtl}, s-maxage=${sMaxAge}`;
+}
+
 function normalize(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map((entry) => normalize(entry));
@@ -76,15 +85,21 @@ export async function cacheGet(_c: Context, key: string): Promise<Response | nul
   return res;
 }
 
-export async function cachePut(_c: Context, key: string, res: Response): Promise<void> {
-  res.headers.set('Cache-Control', CACHE_CONTROL_VALUE);
+export async function cachePut(
+  _c: Context,
+  key: string,
+  res: Response,
+  ttlSeconds?: number | null,
+): Promise<void> {
+  const cacheControl = resolveCacheControl(ttlSeconds);
+  res.headers.set('Cache-Control', cacheControl);
   const cacheStorage = (globalThis as any).caches?.default as Cache | undefined;
   if (!cacheStorage) {
     return;
   }
   const request = new Request(key, { method: 'GET' });
   const clone = res.clone();
-  clone.headers.set('Cache-Control', CACHE_CONTROL_VALUE);
+  clone.headers.set('Cache-Control', cacheControl);
   await cacheStorage.put(request, clone);
 }
 
