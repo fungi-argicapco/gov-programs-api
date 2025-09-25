@@ -49,7 +49,6 @@ async function estimateBytesOut(res: Response): Promise<number | null> {
         return null;
       }
     }
-    return total;
   } catch {
     return null;
   }
