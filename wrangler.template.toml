@@ -26,9 +26,17 @@ bucket_name = "__R2_BUCKET__"
 name = "__DO_BINDING__"
 class_name = "__DO_CLASS__"
 
+[[durable_objects.bindings]]
+name = "__DO_METRICS_BINDING__"
+class_name = "__DO_METRICS_CLASS__"
+
 [[migrations]]
 tag = "v1"
 new_classes = ["__DO_CLASS__"]
+
+[[migrations]]
+tag = "v_metrics_v1"
+new_classes = ["__DO_METRICS_CLASS__"]
 
 [triggers]
 crons = ["0 */4 * * *"]

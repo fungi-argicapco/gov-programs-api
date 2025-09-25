@@ -8,6 +8,8 @@ KV_LOOKUPS="LOOKUPS"
 KV_API_KEYS="API_KEYS"
 DO_CLASS="RateLimiter"
 DO_BINDING="RATE_LIMITER"
+DO_METRICS_CLASS="MetricsDO"
+DO_METRICS_BINDING="METRICS_AGG"
 TEMPLATE="wrangler.template.toml"
 OUTPUT="wrangler.toml"
 MODE="remote"
@@ -103,6 +105,8 @@ KV[CF_KV_API_KEYS_ID]="${APIKEYS_ID}"
 KV[CF_R2_RAW_BUCKET]="${R2_BUCKET}"
 KV[CF_DO_BINDING]="${DO_BINDING}"
 KV[CF_DO_CLASS]="${DO_CLASS}"
+KV[CF_DO_METRICS_BINDING]="${DO_METRICS_BINDING}"
+KV[CF_DO_METRICS_CLASS]="${DO_METRICS_CLASS}"
 for k in "${!KV[@]}"; do
   if grep -q "^${k}=" "${ENV_FILE}" 2>/dev/null; then
     sed -i.bak "s#^${k}=.*#${k}=${KV[$k]}#g" "${ENV_FILE}"
@@ -165,7 +169,9 @@ s = s
   .replaceAll("__KV_API_KEYS_ID__", env.CF_KV_API_KEYS_ID||"")
   .replaceAll("__R2_BUCKET__", env.CF_R2_RAW_BUCKET||"")
   .replaceAll("__DO_BINDING__", env.CF_DO_BINDING||"")
-  .replaceAll("__DO_CLASS__", env.CF_DO_CLASS||"");
+  .replaceAll("__DO_CLASS__", env.CF_DO_CLASS||"")
+  .replaceAll("__DO_METRICS_BINDING__", env.CF_DO_METRICS_BINDING||"")
+  .replaceAll("__DO_METRICS_CLASS__", env.CF_DO_METRICS_CLASS||"");
 writeFileSync(process.argv[2], s);
 ' "${TEMPLATE}" "${OUTPUT}"
 echo "✅ Generated ${OUTPUT}"
