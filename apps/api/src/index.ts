@@ -817,7 +817,11 @@ app.get('/v1/stats/coverage', async (c) => {
   }
 
   const payload: CoverageResponse = await buildCoverageResponse(c.env);
-  const ids: number[] = [];
+  // Extract IDs from the payload for ETag computation
+  // Assumes payload has a property 'sources' which is an array of objects with an 'id' property
+  const ids: number[] = Array.isArray((payload as any).sources)
+    ? (payload as any).sources.map((s: any) => s.id).filter((id: any) => typeof id === 'number')
+    : [];
   const bucket = Math.floor(Date.now() / 60000);
   const etagValue = `"${await computeEtag(payload, ids, bucket)}"`;
 
