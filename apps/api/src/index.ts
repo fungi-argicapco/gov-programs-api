@@ -1111,7 +1111,7 @@ app.delete('/v1/admin/api-keys/:id', async (c) => {
   return c.json({ deleted: true });
 });
 
-app.get('/admin', mwRate, async (c) => {
+app.get('/admin', mwRate, mwAuth, async (c) => {
   const auth = c.get('auth');
   if (!auth) {
     return apiError(c, 401, 'unauthorized', 'Authentication required.');
