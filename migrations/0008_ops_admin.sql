@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS ops_alerts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind TEXT NOT NULL,
+  details TEXT,
+  created_at INTEGER NOT NULL,
+  resolved_at INTEGER
+);
+CREATE TABLE IF NOT EXISTS admin_audits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  actor_key_id INTEGER NOT NULL,
+  action TEXT NOT NULL,
+  target TEXT,
+  meta TEXT,
+  ts INTEGER NOT NULL
+);

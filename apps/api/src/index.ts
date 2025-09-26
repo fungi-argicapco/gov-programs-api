@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { Env } from './db';
 import { buildProgramsQuery } from './query';
 import { listSourcesWithMetrics, buildCoverageResponse, type CoverageResponse } from './coverage';
-import { mwAuth, type AuthVariables } from './mw.auth';
+import { mwAuth, hashKey, type AuthVariables } from './mw.auth';
 import { mwMetrics } from './mw.metrics';
 import { mwRate } from './mw.rate';
 import { createAlertSubscription, createSavedQuery, deleteSavedQuery, getSavedQuery } from './saved';
@@ -13,10 +13,89 @@ import { loadSynonyms } from './synonyms';
 import { getUtcDayStart, getUtcMonthStart } from './time';
 import { CACHE_CONTROL_VALUE, buildCacheKey, cacheGet, cachePut, computeEtag, etagMatches } from './cache';
 import { apiError } from './errors';
+import { adminUi } from './admin/ui';
 
 const MATCH_RESPONSE_LIMIT = 50;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_RANK_LIMIT = 200;
+const FIVE_MINUTES_MS = 5 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+
+function parseTimeInput(raw: string | null): number | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const numeric = Number(trimmed);
+  if (Number.isFinite(numeric)) {
+    return numeric;
+  }
+  const parsed = Date.parse(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toIsoTimestamp(ts: number): string {
+  return new Date(ts).toISOString();
+}
+
+function formatUtcDay(date: Date): string {
+  const year = date.getUTCFullYear();
+  const month = `${date.getUTCMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getUTCDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function parseDayParam(value: string | null, fallback: string): string {
+  if (!value) return fallback;
+  const trimmed = value.trim();
+  if (!trimmed) return fallback;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+  const parsed = Date.parse(trimmed);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return formatUtcDay(new Date(parsed));
+}
+
+function parseQuotaValue(input: unknown): number | null | undefined {
+  if (input === undefined) {
+    return null;
+  }
+  if (input === null) {
+    return null;
+  }
+  if (typeof input === 'number') {
+    return Number.isFinite(input) ? Math.max(0, Math.trunc(input)) : undefined;
+  }
+  if (typeof input === 'string') {
+    const numeric = Number(input);
+    return Number.isFinite(numeric) ? Math.max(0, Math.trunc(numeric)) : undefined;
+  }
+  return undefined;
+}
+
+function generateRawApiKey(): string {
+  const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function auditMeta(payload: Record<string, unknown>): string | null {
+  const entries = Object.entries(payload).filter(([, value]) => value !== undefined);
+  if (entries.length === 0) {
+    return null;
+  }
+  return JSON.stringify(Object.fromEntries(entries));
+}
+
+function toNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
 
 function safeNumber(value: any): number | null {
   const num = Number(value);
@@ -466,8 +545,12 @@ app.use('/v1/usage/me', mwRate, mwAuth);
 app.use('/v1/match', mwRate, mwAuth);
 app.use('/v1/stacks', mwRate, mwAuth);
 app.use('/v1/stacks/*', mwRate, mwAuth);
+app.use('/v1/ops', mwRate, mwAuth);
+app.use('/v1/ops/*', mwRate, mwAuth);
 app.use('/v1/admin', mwRate, mwAuth);
 app.use('/v1/admin/*', mwRate, mwAuth);
+app.use('/admin', mwRate, mwAuth);
+app.use('/admin/*', mwRate, mwAuth);
 
 app.post('/v1/match', async (c) => {
   const auth = c.get('auth');
@@ -523,6 +606,522 @@ app.post('/v1/stacks/suggest', async (c) => {
     value_usd: stack.value_usd,
     coverage_ratio: stack.coverage_ratio,
     constraints_hit: stack.constraints_hit
+  });
+});
+
+app.get('/v1/ops/metrics', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  const url = new URL(c.req.url);
+  const params = url.searchParams;
+  const bucketParam = params.get('bucket') ?? '5m';
+  const bucket = bucketParam === '1h' ? '1h' : bucketParam === '5m' ? '5m' : null;
+  if (!bucket) {
+    return apiError(c, 400, 'invalid_bucket', 'bucket must be 5m or 1h.');
+  }
+
+  const now = Date.now();
+  const toMs = parseTimeInput(params.get('to')) ?? now;
+  const fromMs = parseTimeInput(params.get('from')) ?? toMs - ONE_DAY_MS;
+  const rangeStart = Math.min(fromMs, toMs);
+  const rangeEnd = Math.max(fromMs, toMs);
+  const fromBucket = Math.floor(rangeStart / FIVE_MINUTES_MS) * FIVE_MINUTES_MS;
+  const toBucket = Math.floor(rangeEnd / FIVE_MINUTES_MS) * FIVE_MINUTES_MS;
+
+  const bindings: Array<string | number> = [fromBucket, toBucket];
+  let query =
+    'SELECT bucket_ts, route, status_class, count, p50_ms, p95_ms, p99_ms, bytes_out FROM request_metrics_5m WHERE bucket_ts BETWEEN ? AND ?';
+  const routeFilter = params.get('route');
+  if (routeFilter) {
+    query += ' AND route = ?';
+    bindings.push(routeFilter);
+  }
+  query += ' ORDER BY bucket_ts ASC, route ASC, status_class ASC';
+
+  const rows = (await c.env.DB.prepare(query).bind(...bindings).all<any>()).results ?? [];
+  const aggregates = new Map<
+    string,
+    {
+      bucket_ts: number;
+      route: string;
+      status_class: string;
+      count: number;
+      bytes_out: number;
+      p50_weight: number;
+      p95_weight: number;
+      p99_weight: number;
+    }
+  >();
+
+  for (const row of rows) {
+    const route = String(row.route ?? '');
+    const statusClass = String(row.status_class ?? '');
+    const baseBucket = Number(row.bucket_ts ?? 0);
+    const bucketTs = bucket === '1h' ? Math.floor(baseBucket / HOUR_MS) * HOUR_MS : baseBucket;
+    const count = Number(row.count ?? 0);
+    const bytesOut = Number(row.bytes_out ?? 0);
+    const p50 = Number(row.p50_ms ?? 0);
+    const p95 = Number(row.p95_ms ?? 0);
+    const p99 = Number(row.p99_ms ?? 0);
+    const key = `${bucketTs}|${route}|${statusClass}`;
+    let agg = aggregates.get(key);
+    if (!agg) {
+      agg = {
+        bucket_ts: bucketTs,
+        route,
+        status_class: statusClass,
+        count: 0,
+        bytes_out: 0,
+        p50_weight: 0,
+        p95_weight: 0,
+        p99_weight: 0,
+      };
+      aggregates.set(key, agg);
+    }
+    agg.count += count;
+    agg.bytes_out += bytesOut;
+    if (count > 0) {
+      agg.p50_weight += p50 * count;
+      agg.p95_weight += p95 * count;
+      agg.p99_weight += p99 * count;
+    }
+  }
+
+  const data = Array.from(aggregates.values())
+    .map((agg) => {
+      const denom = agg.count > 0 ? agg.count : 1;
+      return {
+        bucket_ts: agg.bucket_ts,
+        route: agg.route,
+        status_class: agg.status_class,
+        count: agg.count,
+        p50_ms: agg.count > 0 ? Math.round(agg.p50_weight / denom) : 0,
+        p95_ms: agg.count > 0 ? Math.round(agg.p95_weight / denom) : 0,
+        p99_ms: agg.count > 0 ? Math.round(agg.p99_weight / denom) : 0,
+        bytes_out: agg.bytes_out,
+      };
+    })
+    .sort(
+      (a, b) =>
+        a.bucket_ts - b.bucket_ts ||
+        a.route.localeCompare(b.route) ||
+        a.status_class.localeCompare(b.status_class)
+    );
+
+  return c.json({
+    data,
+    meta: {
+      from: toIsoTimestamp(fromBucket),
+      to: toIsoTimestamp(toBucket),
+      bucket,
+    },
+  });
+});
+
+app.get('/v1/ops/slo', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  const url = new URL(c.req.url);
+  const params = url.searchParams;
+  const now = new Date();
+  const defaultTo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const defaultFrom = new Date(defaultTo.getTime() - 6 * ONE_DAY_MS);
+  const toDay = parseDayParam(params.get('to'), formatUtcDay(defaultTo));
+  const fromDayRaw = parseDayParam(params.get('from'), formatUtcDay(defaultFrom));
+
+  let rangeFrom = fromDayRaw;
+  let rangeTo = toDay;
+  const fromComparable = Date.parse(`${rangeFrom}T00:00:00Z`);
+  const toComparable = Date.parse(`${rangeTo}T00:00:00Z`);
+  if (Number.isFinite(fromComparable) && Number.isFinite(toComparable) && fromComparable > toComparable) {
+    rangeFrom = toDay;
+    rangeTo = fromDayRaw;
+  }
+
+  const rows = (
+    await c.env.DB.prepare(
+      `SELECT day_utc, route, requests, err_rate, p99_ms, slo_ok, budget_burn FROM slo_windows_daily WHERE day_utc BETWEEN ? AND ? ORDER BY day_utc ASC, route ASC`
+    )
+      .bind(rangeFrom, rangeTo)
+      .all<any>()
+  ).results ?? [];
+
+  const data: Array<{
+    day_utc: string;
+    route: string;
+    requests: number;
+    err_rate: number;
+    p99_ms: number;
+    slo_ok: boolean;
+    budget_burn: number | null;
+  }> = [];
+  let totalRequests = 0;
+  let errWeighted = 0;
+  let p99Weighted = 0;
+  const routeSummary = new Map<string, { route: string; requests: number; errWeight: number; p99Weight: number }>();
+
+  for (const row of rows) {
+    const route = String(row.route ?? '');
+    const requests = Number(row.requests ?? 0);
+    const errRate = Number(row.err_rate ?? 0);
+    const p99 = Number(row.p99_ms ?? 0);
+    const sloOk = Boolean(Number(row.slo_ok ?? 0));
+    const budgetRaw = row.budget_burn;
+    const budgetNumber =
+      budgetRaw === null || budgetRaw === undefined ? null : Number(budgetRaw);
+    const budgetValue = budgetNumber !== null && Number.isFinite(budgetNumber) ? budgetNumber : null;
+
+    data.push({
+      day_utc: String(row.day_utc ?? ''),
+      route,
+      requests,
+      err_rate: errRate,
+      p99_ms: p99,
+      slo_ok: sloOk,
+      budget_burn: budgetValue,
+    });
+
+    totalRequests += requests;
+    errWeighted += errRate * requests;
+    p99Weighted += p99 * requests;
+
+    const existing = routeSummary.get(route) ?? { route, requests: 0, errWeight: 0, p99Weight: 0 };
+    existing.requests += requests;
+    existing.errWeight += errRate * requests;
+    existing.p99Weight += p99 * requests;
+    routeSummary.set(route, existing);
+  }
+
+  const overallAvailability = totalRequests > 0 ? 1 - errWeighted / totalRequests : 1;
+  const overallP99 = totalRequests > 0 ? p99Weighted / totalRequests : 0;
+
+  const routes = Array.from(routeSummary.values())
+    .map((entry) => {
+      const reqs = entry.requests;
+      const errRate = reqs > 0 ? entry.errWeight / reqs : 0;
+      return {
+        route: entry.route,
+        requests: reqs,
+        err_rate: errRate,
+        availability: reqs > 0 ? 1 - errRate : 1,
+        p99_ms: reqs > 0 ? entry.p99Weight / reqs : 0,
+      };
+    })
+    .sort((a, b) => a.route.localeCompare(b.route));
+
+  return c.json({
+    data,
+    summary: {
+      overall_availability: overallAvailability,
+      overall_p99: overallP99,
+      routes,
+    },
+  });
+});
+
+app.get('/v1/ops/alerts', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  const rows = await c.env.DB.prepare(
+    'SELECT id, kind, details, created_at, resolved_at FROM ops_alerts WHERE resolved_at IS NULL ORDER BY created_at DESC'
+  ).all<any>();
+
+  return c.json({ data: rows.results ?? [] });
+});
+
+app.post('/v1/ops/alerts/resolve', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  let body: any;
+  try {
+    body = await c.req.json();
+  } catch {
+    return apiError(c, 400, 'invalid_json', 'Request body must be valid JSON.');
+  }
+
+  if (!Array.isArray(body?.ids)) {
+    return apiError(c, 400, 'invalid_ids', 'ids must be an array of numbers.');
+  }
+
+  const ids = body.ids
+    .map((value: unknown) => Number(value))
+    .filter((value: number) => Number.isInteger(value) && value > 0);
+
+  if (ids.length === 0) {
+    return c.json({ resolved: 0 });
+  }
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  const placeholders = ids.map(() => '?').join(',');
+  const stmt = c.env.DB.prepare(
+    `UPDATE ops_alerts SET resolved_at = ? WHERE id IN (${placeholders}) AND resolved_at IS NULL`
+  );
+  const result = await stmt.bind(nowSeconds, ...ids).run();
+  const resolved = Number(result?.meta?.changes ?? 0);
+
+  return c.json({ resolved });
+});
+
+app.get('/v1/admin/api-keys', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  const rows = await c.env.DB.prepare(
+    `SELECT id, name, role, quota_daily, quota_monthly, last_seen_at, created_at, updated_at FROM api_keys ORDER BY created_at DESC`
+  ).all<any>();
+
+  const data = (rows.results ?? []).map((row: any) => ({
+    id: Number(row.id),
+    name: row.name ?? null,
+    role: row.role,
+    quota_daily: toNullableNumber(row.quota_daily),
+    quota_monthly: toNullableNumber(row.quota_monthly),
+    last_seen_at: toNullableNumber(row.last_seen_at),
+    created_at: toNullableNumber(row.created_at),
+    updated_at: toNullableNumber(row.updated_at),
+  }));
+
+  return c.json({ data });
+});
+
+app.post('/v1/admin/api-keys', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  let body: any;
+  try {
+    body = await c.req.json();
+  } catch {
+    return apiError(c, 400, 'invalid_json', 'Request body must be valid JSON.');
+  }
+
+  const name = typeof body?.name === 'string' ? body.name.trim() : null;
+  const role =
+    body?.role === 'admin' || body?.role === 'partner' || body?.role === 'read' ? (body.role as 'admin' | 'partner' | 'read') : 'read';
+  const quotaDaily = parseQuotaValue(body?.quota_daily);
+  const quotaMonthly = parseQuotaValue(body?.quota_monthly);
+
+  if (quotaDaily === undefined || quotaMonthly === undefined) {
+    return apiError(c, 400, 'invalid_quota', 'quota_daily and quota_monthly must be numbers or null.');
+  }
+
+  const rawKey = generateRawApiKey();
+  const keyHash = await hashKey(rawKey);
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  const result = await c.env.DB.prepare(
+    `INSERT INTO api_keys (key_hash, role, name, quota_daily, quota_monthly, created_at, updated_at, last_seen_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, NULL)`
+  )
+    .bind(keyHash, role, name, quotaDaily, quotaMonthly, nowSeconds, nowSeconds)
+    .run();
+
+  const id = Number(result?.meta?.last_row_id ?? 0);
+
+  await c.env.DB.prepare(
+    `INSERT INTO admin_audits (actor_key_id, action, target, meta, ts) VALUES (?, ?, ?, ?, ?)`
+  )
+    .bind(
+      auth.apiKeyId,
+      'api_keys.create',
+      String(id),
+      auditMeta({ name, role, quota_daily: quotaDaily, quota_monthly: quotaMonthly }),
+      nowSeconds
+    )
+    .run();
+
+  return c.json({ id, raw_key: rawKey });
+});
+
+app.patch('/v1/admin/api-keys/:id', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  const id = Number(c.req.param('id'));
+  if (!Number.isInteger(id) || id <= 0) {
+    return apiError(c, 400, 'invalid_id', 'API key identifier is invalid.');
+  }
+
+  let body: any;
+  try {
+    body = await c.req.json();
+  } catch {
+    return apiError(c, 400, 'invalid_json', 'Request body must be valid JSON.');
+  }
+
+  const current = await c.env.DB.prepare(
+    `SELECT id, name, role, quota_daily, quota_monthly, created_at, updated_at, last_seen_at FROM api_keys WHERE id = ?`
+  )
+    .bind(id)
+    .first<{
+      id: number;
+      name: string | null;
+      role: 'admin' | 'partner' | 'read';
+      quota_daily: number | null;
+      quota_monthly: number | null;
+      created_at: number | null;
+      updated_at: number | null;
+      last_seen_at: number | null;
+    }>();
+
+  if (!current) {
+    return apiError(c, 404, 'not_found', 'Requested resource was not found.');
+  }
+
+  const updates: string[] = [];
+  const values: any[] = [];
+  const changes: Record<string, unknown> = {};
+
+  if (Object.prototype.hasOwnProperty.call(body, 'name')) {
+    const name = typeof body.name === 'string' ? body.name.trim() : null;
+    if (name !== current.name) {
+      updates.push('name = ?');
+      values.push(name);
+      changes.name = name;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'role')) {
+    const role =
+      body.role === 'admin' || body.role === 'partner' || body.role === 'read'
+        ? (body.role as 'admin' | 'partner' | 'read')
+        : null;
+    if (!role) {
+      return apiError(c, 400, 'invalid_role', 'role must be admin, partner, or read.');
+    }
+    if (role !== current.role) {
+      updates.push('role = ?');
+      values.push(role);
+      changes.role = role;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'quota_daily')) {
+    const quota = parseQuotaValue(body.quota_daily);
+    if (quota === undefined) {
+      return apiError(c, 400, 'invalid_quota', 'quota_daily must be a number or null.');
+    }
+    if (quota !== current.quota_daily) {
+      updates.push('quota_daily = ?');
+      values.push(quota);
+      changes.quota_daily = quota;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'quota_monthly')) {
+    const quota = parseQuotaValue(body.quota_monthly);
+    if (quota === undefined) {
+      return apiError(c, 400, 'invalid_quota', 'quota_monthly must be a number or null.');
+    }
+    if (quota !== current.quota_monthly) {
+      updates.push('quota_monthly = ?');
+      values.push(quota);
+      changes.quota_monthly = quota;
+    }
+  }
+
+  if (updates.length > 0) {
+    updates.push('updated_at = ?');
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    values.push(nowSeconds, id);
+    await c.env.DB.prepare(
+      `UPDATE api_keys SET ${updates.join(', ')} WHERE id = ?`
+    )
+      .bind(...values)
+      .run();
+
+    await c.env.DB.prepare(
+      `INSERT INTO admin_audits (actor_key_id, action, target, meta, ts) VALUES (?, ?, ?, ?, ?)`
+    )
+      .bind(auth.apiKeyId, 'api_keys.update', String(id), auditMeta(changes) ?? null, nowSeconds)
+      .run();
+  }
+
+  const updated = await c.env.DB.prepare(
+    `SELECT id, name, role, quota_daily, quota_monthly, last_seen_at, created_at, updated_at FROM api_keys WHERE id = ?`
+  )
+    .bind(id)
+    .first<any>();
+
+  return c.json({
+    id: Number(updated?.id ?? id),
+    name: updated?.name ?? null,
+    role: updated?.role ?? current.role,
+    quota_daily: toNullableNumber(updated?.quota_daily),
+    quota_monthly: toNullableNumber(updated?.quota_monthly),
+    last_seen_at: toNullableNumber(updated?.last_seen_at ?? current.last_seen_at),
+    created_at: toNullableNumber(updated?.created_at ?? current.created_at),
+    updated_at: toNullableNumber(updated?.updated_at ?? null),
+  });
+});
+
+app.delete('/v1/admin/api-keys/:id', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  const id = Number(c.req.param('id'));
+  if (!Number.isInteger(id) || id <= 0) {
+    return apiError(c, 400, 'invalid_id', 'API key identifier is invalid.');
+  }
+
+  const existing = await c.env.DB.prepare('SELECT id FROM api_keys WHERE id = ? LIMIT 1')
+    .bind(id)
+    .first<{ id: number }>();
+
+  if (!existing) {
+    return c.json({ deleted: false });
+  }
+
+  await c.env.DB.prepare('DELETE FROM api_keys WHERE id = ?')
+    .bind(id)
+    .run();
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  await c.env.DB.prepare(
+    `INSERT INTO admin_audits (actor_key_id, action, target, meta, ts) VALUES (?, ?, ?, ?, ?)`
+  )
+    .bind(auth.apiKeyId, 'api_keys.delete', String(id), null, nowSeconds)
+    .run();
+
+  return c.json({ deleted: true });
+});
+
+app.get('/admin', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  return new Response(adminUi(c), {
+    headers: { 'content-type': 'text/html; charset=utf-8' },
   });
 });
 

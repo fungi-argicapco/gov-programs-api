@@ -33,7 +33,10 @@ on the same sanitisation helpers used by the matching endpoints to guarantee con
 ## Administrative Health
 
 Admin endpoints expose health insights such as source freshness and coverage statistics. These
-endpoints are authenticated and rate-limited to align with operational access requirements.
+endpoints are authenticated and rate-limited to align with operational access requirements. The
+Phase 5 observability additions extend this surface with request metrics, SLO tracking, an audit
+trail for API key mutations, and a lightweight `/admin` console that consumes the new operator
+APIs directly from the Worker.
 =======
 # API Service Overview
 
@@ -216,6 +219,36 @@ These routes require `role === 'admin'` in addition to a valid API key.
   - Validates that the `source` exists and enqueues a `partial` ingest run with the message `queued for admin retry`.
   - Response: `{ "queued": true, "source_id": number }`.
   - Errors: `400 { "error": "invalid_source" }` or `404 { "error": "not_found" }`.
+
+- `GET /v1/ops/metrics`
+  - Aggregates 5-minute request buckets into `5m` or `1h` intervals with weighted percentile math.
+  - Query parameters: `route`, `from`, `to`, `bucket`. Default window covers the trailing 24 hours.
+  - Response: `{ "data": OpsMetricPoint[], "meta": { "from": ISO8601, "to": ISO8601, "bucket": "5m" | "1h" } }`.
+- `GET /v1/ops/slo`
+  - Returns daily SLO windows plus an overall summary of availability, p99 latency, and per-route aggregates.
+  - Query parameters: `from`, `to` (YYYY-MM-DD). Defaults to the most recent 7 days.
+  - Response: `{ "data": OpsSloRow[], "summary": OpsSloSummary }`.
+- `GET /v1/ops/alerts`
+  - Lists unresolved operational alerts sourced from `ops_alerts`.
+  - Response: `{ "data": OpsAlert[] }` (empty when there are no active alerts).
+- `POST /v1/ops/alerts/resolve`
+  - Body: `{ "ids": number[] }`. Sets `resolved_at` for matching alert IDs and returns the count of changed rows.
+  - Response: `{ "resolved": number }`.
+- `GET /v1/admin/api-keys`
+  - Lists API keys without returning the hashed secret. Includes quota ceilings and timestamps.
+  - Response: `{ "data": AdminApiKey[] }`.
+- `POST /v1/admin/api-keys`
+  - Body: `{ "name"?: string, "role"?: "admin" | "partner" | "read", "quota_daily"?: number | null, "quota_monthly"?: number | null }`.
+  - Generates a 40-character secret, hashes it, and records an `admin_audits` row with the creation metadata.
+  - Response: `{ "id": number, "raw_key": string }` (the plaintext secret is only returned once).
+- `PATCH /v1/admin/api-keys/:id`
+  - Updates any combination of `name`, `role`, `quota_daily`, or `quota_monthly`. Writes an `admin_audits` entry for changed fields.
+  - Response: Updated `AdminApiKey` record.
+- `DELETE /v1/admin/api-keys/:id`
+  - Removes the record and appends an `admin_audits` entry. Response: `{ "deleted": boolean }`.
+- `GET /admin`
+  - Serves a minimal HTML console that lets administrators fetch metrics, review SLOs, and manage API keys inline.
+  - The console stores the admin key in localStorage and issues requests to the `/v1/ops/*` and `/v1/admin/api-keys*` APIs.
 
 ### Metadata and metrics
 
