@@ -1113,7 +1113,10 @@ app.delete('/v1/admin/api-keys/:id', async (c) => {
 
 app.get('/admin', mwRate, async (c) => {
   const auth = c.get('auth');
-  if (auth && auth.role !== 'admin') {
+  if (!auth) {
+    return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  }
+  if (auth.role !== 'admin') {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
