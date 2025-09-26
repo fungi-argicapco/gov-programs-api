@@ -93,7 +93,7 @@ async function main() {
     metrics: metricsRows
   };
 
-  await Bun.write('/mnt/data/ops-snapshot.json', JSON.stringify(snapshot, null, 2));
+  await Bun.write('./ops-snapshot.json', JSON.stringify(snapshot, null, 2));
   console.log('SNAPSHOT=./ops-snapshot.json');
 }
 
