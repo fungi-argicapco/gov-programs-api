@@ -1446,4 +1446,7 @@ app.get('/v1/stats/coverage', async (c) => {
   return res;
 });
 
+export { MetricsDO } from './do.metrics';
+export { RateLimiter } from './do.rate';
+
 export default app;
