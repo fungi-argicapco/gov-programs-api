@@ -11,15 +11,13 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      BUN_VERSION: ${{ inputs.bun-version != '' && inputs.bun-version || 'latest' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          bun-version: ${{ inputs.bun-version }}
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Deploy with Wrangler
