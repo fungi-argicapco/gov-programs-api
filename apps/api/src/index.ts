@@ -549,8 +549,6 @@ app.use('/v1/ops', mwRate, mwAuth);
 app.use('/v1/ops/*', mwRate, mwAuth);
 app.use('/v1/admin', mwRate, mwAuth);
 app.use('/v1/admin/*', mwRate, mwAuth);
-app.use('/admin', mwRate, mwAuth);
-app.use('/admin/*', mwRate, mwAuth);
 
 app.post('/v1/match', async (c) => {
   const auth = c.get('auth');
@@ -1113,9 +1111,11 @@ app.delete('/v1/admin/api-keys/:id', async (c) => {
   return c.json({ deleted: true });
 });
 
-app.get('/admin', async (c) => {
+app.get('/admin', mwRate, async (c) => {
   const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (!auth) {
+    return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  }
   if (auth.role !== 'admin') {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
