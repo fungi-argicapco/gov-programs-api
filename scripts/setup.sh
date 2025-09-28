@@ -72,21 +72,16 @@ if [ "${MODE}" = "local" ]; then
 else
   echo "➡️ Creating Cloudflare resources via wrangler (bunx)…"
   # D1
-  DB_JSON="$(bunx wrangler d1 create "$DB_NAME" --json || true)"
-  if [ -n "${DB_JSON}" ] && echo "$DB_JSON" | grep -q '"uuid"'; then
-    D1_ID="$(echo "$DB_JSON" | bun -e 'process.stdin.once("data",d=>{try{console.log(JSON.parse(d).uuid)}catch{}})')"
-  else
-    D1_ID="$(bunx wrangler d1 list --json | bun -e "process.stdin.once('data',d=>{const a=JSON.parse(d);const m=a.find(x=>x.name=='${DB_NAME}');console.log(m?m.uuid:'')} )")"
-  fi
+  bunx wrangler d1 create "$DB_NAME" >/dev/null 2>&1 || true
+  D1_ID="$(bunx wrangler d1 list --json | bun -e "process.stdin.once('data',d=>{try{const list=JSON.parse(d);const match=list.find(x=>x.name==='${DB_NAME}');console.log(match?match.uuid:'')}catch{}})")"
   [ -n "${D1_ID:-}" ] || { echo "❌ Could not determine D1 database id"; exit 1; }
 
   # KV namespaces
-  LOOKUPS_JSON="$(bunx wrangler kv:namespace create ${KV_LOOKUPS} --json || true)"
-  APIKEYS_JSON="$(bunx wrangler kv:namespace create ${KV_API_KEYS} --json || true)"
-  LOOKUPS_ID="$( [ -n "$LOOKUPS_JSON" ] && echo "$LOOKUPS_JSON" | bun -e 'process.stdin.once("data",d=>{try{console.log(JSON.parse(d).id)}catch{}})' || true )"
-  APIKEYS_ID="$( [ -n "$APIKEYS_JSON" ] && echo "$APIKEYS_JSON" | bun -e 'process.stdin.once("data",d=>{try{console.log(JSON.parse(d).id)}catch{}})' || true )"
-  [ -n "${LOOKUPS_ID:-}" ] || LOOKUPS_ID="$(bunx wrangler kv:namespace list --json | bun -e "process.stdin.once('data',d=>{const a=JSON.parse(d);const m=a.find(x=>x.title==='${KV_LOOKUPS}');console.log(m?m.id:'')} )")"
-  [ -n "${APIKEYS_ID:-}" ] || APIKEYS_ID="$(bunx wrangler kv:namespace list --json | bun -e "process.stdin.once('data',d=>{const a=JSON.parse(d);const m=a.find(x=>x.title==='${KV_API_KEYS}');console.log(m?m.id:'')} )")"
+  bunx wrangler kv namespace create "${KV_LOOKUPS}" >/dev/null 2>&1 || true
+  bunx wrangler kv namespace create "${KV_API_KEYS}" >/dev/null 2>&1 || true
+  NAMESPACE_JSON="$(bunx wrangler kv namespace list)"
+  LOOKUPS_ID="$(echo "$NAMESPACE_JSON" | bun -e "process.stdin.once('data',d=>{try{const arr=JSON.parse(d);const match=arr.find(x=>x.title==='${KV_LOOKUPS}');console.log(match?match.id:'')}catch{}})")"
+  APIKEYS_ID="$(echo "$NAMESPACE_JSON" | bun -e "process.stdin.once('data',d=>{try{const arr=JSON.parse(d);const match=arr.find(x=>x.title==='${KV_API_KEYS}');console.log(match?match.id:'')}catch{}})")"
 
   [ -n "${LOOKUPS_ID:-}" ] || { echo "❌ Could not determine ${KV_LOOKUPS} KV id"; exit 1; }
   [ -n "${APIKEYS_ID:-}" ] || { echo "❌ Could not determine ${KV_API_KEYS} KV id"; exit 1; }

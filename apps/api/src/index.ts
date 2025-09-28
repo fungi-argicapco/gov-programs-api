@@ -14,6 +14,8 @@ import { getUtcDayStart, getUtcMonthStart } from './time';
 import { CACHE_CONTROL_VALUE, buildCacheKey, cacheGet, cachePut, computeEtag, etagMatches } from './cache';
 import { apiError } from './errors';
 import { adminUi } from './admin/ui';
+import ingestWorker from '../../ingest/src/index';
+import type { ExportedHandler } from '@cloudflare/workers-types';
 
 const MATCH_RESPONSE_LIMIT = 50;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -1448,5 +1450,15 @@ app.get('/v1/stats/coverage', async (c) => {
 
 export { MetricsDO } from './do.metrics';
 export { RateLimiter } from './do.rate';
+
+type IngestScheduled = typeof ingestWorker.scheduled;
+type IngestScheduledParams = IngestScheduled extends (...args: infer P) => any ? P : never;
+
+export const scheduled: ExportedHandler<Env>['scheduled'] = async (controller, env, ctx) => {
+  const handler: IngestScheduled | undefined = ingestWorker.scheduled;
+  if (typeof handler === 'function') {
+    await handler(controller as IngestScheduledParams[0], env, ctx);
+  }
+};
 
 export default app;
