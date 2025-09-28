@@ -62,3 +62,29 @@ export const snapshots = sqliteTable('snapshots', {
   adapter: text('adapter').notNull(),
   sourceUrl: text('source_url')
 });
+
+export const countryPlaybooks = sqliteTable('country_playbooks', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  country: text('country').notNull().unique(),
+  version: text('version'),
+  lastUpdated: text('last_updated'),                                        // YYYY-MM-DD
+  docOwner: text('doc_owner'),
+  documentControl: text('document_control'),                                // JSON-encoded DocumentControl
+  executiveSummary: text('executive_summary'),                              // JSON-encoded ExecutiveSummary
+  snapshot: text('snapshot'),                                               // JSON-encoded CountrySnapshot
+  segmentation: text('segmentation'),                                       // JSON-encoded Segmentation
+  valueProposition: text('value_proposition'),                              // JSON-encoded ValueProposition
+  ecosystem: text('ecosystem'),                                             // JSON-encoded CompetitiveEcosystem
+  productLocalization: text('product_localization'),                        // JSON-encoded ProductLocalization
+  regulatoryCompliance: text('regulatory_compliance'),                      // JSON-encoded RegulatoryCompliance
+  pricingPackaging: text('pricing_packaging'),                              // JSON-encoded PricingPackaging
+  goToMarket: text('go_to_market'),                                         // JSON-encoded GoToMarketPlan
+  serviceSupport: text('service_support'),                                  // JSON-encoded ServiceSupport
+  operationsPeople: text('operations_people'),                              // JSON-encoded OperationsPeople
+  financialPlan: text('financial_plan'),                                    // JSON-encoded FinancialPlan
+  milestones: text('milestones'),                                           // JSON-encoded Milestones
+  raid: text('raid'),                                                       // JSON-encoded RAID
+  regionalFocus: text('regional_focus'),
+  createdAt: integer('created_at').notNull(),                               // epoch ms
+  updatedAt: integer('updated_at').notNull()                                // epoch ms
+});
