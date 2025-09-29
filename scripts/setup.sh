@@ -117,8 +117,20 @@ ensure_kv CF_DO_CLASS "${DO_CLASS}"
 # Render wrangler.toml with conditional sections only when IDs exist
 bun -e '
   import {readFileSync, writeFileSync} from "fs";
-  const env = Object.fromEntries(readFileSync(".env","utf8").split(/\r?\n/).filter(Boolean).map(l=>l.split("=")));
-  let s = readFileSync("wrangler.template.toml","utf8");
+  let env;
+  try {
+    env = Object.fromEntries(readFileSync(".env","utf8").split(/\r?\n/).filter(Boolean).map(l=>l.split("=")));
+  } catch (e) {
+    console.error("❌ Error: Could not read .env file. Please ensure it exists and is readable.");
+    process.exit(1);
+  }
+  let s;
+  try {
+    s = readFileSync("wrangler.template.toml","utf8");
+  } catch (e) {
+    console.error("❌ Error: Could not read wrangler.template.toml. Please ensure it exists and is readable.");
+    process.exit(1);
+  }
   s = s.replaceAll("__R2_BUCKET__", env.CF_R2_RAW_BUCKET||"")
        .replaceAll("__DO_BINDING__", env.CF_DO_BINDING||"RATE_LIMITER")
        .replaceAll("__DO_CLASS__", env.CF_DO_CLASS||"RateLimiter");
