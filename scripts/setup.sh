@@ -158,8 +158,6 @@ echo "✅ Wrote wrangler.toml"
 
 # Only run migrations when a real D1 ID exists
 if grep -q '^CF_D1_DATABASE_ID=' .env && [ -n "$(grep '^CF_D1_DATABASE_ID=' .env | cut -d= -f2-)" ]; then
-  CF_TOKEN="${CLOUDFLARE_API_TOKEN:-${CF_API_TOKEN:-}}"
-  CF_ACCOUNT="${CLOUDFLARE_ACCOUNT_ID:-${CF_ACCOUNT_ID:-}}"
   if [ -n "$CF_TOKEN" ] && [ -n "$CF_ACCOUNT" ]; then
     bunx wrangler d1 migrations apply DB --remote || echo "⚠️ Remote migrations skipped."
   fi
