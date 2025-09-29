@@ -4,5 +4,9 @@ export type Env = {
   LOOKUPS_KV?: KVNamespace;
   API_KEYS?: KVNamespace;
   RAW_R2?: R2Bucket;
+  EMAIL_ADMIN?: string;
+  EMAIL_SENDER?: string;
+  PROGRAM_API_BASE?: string;
+  SESSION_COOKIE_NAME?: string;
 };
 export const getDb = (env: Env) => drizzle(env.DB);

@@ -16,6 +16,23 @@ import { apiError } from './errors';
 import { adminUi } from './admin/ui';
 import ingestWorker from '../../ingest/src/index';
 import type { ExportedHandler } from '@cloudflare/workers-types';
+import {
+  accountRequestCreateSchema,
+  decisionTokenSchema,
+  userProfileSchema
+} from './schemas';
+import {
+  createAccountRequest as storeAccountRequest,
+  getAccountRequestByToken,
+  markDecisionTokenUsed,
+  updateAccountRequestStatus,
+  ensureUserWithDefaultCanvas
+} from './onboarding/storage';
+import {
+  buildDecisionEmail,
+  buildDecisionResultEmail,
+  sendEmail
+} from './onboarding/email';
 
 const MATCH_RESPONSE_LIMIT = 50;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -391,6 +408,133 @@ async function getScoredPrograms(
 }
 
 app.get('/v1/health', (c) => c.json({ ok: true, service: 'gov-programs-api' }));
+
+app.post('/v1/account/request', async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return apiError(c, 400, 'invalid_payload', 'Request body must be valid JSON.');
+  }
+
+  const parsed = accountRequestCreateSchema.safeParse(body);
+  if (!parsed.success) {
+    return apiError(c, 400, 'invalid_payload', 'Unable to parse account request.', {
+      issues: parsed.error.issues
+    });
+  }
+
+  const { accountRequest, decisionToken, tokenExpiresAt } = await storeAccountRequest(c.env, {
+    email: parsed.data.email.toLowerCase(),
+    displayName: parsed.data.display_name,
+    requestedApps: parsed.data.requested_apps,
+    justification: parsed.data.justification
+  });
+
+  const baseUrl = c.env.PROGRAM_API_BASE ?? `https://${c.req.header('host') ?? 'program.fungiagricap.com'}`;
+  const adminEmail = c.env.EMAIL_ADMIN;
+  if (adminEmail) {
+    const decisionBase = new URL('/admin/account/decision', baseUrl).toString();
+    const email = buildDecisionEmail({ recipient: adminEmail, token: decisionToken, decisionBaseUrl: decisionBase });
+    await sendEmail(c.env, email);
+  } else {
+    console.warn('EMAIL_ADMIN not configured; skipping admin notification');
+  }
+
+  return c.json({ status: 'pending', request: accountRequest, decision_token_expires_at: tokenExpiresAt }, 202);
+});
+
+app.post('/v1/account/decision', async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return apiError(c, 400, 'invalid_payload', 'Request body must be valid JSON.');
+  }
+
+  const parsed = decisionTokenSchema.safeParse(body);
+  if (!parsed.success) {
+    return apiError(c, 400, 'invalid_payload', 'Unable to parse decision payload.', {
+      issues: parsed.error.issues
+    });
+  }
+
+  const tokenRecord = await getAccountRequestByToken(c.env, parsed.data.token);
+  if (!tokenRecord) {
+    return apiError(c, 404, 'invalid_token', 'Decision token is not valid.');
+  }
+
+  const expiresAt = Date.parse(tokenRecord.token.expires_at);
+  if (Number.isNaN(expiresAt) || expiresAt < Date.now()) {
+    return apiError(c, 410, 'token_expired', 'Decision token has expired.');
+  }
+
+  if (tokenRecord.token.used_at) {
+    return apiError(c, 409, 'token_used', 'Decision token has already been used.');
+  }
+
+  await markDecisionTokenUsed(c.env, tokenRecord.token.id);
+
+  const status = parsed.data.decision === 'approve' ? 'approved' : 'declined';
+
+  const updated = await updateAccountRequestStatus(
+    c.env,
+    tokenRecord.accountRequest.id,
+    status,
+    'admin',
+    parsed.data.reviewer_comment
+  );
+
+  if (!updated) {
+    return apiError(c, 404, 'not_found', 'Account request not found.');
+  }
+
+  if (status === 'approved') {
+    const apps = tokenRecord.accountRequest.requested_apps ?? { program: true, canvas: true, website: false };
+    const userId = await ensureUserWithDefaultCanvas(c.env, {
+      id: `user_${crypto.randomUUID()}`,
+      email: tokenRecord.accountRequest.email,
+      display_name: tokenRecord.accountRequest.display_name,
+      status: 'active',
+      apps,
+      roles: ['user'],
+      mfa_enrolled: false
+    });
+
+    const profile = userProfileSchema.parse({
+      schema_version: 1,
+      id: userId,
+      email: tokenRecord.accountRequest.email,
+      display_name: tokenRecord.accountRequest.display_name,
+      status: 'active',
+      apps,
+      roles: ['user'],
+      mfa_enrolled: false,
+      mfa_methods: [],
+      last_login_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+
+    console.log('Approved account request', {
+      request_id: tokenRecord.accountRequest.id,
+      user_id: profile.id
+    });
+
+    const approvalEmail = buildDecisionResultEmail({
+      recipient: profile.email,
+      decision: 'approved'
+    });
+    await sendEmail(c.env, approvalEmail);
+  } else {
+    await sendEmail(c.env, buildDecisionResultEmail({
+      recipient: tokenRecord.accountRequest.email,
+      decision: 'declined'
+    }));
+  }
+
+  return c.json({ status: updated.status, request: updated });
+});
 
 app.get('/v1/programs', async (c) => {
   const cacheKey = buildCacheKey(c.req.url);
