@@ -35,7 +35,19 @@ bun add -d wrangler bun-types >/dev/null 2>&1 || true
 [ -f "$TEMPLATE" ] || { echo "❌ Missing $TEMPLATE"; exit 1; }
 
 touch .env
-ensure_kv () { local K="$1" V="$2"; if grep -q "^${K}=" .env 2>/dev/null; then sed -i.bak "s#^${K}=.*#${K}=${V}#g" .env; else echo "${K}=${V}" >> .env; fi; }
+# Ensure a key-value pair exists in .env, updating if present, or appending if not.
+ensure_kv () {
+  local K="$1"
+  local V="$2"
+  # If the key exists, update its value using sed. Create a .bak backup before replacing.
+  if grep -q "^${K}=" .env 2>/dev/null; then
+    # Replace the line starting with K= with K=V
+    sed -i.bak "s#^${K}=.*#${K}=${V}#g" .env
+  else
+    # Append the key-value pair if not present
+    echo "${K}=${V}" >> .env
+  fi
+}
 
 CF_TOKEN="${CLOUDFLARE_API_TOKEN:-${CF_API_TOKEN:-}}"
 CF_ACCOUNT="${CLOUDFLARE_ACCOUNT_ID:-${CF_ACCOUNT_ID:-}}"
