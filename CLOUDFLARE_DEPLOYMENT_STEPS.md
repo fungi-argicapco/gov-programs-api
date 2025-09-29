@@ -1,0 +1,27 @@
+# Cloudflare deployment playbook
+
+## 1. Bootstrap the environment
+- Install dependencies with `bun install`.
+- Copy `.env.example` to `.env` and populate Cloudflare credentials plus the Lean Canvas bindings (`D1_DATABASE_NAME`, `D1_DATABASE_ID`, `PROGRAM_API_BASE`, `EMAIL_ADMIN`, `EMAIL_SENDER`).
+- Authenticate Wrangler once: `bunx wrangler login`.
+
+## 2. Provision core Cloudflare services
+- **D1 database**: `bun x wrangler d1 create canvas-app` (save the returned ID) then run `bun x wrangler d1 migrations apply canvas-app` to create tables locally; repeat with `--remote` before production deploys.
+- **DNS**: the deploy script now enforces both `canvas.fungiagricap.com` and `program.fungiagricap.com` A-record placeholders (192.0.2.1, proxied). Ensure the API token has `Zone -> DNS:Edit` for `fungiagricap.com`.
+- **Email routing**: verify that `register@fungiagricap.com` is configured as a sending identity and that MX/SPF/DKIM/DMARC records exist. The deploy script will currently warn if verification fails; add DNS records via the Cloudflare dashboard or automate via API before going live.
+
+## 3. Deployment workflow
+1. Run `bun run check` and `bun run build` locally.
+2. Execute `bun run deploy`. This command:
+   - Applies D1 migrations (`wrangler d1 migrations apply canvas-app`).
+   - Deploys the Worker with Wrangler.
+   - Verifies/creates DNS records for both canvas and program hostnames.
+3. Tail logs or hit `/api/account/request` via `bun run cf:dev` to smoke test.
+
+## 4. Post-deploy validation
+- Submit an account request at `https://canvas.fungiagricap.com/signup` and confirm the record appears in D1 (`wrangler d1 execute canvas-app --command "SELECT * FROM account_requests"`).
+- Use the decision endpoint (via the emailed token) to approve the request and ensure a default canvas is created for the user.
+- Verify that `https://program.fungiagricap.com` resolves (served by the same Worker) so dependent apps can integrate.
+- Confirm emails route through `register@fungiagricap.com` once Cloudflare Email Routing is configured.
+
+Keep the API token scoped to Workers Scripts/Routes, D1, DNS, and Email Routing permissions needed by the deploy script.
