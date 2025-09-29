@@ -8,7 +8,7 @@ Constraints
 
 Bootstrap (idempotent)
 1) `bash codex/env.setup.sh`  # installs Bun, writes scaffolding if missing, renders conditional toml.
-2) `bash scripts/setup.sh --local`  # safe without CF creds; remote only when CLOUDFLARE_* present.
+2) `bun run setup:local`  # safe without CF creds; use setup:remote when CLOUDFLARE_* present.
 3) `bun run typecheck`
 
 Git Workflow (conflict-proof)

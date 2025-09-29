@@ -7,9 +7,13 @@
   },
   "scripts": {
     "dev:api": "bunx wrangler dev --local",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "setup": "bash scripts/setup.sh",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:vitest": "vitest run",
+    "setup": "bun run scripts/setup.ts",
+    "setup:local": "bun run scripts/setup.ts --local",
+    "setup:remote": "bun run scripts/setup.ts --remote",
+    "deploy": "bun run scripts/deploy.ts",
     "typecheck": "bunx tsc -p tsconfig.json",
     "lint": "bun run typecheck",
     "openapi": "bun run scripts/generate-openapi.ts"

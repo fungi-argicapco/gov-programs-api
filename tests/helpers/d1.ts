@@ -1,5 +1,3 @@
-import { Database } from 'bun:sqlite';
-
 type Prepared = {
   bind: (...values: any[]) => Prepared;
   first: <T = any>() => Promise<T | null>;
@@ -8,8 +6,25 @@ type Prepared = {
 };
 
 type D1Like = D1Database & {
-  __db__: Database;
+  __db__: any;
 };
+
+type SqliteDatabaseConstructor = new (filename: string) => {
+  prepare(sql: string): any;
+  exec(sql: string): void;
+};
+
+async function getDatabaseCtor(): Promise<SqliteDatabaseConstructor> {
+  try {
+    const mod = await import('bun:sqlite');
+    return mod.Database as unknown as SqliteDatabaseConstructor;
+  } catch {
+    const better = await import('better-sqlite3');
+    return better.default as unknown as SqliteDatabaseConstructor;
+  }
+}
+
+const Database = await getDatabaseCtor();
 
 function createPreparedStatement(stmt: any, params: any[] = []): Prepared {
   return {

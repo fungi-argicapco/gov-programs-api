@@ -7,9 +7,10 @@ const resolveFromRoot = (...segments: string[]) => path.resolve(__dirname, ...se
 
 export default defineConfig({
   resolve: {
-    alias: {
-      '@common': resolveFromRoot('packages/common/src'),
-      '@db': resolveFromRoot('packages/db/src'),
-    },
-  },
+    alias: [
+      { find: '@common', replacement: resolveFromRoot('packages/common/src') },
+      { find: '@db', replacement: resolveFromRoot('packages/db/src') },
+      { find: '@ml', replacement: resolveFromRoot('packages/ml/src') }
+    ]
+  }
 });

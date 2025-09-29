@@ -4,10 +4,22 @@
 ```bash
 bun install
 bash codex/env.setup.sh
-bash scripts/setup.sh --local   # or --remote with CF creds
+bun run setup:local   # or bun run setup:remote when CF creds are available
 bun run typecheck
+# Run tests
+bun test
 # Optional: start a local dev server
 bunx wrangler dev
+
+## Deploying
+
+```bash
+# Ensure CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, and CLOUDFLARE_ZONE_ID are configured
+bun run setup:remote      # provisions remote bindings and renders wrangler.toml
+bun run deploy            # deploys the Worker and manages DNS for program.fungiagricap.com
+```
+
+`bun run deploy` enforces the DNS record for `program.fungiagricap.com`, logging any existing record or creating a proxied entry when missing. Override defaults with `CUSTOM_DOMAIN`, `CUSTOM_DOMAIN_DNS_TYPE`, `CUSTOM_DOMAIN_TARGET`, or `CUSTOM_DOMAIN_PROXIED` environment variables if you need a different hostname.
 ```
 
 ## API
