@@ -1,15 +1,16 @@
 const encoder = new TextEncoder();
 
-function toHex(bytes: Uint8Array): string {
+function toHex(input: ArrayBuffer | Uint8Array): string {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function fromHex(hex: string): Uint8Array {
-  const output = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < output.length; i += 1) {
-    output[i] = parseInt(hex.substr(i * 2, 2), 16);
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i += 1) {
+    bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
   }
-  return output;
+  return bytes;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -18,8 +19,7 @@ export async function hashPassword(password: string): Promise<string> {
   const salted = new Uint8Array(salt.length + passwordBytes.length);
   salted.set(salt);
   salted.set(passwordBytes, salt.length);
-  const digestBuffer = await crypto.subtle.digest('SHA-256', salted);
-  const digest = new Uint8Array(digestBuffer);
+  const digest = await crypto.subtle.digest('SHA-256', salted);
   return `${toHex(salt)}:${toHex(digest)}`;
 }
 
@@ -33,7 +33,6 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   const salted = new Uint8Array(salt.length + passwordBytes.length);
   salted.set(salt);
   salted.set(passwordBytes, salt.length);
-  const digestBuffer = await crypto.subtle.digest('SHA-256', salted);
-  const digest = new Uint8Array(digestBuffer);
+  const digest = await crypto.subtle.digest('SHA-256', salted);
   return toHex(digest) === digestHex;
 }

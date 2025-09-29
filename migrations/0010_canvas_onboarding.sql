@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   status TEXT NOT NULL DEFAULT 'pending',
   apps TEXT NOT NULL,
   roles TEXT NOT NULL DEFAULT '[]',
+  password_hash TEXT,
   mfa_enrolled INTEGER NOT NULL DEFAULT 0,
   last_login_at TEXT,
   created_at TEXT NOT NULL,

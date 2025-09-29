@@ -94,6 +94,32 @@ function parseJson<T>(value: string | null | undefined, fallback: T): T {
   }
 }
 
+
+async function insertEmailToken(env: Env, options: {
+  purpose: string;
+  accountRequestId?: string;
+  userId?: string;
+  expiresAt?: string;
+}) {
+  const id = randomId('tok');
+  const token = randomId(options.purpose.replace(/[^a-z0-9]/gi, '') || 'token');
+  const createdAt = now();
+  const expiresAt = options.expiresAt ?? new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString();
+  await env.DB.prepare(
+    `INSERT INTO email_tokens (id, token, purpose, user_id, account_request_id, expires_at, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
+  ).bind(
+    id,
+    token,
+    options.purpose,
+    options.userId ?? null,
+    options.accountRequestId ?? null,
+    expiresAt,
+    createdAt
+  ).run();
+  return { id, token, expiresAt, createdAt };
+}
+
 export async function createAccountRequest(
   env: Env,
   payload: { email: string; displayName: string; requestedApps: Record<string, boolean>; justification?: string }
@@ -104,24 +130,24 @@ export async function createAccountRequest(
   const createdAt = now();
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString();
 
-  await env.DB.batch([
-    env.DB.prepare(
-      `INSERT INTO account_requests (id, email, display_name, requested_apps, justification, status, schema_version, created_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, 'pending', ?6, ?7)`
-    ).bind(
-      id,
-      payload.email,
-      payload.displayName,
-      JSON.stringify(payload.requestedApps),
-      payload.justification ?? null,
-      SCHEMA_VERSION,
-      createdAt
-    ),
-    env.DB.prepare(
-      `INSERT INTO email_tokens (id, token, purpose, account_request_id, expires_at, created_at)
-       VALUES (?1, ?2, 'account-decision', ?3, ?4, ?5)`
-    ).bind(tokenId, decisionToken, id, expiresAt, createdAt)
-  ]);
+  await env.DB.prepare(
+    `INSERT INTO account_requests (id, email, display_name, requested_apps, justification, status, schema_version, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, 'pending', ?6, ?7)`
+  ).bind(
+    id,
+    payload.email,
+    payload.displayName,
+    JSON.stringify(payload.requestedApps),
+    payload.justification ?? null,
+    SCHEMA_VERSION,
+    createdAt
+  ).run();
+
+  const tokenInfo = await insertEmailToken(env, {
+    purpose: 'account-decision',
+    accountRequestId: id,
+    expiresAt
+  });
 
   return {
     accountRequest: {
@@ -134,9 +160,9 @@ export async function createAccountRequest(
       status: 'pending' as const,
       created_at: createdAt
     },
-    decisionToken,
-    tokenId,
-    tokenExpiresAt: expiresAt
+    decisionToken: tokenInfo.token,
+    tokenId: tokenInfo.id,
+    tokenExpiresAt: tokenInfo.expiresAt
   };
 }
 
@@ -478,4 +504,26 @@ export async function listCanvasVersions(env: Env, userId: string, canvasId: str
 
 export async function deleteCanvas(env: Env, userId: string, canvasId: string) {
   await env.DB.prepare(`DELETE FROM canvases WHERE id = ?1 AND owner_id = ?2`).bind(canvasId, userId).run();
+}
+
+
+export async function createSignupToken(env: Env, userId: string, ttlHours = 24) {
+  const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000).toISOString();
+  const record = await insertEmailToken(env, {
+    purpose: 'signup',
+    userId,
+    expiresAt
+  });
+  return record;
+}
+
+export async function getEmailToken(env: Env, token: string, expectedPurpose: string) {
+  const record = await env.DB.prepare(
+    `SELECT * FROM email_tokens WHERE token = ?1 AND purpose = ?2`
+  ).bind(token, expectedPurpose).first<EmailTokenRecord>();
+  return record;
+}
+
+export async function markEmailTokenUsed(env: Env, tokenId: string) {
+  await env.DB.prepare(`UPDATE email_tokens SET used_at = ?1 WHERE id = ?2`).bind(now(), tokenId).run();
 }
