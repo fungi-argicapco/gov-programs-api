@@ -138,7 +138,7 @@ bun -e '
   if ((env.CF_D1_DATABASE_ID||"").trim()) {
     extra += `[[d1_databases]]
 binding = "DB"
-database_name = "gov-programs-api-db"
+database_name = "${env.DB_NAME}"
 database_id = "${env.CF_D1_DATABASE_ID}"\n`;
   }
   if ((env.CF_KV_LOOKUPS_ID||"").trim()) {
