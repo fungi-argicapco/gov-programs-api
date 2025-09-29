@@ -85,7 +85,7 @@ async function deployWorker(): Promise<void> {
   await ensureDnsRecord();
   console.log('➡️ Deploying Worker via wrangler…');
   if (customDomain) {
-    await $`bunx wrangler deploy --custom-domain ${customDomain}`;
+    await $`bunx wrangler deploy --domain ${customDomain}`;
   } else {
     await $`bunx wrangler deploy`;
   }
