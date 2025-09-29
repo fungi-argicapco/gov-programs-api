@@ -84,11 +84,7 @@ async function deployWorker(): Promise<void> {
   requireEnv('CLOUDFLARE_API_TOKEN', apiToken);
   await ensureDnsRecord();
   console.log('➡️ Deploying Worker via wrangler…');
-  if (customDomain) {
-    await $`bunx wrangler deploy --domain ${customDomain}`;
-  } else {
-    await $`bunx wrangler deploy`;
-  }
+  await $`bunx wrangler deploy`;
 }
 
 deployWorker().catch((error) => {
