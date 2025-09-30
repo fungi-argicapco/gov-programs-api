@@ -1,0 +1,14 @@
+name = "canvas-app"
+main = "src/worker.ts"
+compatibility_date = "2024-11-12"
+
+[vars]
+EMAIL_SENDER = "register@fungiagricap.com"
+POSTMARK_MESSAGE_STREAM = "outbound"
+POSTMARK_WEBHOOK_SECRET = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "canvas-app-db"
+database_id = "__CANVAS_D1_ID__"
+migrations_dir = "../../migrations"

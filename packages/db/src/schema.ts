@@ -184,3 +184,31 @@ export const emailTokens = sqliteTable('email_tokens', {
   accountIdx: index('idx_email_tokens_account').on(table.accountRequestId),
   userIdx: index('idx_email_tokens_user').on(table.userId)
 }));
+
+export const emailSuppressions = sqliteTable('email_suppressions', {
+  email: text('email').primaryKey(),
+  suppressed: integer('suppressed', { mode: 'boolean' }).notNull().default(false),
+  lastEventType: text('last_event_type').notNull(),
+  lastEventAt: text('last_event_at').notNull(),
+  reason: text('reason'),
+  description: text('description'),
+  details: text('details'),
+  messageStream: text('message_stream'),
+  recordId: text('record_id'),
+  metadata: text('metadata'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull()
+});
+
+export const emailSuppressionEvents = sqliteTable('email_suppression_events', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull(),
+  eventType: text('event_type').notNull(),
+  payload: text('payload').notNull(),
+  recordedAt: text('recorded_at').notNull(),
+  occurredAt: text('occurred_at'),
+  messageStream: text('message_stream'),
+  recordId: text('record_id')
+}, (table) => ({
+  emailIdx: index('idx_email_suppression_events_email').on(table.email)
+}));

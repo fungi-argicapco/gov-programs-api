@@ -8,7 +8,7 @@
 ## 2. Provision core Cloudflare services
 - **D1 database**: `bun run setup:remote` will now detect existing databases and re-use their identifiers—no need to delete and recreate if the name is already provisioned.
 - **DNS**: the deploy script now enforces both `canvas.fungiagricap.com` and `program.fungiagricap.com` A-record placeholders (192.0.2.1, proxied). Ensure the API token has `Zone -> DNS:Edit` for `fungiagricap.com`.
-- **Email routing**: verify that `register@fungiagricap.com` is configured as a sending identity and that MX/SPF/DKIM/DMARC records exist. The deploy script will currently warn if verification fails; add DNS records via the Cloudflare dashboard or automate via API before going live.
+- **Email routing & Postmark**: verify that `register@fungiagricap.com` is configured as a sending identity and that MX/SPF/DKIM/DMARC records exist. In Postmark, provision the transactional "outbound" stream, collect the Server Token, and store it with `bunx wrangler secret put POSTMARK_TOKEN` for both the API and canvas Workers. Add the webhook signing secret with `bunx wrangler secret put POSTMARK_WEBHOOK_SECRET` and point the webhook to `https://canvas.fungiagricap.com/api/postmark/webhook`.
 - **KV / R2**: rerunning `bun run setup:remote` is idempotent—existing namespaces (`LOOKUPS`, `API_KEYS`) and the `gov-programs-api-raw` bucket are discovered via the Cloudflare API instead of re-creation attempts.
 
 ## 3. Deployment workflow
