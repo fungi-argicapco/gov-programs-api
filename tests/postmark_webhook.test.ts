@@ -3,6 +3,8 @@ import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { handlePostmarkWebhook } from '../apps/canvas/src/postmark_webhook';
 import { type CanvasEnv } from '../apps/canvas/src/env';
 import * as suppressions from '../apps/canvas/src/suppressions';
+import type { NormalizedSuppressionEvent } from '../apps/canvas/src/suppressions';
+import type { SuppressionPersistenceResult } from '../apps/canvas/src/suppressions';
 
 const SECRET = 'sandbox-secret';
 const SIGNATURE_HEADER = 'X-Postmark-Signature';
@@ -33,15 +35,37 @@ describe('handlePostmarkWebhook', () => {
   const env: CanvasEnv = { POSTMARK_WEBHOOK_SECRET: SECRET } as CanvasEnv;
   let suppressionSpy: ReturnType<typeof vi.spyOn>;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+
+  function persisted(event: Partial<NormalizedSuppressionEvent>): SuppressionPersistenceResult {
+    return {
+      status: 'persisted',
+      event: {
+        email: 'user@example.com',
+        recordType: event.recordType ?? 'Bounce',
+        suppressed: event.suppressed ?? true,
+        reason: event.reason ?? null,
+        description: event.description ?? null,
+        details: event.details ?? null,
+        occurredAt: event.occurredAt ?? '2024-01-01T00:00:00Z',
+        messageStream: event.messageStream ?? 'sandbox',
+        recordId: event.recordId ?? 'abc'
+      }
+    };
+  }
 
   beforeEach(() => {
-    suppressionSpy = vi.spyOn(suppressions, 'recordSuppressionEvent').mockResolvedValue();
+    suppressionSpy = vi
+      .spyOn(suppressions, 'recordSuppressionEvent')
+      .mockResolvedValue(persisted({}));
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
     suppressionSpy.mockRestore();
     consoleErrorSpy.mockRestore();
+    consoleLogSpy.mockRestore();
   });
 
   it('rejects non-POST requests', async () => {
@@ -57,6 +81,10 @@ describe('handlePostmarkWebhook', () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('ok');
     expect(suppressionSpy).toHaveBeenCalledWith(env, body);
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      'Postmark webhook processed:',
+      expect.objectContaining({ persisted: 1, skipped: 0, failures: 0 })
+    );
   });
 
   it('returns 403 when the signature is missing', async () => {
@@ -71,6 +99,7 @@ describe('handlePostmarkWebhook', () => {
     const response = await handlePostmarkWebhook(request, env);
     expect(response.status).toBe(403);
     expect(suppressionSpy).not.toHaveBeenCalled();
+    expect(consoleLogSpy).not.toHaveBeenCalled();
   });
 
   it('returns 403 when the signature does not match', async () => {
@@ -79,6 +108,7 @@ describe('handlePostmarkWebhook', () => {
     const response = await handlePostmarkWebhook(request, env);
     expect(response.status).toBe(403);
     expect(suppressionSpy).not.toHaveBeenCalled();
+    expect(consoleLogSpy).not.toHaveBeenCalled();
   });
 
   it('accepts events when no webhook secret is configured', async () => {
@@ -95,5 +125,61 @@ describe('handlePostmarkWebhook', () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('ok');
     expect(suppressionSpy).toHaveBeenCalledWith(envWithoutSecret, body);
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      'Postmark webhook processed:',
+      expect.objectContaining({ persisted: 1 })
+    );
+  });
+
+  it('logs metrics when multiple events are processed', async () => {
+    const events = [
+      { RecordType: 'Bounce', Email: 'one@example.com', MessageStream: 'sandbox' },
+      { RecordType: 'Delivery', Email: 'two@example.com', MessageStream: 'sandbox' }
+    ];
+
+    suppressionSpy.mockResolvedValueOnce(
+      persisted({ recordType: 'Bounce', suppressed: true, messageStream: 'sandbox' })
+    );
+    suppressionSpy.mockResolvedValueOnce({ status: 'skipped', reason: 'invalid-payload' });
+
+    const request = await createSignedRequest(events, SECRET);
+    const response = await handlePostmarkWebhook(request, env);
+
+    expect(response.status).toBe(200);
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      'Postmark webhook processed:',
+      expect.objectContaining({
+        received: 2,
+        persisted: 1,
+        skipped: 1,
+        failures: 0,
+        countsByRecordType: expect.objectContaining({ Bounce: 1 }),
+        skippedByReason: expect.objectContaining({ 'invalid-payload': 1 })
+      })
+    );
+  });
+
+  it('returns 500 when persistence fails and logs error metrics', async () => {
+    const events = [
+      { RecordType: 'Bounce', Email: 'one@example.com', MessageStream: 'sandbox' },
+      { RecordType: 'SpamComplaint', Email: 'two@example.com', MessageStream: 'sandbox' }
+    ];
+
+    suppressionSpy.mockResolvedValueOnce(
+      persisted({ recordType: 'Bounce', suppressed: true, messageStream: 'sandbox' })
+    );
+    suppressionSpy.mockImplementationOnce(async () => {
+      throw new Error('db unavailable');
+    });
+
+    const request = await createSignedRequest(events, SECRET);
+    const response = await handlePostmarkWebhook(request, env);
+
+    expect(response.status).toBe(500);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Postmark webhook persistence failed:',
+      expect.objectContaining({ failures: 1, persisted: 1 })
+    );
+    expect(consoleLogSpy).not.toHaveBeenCalled();
   });
 });

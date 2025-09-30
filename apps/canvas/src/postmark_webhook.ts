@@ -1,5 +1,10 @@
 import { getWebhookSecret, type CanvasEnv } from './env';
-import { recordSuppressionEvent, type PostmarkWebhookPayload } from './suppressions';
+import { PostmarkMetricsCollector } from './postmark_metrics';
+import {
+  recordSuppressionEvent,
+  type PostmarkWebhookPayload,
+  type SuppressionPersistenceResult
+} from './suppressions';
 
 async function verifySignature(payload: string, signature: string, secret: string) {
   const normalizedSignature = signature.trim();
@@ -56,14 +61,31 @@ export async function handlePostmarkWebhook(req: Request, env: CanvasEnv): Promi
     return new Response('bad request', { status: 400 });
   }
 
-  try {
-    for (const event of events) {
-      // TODO: persist suppression, metrics, etc.
-      await recordSuppressionEvent(env, event);
+  const metrics = new PostmarkMetricsCollector();
+
+  for (const event of events) {
+    metrics.noteReceived();
+    try {
+      const result: SuppressionPersistenceResult = await recordSuppressionEvent(env, event);
+      if (result.status === 'persisted') {
+        metrics.notePersisted(result.event);
+      } else {
+        metrics.noteSkipped(result.reason);
+      }
+    } catch (error) {
+      metrics.noteFailure(event, error);
     }
-  } catch (error) {
-    console.error('Postmark webhook persistence failed:', error);
+  }
+
+  const snapshot = metrics.snapshot();
+
+  if (metrics.hasFailures()) {
+    console.error('Postmark webhook persistence failed:', snapshot);
     return new Response('server error', { status: 500 });
+  }
+
+  if (snapshot.received > 0) {
+    console.log('Postmark webhook processed:', snapshot);
   }
 
   return new Response('ok');

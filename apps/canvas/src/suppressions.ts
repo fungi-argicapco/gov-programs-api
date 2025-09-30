@@ -108,14 +108,23 @@ function randomId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
 }
 
-export async function recordSuppressionEvent(env: CanvasEnv, payload: PostmarkWebhookPayload): Promise<void> {
+export type SuppressionSkipReason = 'invalid-payload' | 'missing-db';
+
+export type SuppressionPersistenceResult =
+  | { status: 'persisted'; event: NormalizedSuppressionEvent }
+  | { status: 'skipped'; reason: SuppressionSkipReason };
+
+export async function recordSuppressionEvent(
+  env: CanvasEnv,
+  payload: PostmarkWebhookPayload
+): Promise<SuppressionPersistenceResult> {
   const normalized = deriveSuppressionState(payload);
   if (!normalized) {
-    return;
+    return { status: 'skipped', reason: 'invalid-payload' };
   }
   if (!env.DB) {
     console.warn('Skipping suppression persistence because DB binding is missing.');
-    return;
+    return { status: 'skipped', reason: 'missing-db' };
   }
   const recordedAt = now();
   const occurredAt = normalized.occurredAt ?? recordedAt;
@@ -169,6 +178,8 @@ export async function recordSuppressionEvent(env: CanvasEnv, payload: PostmarkWe
       recordedAt
     )
     .run();
+
+  return { status: 'persisted', event: normalized };
 }
 
 export async function isEmailSuppressed(db: D1Database, email: string): Promise<boolean> {
