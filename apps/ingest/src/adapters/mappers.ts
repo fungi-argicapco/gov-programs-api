@@ -113,17 +113,49 @@ export function mapSamAssistance(row: any): MapperResult {
   };
 }
 
+interface CkanTag {
+  name: string;
+}
+
+const isCkanTag = (tag: unknown): tag is CkanTag => {
+  return (
+    typeof tag === 'object' &&
+    tag !== null &&
+    typeof (tag as { name?: unknown }).name === 'string'
+  );
+};
+
+const normalizeCkanTags = (tags: unknown): string[] => {
+  if (Array.isArray(tags)) {
+    return tags
+      .map((tag) => {
+        if (typeof tag === 'string') return tag;
+        if (isCkanTag(tag)) {
+          return tag.name;
+        }
+        return undefined;
+      })
+      .filter((value): value is string => typeof value === 'string' && value.length > 0);
+  }
+  if (typeof tags === 'string') {
+    return tags ? [tags] : [];
+  }
+  return [];
+};
+
 const pickCkanUrl = (resources: any[]): string | undefined => {
   if (!Array.isArray(resources)) return undefined;
-  const preferred = resources.find((r) => typeof r?.url === 'string' && /html|htm/.test(String(r.format ?? '').toLowerCase()));
+  const preferred = resources.find(
+    (r) => typeof r?.url === 'string' && /html|htm/.test(String(r.format ?? '').toLowerCase())
+  );
   if (preferred?.url) return preferred.url;
   const dataset = resources.find((r) => typeof r?.url === 'string');
   return dataset?.url;
 };
 
-export function mapCkanGC(row: any): MapperResult {
+const mapCkanCommon = (row: any, defaultTitle: string): MapperResult => {
   const pkg = row?.package ?? row;
-  const title = pkg?.title ?? 'Government of Canada Program';
+  const title = pkg?.title ?? defaultTitle;
   const summary = pkg?.notes ?? pkg?.description ?? undefined;
   const url = pickCkanUrl(pkg?.resources ?? []);
   return {
@@ -132,23 +164,16 @@ export function mapCkanGC(row: any): MapperResult {
     url,
     status: 'open',
     benefit_type: 'grant',
-    tags: pkg?.tags?.map?.((t: any) => (typeof t === 'string' ? t : t?.name)).filter(Boolean)
+    tags: normalizeCkanTags(pkg?.tags)
   };
+};
+
+export function mapCkanGC(row: any): MapperResult {
+  return mapCkanCommon(row, 'Government of Canada Program');
 }
 
 export function mapCkanProvON(row: any): MapperResult {
-  const pkg = row?.package ?? row;
-  const title = pkg?.title ?? 'Ontario Program';
-  const summary = pkg?.notes ?? pkg?.description ?? undefined;
-  const url = pickCkanUrl(pkg?.resources ?? []);
-  return {
-    title,
-    summary,
-    url,
-    status: 'open',
-    benefit_type: 'grant',
-    tags: pkg?.tags?.map?.((t: any) => (typeof t === 'string' ? t : t?.name)).filter(Boolean)
-  };
+  return mapCkanCommon(row, 'Ontario Program');
 }
 
 export const MAPPERS: Record<string, (row: any) => MapperResult> = {

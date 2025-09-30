@@ -67,6 +67,16 @@ describe('mapCkanGC', () => {
     expect(result.url).toBe('https://example.com/info');
     expect(result.tags).toEqual(['innovation']);
   });
+
+  it('normalizes mixed CKAN tag representations and defaults the title', () => {
+    const result = mapCkanGC({
+      resources: [],
+      tags: ['clean-tech', { name: 'manufacturing' }, { value: 'ignored' }]
+    });
+
+    expect(result.title).toBe('Government of Canada Program');
+    expect(result.tags).toEqual(['clean-tech', 'manufacturing']);
+  });
 });
 
 describe('mapCkanProvON', () => {
