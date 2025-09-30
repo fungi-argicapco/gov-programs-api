@@ -29,6 +29,29 @@ type SourceMetrics = {
   success_rate_7d: number;
 };
 
+type CoverageCount = {
+  withTags: number;
+  withoutTags: number;
+};
+
+type NaicsCoverage = {
+  withNaics: number;
+  missingNaics: number;
+};
+
+export type ValidationIssue = {
+  issue: string;
+  count: number;
+};
+
+export type PersistedCoverageReport = {
+  day: string;
+  created_at: number;
+  tagCoverage: CoverageCount;
+  naicsCoverage: NaicsCoverage;
+  validationIssues: ValidationIssue[];
+};
+
 export type CoverageResponse = {
   byJurisdiction: Array<{ country_code: string; jurisdiction_code: string; n: number }>;
   byBenefit: Array<{ benefit_type: string | null; n: number }>;
@@ -40,6 +63,10 @@ export type CoverageResponse = {
   naics_density: number;
   deadlink_rate: number | null;
   metrics: CoverageSummary;
+  tagCoverage: CoverageCount;
+  naicsCoverage: NaicsCoverage;
+  validationIssues: ValidationIssue[];
+  reports: PersistedCoverageReport[];
 };
 
 type CoverageSummary = {
@@ -58,6 +85,60 @@ const toMap = <T extends { [key: string]: any }>(rows: T[], key: keyof T) => {
   }
   return map;
 };
+
+type CoverageReportRow = {
+  day: string;
+  with_tags: number;
+  without_tags: number;
+  with_naics: number;
+  missing_naics: number;
+  validation_issues: string | null;
+  created_at: number | null;
+};
+
+function parseValidationIssues(raw: unknown): ValidationIssue[] {
+  if (!raw) return [];
+  let value: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      value = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') return null;
+      const candidate = entry as { issue?: unknown; count?: unknown };
+      const issue = typeof candidate.issue === 'string' ? candidate.issue : null;
+      const count = typeof candidate.count === 'number' ? candidate.count : null;
+      if (!issue || count === null) return null;
+      return { issue, count } satisfies ValidationIssue;
+    })
+    .filter((entry): entry is ValidationIssue => entry !== null);
+}
+
+function aggregateAuditIssues(rows: Array<{ issues: string | null }>): ValidationIssue[] {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    if (!row.issues) continue;
+    try {
+      const parsed = JSON.parse(row.issues);
+      if (Array.isArray(parsed)) {
+        for (const issue of parsed) {
+          if (typeof issue !== 'string' || !issue) continue;
+          counts.set(issue, (counts.get(issue) ?? 0) + 1);
+        }
+      }
+    } catch {
+      continue;
+    }
+  }
+  return Array.from(counts.entries())
+    .map(([issue, count]) => ({ issue, count }))
+    .sort((a, b) => b.count - a.count);
+}
 
 export async function listSourcesWithMetrics(env: Env): Promise<SourceMetrics[]> {
   const sources = await env.DB.prepare(
@@ -106,7 +187,16 @@ export async function listSourcesWithMetrics(env: Env): Promise<SourceMetrics[]>
 
 export async function buildCoverageResponse(env: Env): Promise<CoverageResponse> {
   const now = Date.now();
-  const [byJur, byBenefit, naicsRows, sourceMetrics, snapshotRow] = await Promise.all([
+  const [
+    byJur,
+    byBenefit,
+    naicsRows,
+    sourceMetrics,
+    snapshotRow,
+    reportHistoryRows,
+    auditIssueRows,
+    tagCoverageRow
+  ] = await Promise.all([
     env.DB.prepare(
       `SELECT country_code, jurisdiction_code, COUNT(*) as n FROM programs GROUP BY country_code, jurisdiction_code`
     ).all<{ country_code: string; jurisdiction_code: string; n: number }>(),
@@ -120,7 +210,12 @@ export async function buildCoverageResponse(env: Env): Promise<CoverageResponse>
     listSourcesWithMetrics(env),
     env.DB.prepare(`SELECT day, n_programs, fresh_sources, naics_density, deadlink_rate FROM daily_coverage_stats WHERE day = ? LIMIT 1`)
       .bind(formatDay(now))
-      .first<{ day: string; n_programs: number; fresh_sources: number; naics_density: number; deadlink_rate: number | null }>()
+      .first<{ day: string; n_programs: number; fresh_sources: number; naics_density: number; deadlink_rate: number | null }>(),
+    env.DB.prepare(
+      `SELECT day, with_tags, without_tags, with_naics, missing_naics, validation_issues, created_at FROM coverage_reports ORDER BY day DESC LIMIT 30`
+    ).all<CoverageReportRow>(),
+    env.DB.prepare(`SELECT issues FROM coverage_audit`).all<{ issues: string | null }>(),
+    env.DB.prepare(`SELECT COUNT(DISTINCT program_id) as with_tags FROM tags`).first<{ with_tags: number }>()
   ]);
 
   const totalPrograms = Number(naicsRows?.total ?? 0);
@@ -171,6 +266,40 @@ export async function buildCoverageResponse(env: Env): Promise<CoverageResponse>
       }
     : fallbackMetrics;
 
+  const historyRows = reportHistoryRows.results ?? [];
+  const reports: PersistedCoverageReport[] = historyRows.map((row) => ({
+    day: row.day,
+    created_at: Number(row.created_at ?? 0),
+    tagCoverage: {
+      withTags: Number(row.with_tags ?? 0),
+      withoutTags: Number(row.without_tags ?? 0)
+    },
+    naicsCoverage: {
+      withNaics: Number(row.with_naics ?? 0),
+      missingNaics: Number(row.missing_naics ?? 0)
+    },
+    validationIssues: parseValidationIssues(row.validation_issues)
+  }));
+
+  const latestReport = reports[0] ?? null;
+  const fallbackTagWith = Number(tagCoverageRow?.with_tags ?? 0);
+  const fallbackTagCoverage: CoverageCount = {
+    withTags: fallbackTagWith,
+    withoutTags: Math.max(totalPrograms - fallbackTagWith, 0)
+  };
+  const fallbackNaicsCoverage: NaicsCoverage = {
+    withNaics: withCodes,
+    missingNaics: Math.max(totalPrograms - withCodes, 0)
+  };
+
+  const tagCoverage = latestReport ? latestReport.tagCoverage : fallbackTagCoverage;
+  const naicsCoverage = latestReport ? latestReport.naicsCoverage : fallbackNaicsCoverage;
+
+  const auditIssues = aggregateAuditIssues(auditIssueRows.results ?? []);
+  const validationIssues = auditIssues.length > 0
+    ? auditIssues
+    : latestReport?.validationIssues ?? [];
+
   return {
     byJurisdiction: byJur.results ?? [],
     byBenefit: byBenefit.results ?? [],
@@ -181,6 +310,10 @@ export async function buildCoverageResponse(env: Env): Promise<CoverageResponse>
     },
     naics_density: metrics.naics_density,
     deadlink_rate: metrics.deadlink_rate,
-    metrics
+    metrics,
+    tagCoverage,
+    naicsCoverage,
+    validationIssues,
+    reports
   };
 }
