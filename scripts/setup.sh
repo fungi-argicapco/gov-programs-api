@@ -56,41 +56,88 @@ D1_ID=""; LOOKUPS_ID=""; APIKEYS_ID=""
 if [ "$CF_REMOTE_OK" -eq 1 ]; then
   echo "➡️ Remote provisioning (account: $CF_ACCOUNT)…"
   OUT="$(bunx wrangler d1 create "$DB_NAME" --account-id "$CF_ACCOUNT" 2>&1 || true)"
-  D1_ID="$(printf "%s" "$OUT" | grep -oE '[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}' | head -n1)"
+  D1_ID="$(printf "%s" "$OUT" | grep -oE '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}' | head -n1)"
   if [ -z "$D1_ID" ]; then
-    LOUT="$(bunx wrangler d1 list --account-id "$CF_ACCOUNT" 2>&1 || true)"
-    D1_ID="$(printf "%s" "$LOUT" | awk -v n="$DB_NAME" '
-      BEGIN{IGNORECASE=1}
-      /uuid|name/{
-        if ($0 ~ /name[^"]*"'"$DB_NAME"'"|'"$DB_NAME"'/) seen=1;
-        if (seen && match($0,/[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}/)){
-          print substr($0,RSTART,RLENGTH); exit
-        }
-      }')"
+    LOUT="$(bunx wrangler d1 list --account-id "$CF_ACCOUNT" --json 2>/dev/null || true)"
+    D1_ID="$(D1_LIST_JSON="$LOUT" DB_NAME="$DB_NAME" "$PYBIN" - <<'PY'
+import json
+import os
+
+data = os.environ.get("D1_LIST_JSON", "")
+target = os.environ.get("DB_NAME", "")
+
+try:
+    payload = json.loads(data)
+except Exception:
+    payload = []
+
+if isinstance(payload, list):
+    for entry in payload:
+        if isinstance(entry, dict):
+            name = entry.get("name") or entry.get("database_name")
+            if name and name.lower() == target.lower():
+                database_id = entry.get("uuid") or entry.get("id") or entry.get("database_id")
+                if database_id:
+                    print(database_id)
+                    break
+PY
+)"
   fi
   K1="$(bunx wrangler kv:namespace create "$KV_LOOKUPS" --account-id "$CF_ACCOUNT" 2>&1 || true)"
   LOOKUPS_ID="$(printf "%s" "$K1" | grep -oE '[a-z0-9]{32}' | head -n1)"
   if [ -z "$LOOKUPS_ID" ]; then
-    KL="$(bunx wrangler kv:namespace list --account-id "$CF_ACCOUNT" 2>&1 || true)"
-    LOOKUPS_ID="$(printf "%s" "$KL" | awk -v t="$KV_LOOKUPS" '
-      BEGIN{IGNORECASE=1}
-      /id|title/{
-        if ($0 ~ /title[^"]*"'"$KV_LOOKUPS"'"|'"$KV_LOOKUPS"'/) seen=1;
-        if (seen && match($0,/id[^"]*"([a-z0-9]{32})"/,m)){ print m[1]; exit }
-        if (seen && match($0,/[a-z0-9]{32}/)){ print substr($0,RSTART,RLENGTH); exit }
-      }')"
+    KL="$(bunx wrangler kv:namespace list --account-id "$CF_ACCOUNT" --json 2>/dev/null || true)"
+    LOOKUPS_ID="$(KV_LIST_JSON="$KL" KV_TITLE="$KV_LOOKUPS" "$PYBIN" - <<'PY'
+import json
+import os
+
+data = os.environ.get("KV_LIST_JSON", "")
+target = os.environ.get("KV_TITLE", "")
+
+try:
+    payload = json.loads(data)
+except Exception:
+    payload = []
+
+if isinstance(payload, list):
+    for entry in payload:
+        if isinstance(entry, dict):
+            title = entry.get("title") or entry.get("name") or entry.get("binding")
+            if title and title.lower() == target.lower():
+                namespace_id = entry.get("id") or entry.get("namespace_id")
+                if namespace_id:
+                    print(namespace_id)
+                    break
+PY
+)"
   fi
   K2="$(bunx wrangler kv:namespace create "$KV_API_KEYS" --account-id "$CF_ACCOUNT" 2>&1 || true)"
   APIKEYS_ID="$(printf "%s" "$K2" | grep -oE '[a-z0-9]{32}' | head -n1)"
   if [ -z "$APIKEYS_ID" ]; then
-    KL2="$(bunx wrangler kv:namespace list --account-id "$CF_ACCOUNT" 2>&1 || true)"
-    APIKEYS_ID="$(printf "%s" "$KL2" | awk -v t="$KV_API_KEYS" '
-      BEGIN{IGNORECASE=1}
-      /id|title/{
-        if ($0 ~ /title[^"]*"'"$KV_API_KEYS"'"|'"$KV_API_KEYS"'/) seen=1;
-        if (seen && match($0,/id[^"]*"([a-z0-9]{32})"/,m)){ print m[1]; exit }
-        if (seen && match($0,/[a-z0-9]{32}/)){ print substr($0,RSTART,RLENGTH); exit }
-      }')"
+    KL2="$(bunx wrangler kv:namespace list --account-id "$CF_ACCOUNT" --json 2>/dev/null || true)"
+    APIKEYS_ID="$(KV_LIST_JSON="$KL2" KV_TITLE="$KV_API_KEYS" "$PYBIN" - <<'PY'
+import json
+import os
+
+data = os.environ.get("KV_LIST_JSON", "")
+target = os.environ.get("KV_TITLE", "")
+
+try:
+    payload = json.loads(data)
+except Exception:
+    payload = []
+
+if isinstance(payload, list):
+    for entry in payload:
+        if isinstance(entry, dict):
+            title = entry.get("title") or entry.get("name") or entry.get("binding")
+            if title and title.lower() == target.lower():
+                namespace_id = entry.get("id") or entry.get("namespace_id")
+                if namespace_id:
+                    print(namespace_id)
+                    break
+PY
+)"
   fi
 
     if [ -z "$R2_BUCKET" ]; then
