@@ -254,7 +254,30 @@ These routes require `role === 'admin'` in addition to a valid API key.
 
 - `GET /v1/sources`
   - Authentication: Not required.
-  - Response: `{ "data": [{ "id": number, "source_id": string, "authority": string | null, "jurisdiction_code": string | null, "url": string | null, "license": string | null, "tos_url": string | null, "last_success_at": number | null, "success_rate_7d": number | null }] }`.
+  - Response:
+
+    ```jsonc
+    {
+      "data": [
+        {
+          "id": "us-fed-grants-gov",
+          "source_id": 1,
+          "country_code": "US",
+          "authority": "federal",
+          "jurisdiction_code": "US-FED",
+          "kind": "json",
+          "parser": "json_api_generic",
+          "schedule": "4h",
+          "rate": { "rps": 2, "burst": 5 },
+          "url": "https://www.grants.gov/grantsws/rest/opportunities/search?filter=active&sortBy=closeDate",
+          "license": "https://www.grants.gov/help/html/help/Register/SAM.gov-Data-Usage-Agreement.htm",
+          "tos_url": "https://www.grants.gov/web/grants/policy/policy-guidance/sam-gov-data-usage-agreement.html",
+          "last_success_at": 1700000000,
+          "success_rate_7d": 0.95
+        }
+      ]
+    }
+    ```
 - `GET /v1/stats/coverage`
   - Authentication: Not required.
   - Response: Daily coverage metrics produced by `buildCoverageResponse`, including per-country totals and ingest cadence information.

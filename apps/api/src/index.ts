@@ -1615,8 +1615,13 @@ app.get('/v1/sources', async (c) => {
     data: rows.map((row) => ({
       id: row.id,
       source_id: row.source_id,
+      country_code: row.country_code,
       authority: row.authority,
       jurisdiction_code: row.jurisdiction_code,
+      kind: row.kind,
+      parser: row.parser,
+      schedule: row.schedule,
+      rate: row.rate,
       url: row.url,
       license: row.license,
       tos_url: row.tos_url,

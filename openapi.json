@@ -134,26 +134,6 @@
               "minimum": 1,
               "maximum": 100
             }
-          },
-          {
-            "name": "rank",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ltr"
-              ]
-            },
-            "description": "Optional learning-to-rank strategy"
-          },
-          {
-            "name": "rank_n",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "description": "Number of candidates to rerank before paging"
           }
         ],
         "responses": {
@@ -163,47 +143,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProgramListResponse"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "description": "Caching directives for clients and intermediaries.",
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "ETag": {
-                "description": "Entity tag representing the current response state.",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "304": {
-            "description": "Not modified",
-            "headers": {
-              "Cache-Control": {
-                "description": "Caching directives for clients and intermediaries.",
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "ETag": {
-                "description": "Entity tag representing the cached response state.",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request parameters",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -235,48 +174,10 @@
                   "$ref": "#/components/schemas/ProgramDetailResponse"
                 }
               }
-            },
-            "headers": {
-              "Cache-Control": {
-                "description": "Caching directives for clients and intermediaries.",
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "ETag": {
-                "description": "Entity tag representing the current response state.",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "304": {
-            "description": "Not modified",
-            "headers": {
-              "Cache-Control": {
-                "description": "Caching directives for clients and intermediaries.",
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "ETag": {
-                "description": "Entity tag representing the cached response state.",
-                "schema": {
-                  "type": "string"
-                }
-              }
             }
           },
           "404": {
-            "description": "Program not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Program not found"
           }
         }
       }
@@ -292,37 +193,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SourcesResponse"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "description": "Caching directives for clients and intermediaries.",
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "ETag": {
-                "description": "Entity tag representing the current response state.",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "304": {
-            "description": "Not modified",
-            "headers": {
-              "Cache-Control": {
-                "description": "Caching directives for clients and intermediaries.",
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "ETag": {
-                "description": "Entity tag representing the cached response state.",
-                "schema": {
-                  "type": "string"
                 }
               }
             }
@@ -343,339 +213,7 @@
                   "$ref": "#/components/schemas/CoverageResponse"
                 }
               }
-            },
-            "headers": {
-              "Cache-Control": {
-                "description": "Caching directives for clients and intermediaries.",
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "ETag": {
-                "description": "Entity tag representing the current response state.",
-                "schema": {
-                  "type": "string"
-                }
-              }
             }
-          },
-          "304": {
-            "description": "Not modified",
-            "headers": {
-              "Cache-Control": {
-                "description": "Caching directives for clients and intermediaries.",
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "ETag": {
-                "description": "Entity tag representing the cached response state.",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/ops/metrics": {
-      "get": {
-        "summary": "Request metrics",
-        "operationId": "getOpsMetrics",
-        "parameters": [
-          {
-            "name": "route",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter results by route"
-          },
-          {
-            "name": "from",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Start of the window (ISO timestamp or epoch milliseconds)"
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "End of the window (ISO timestamp or epoch milliseconds)"
-          },
-          {
-            "name": "bucket",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "5m",
-                "1h"
-              ]
-            },
-            "description": "Aggregation bucket size"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Aggregated request metrics",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OpsMetricsResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        }
-      }
-    },
-    "/v1/ops/slo": {
-      "get": {
-        "summary": "Daily SLO windows",
-        "operationId": "getOpsSlo",
-        "parameters": [
-          {
-            "name": "from",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "Start date (YYYY-MM-DD)"
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "End date (YYYY-MM-DD)"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "SLO window details and summary",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OpsSloResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        }
-      }
-    },
-    "/v1/ops/alerts": {
-      "get": {
-        "summary": "List open operational alerts",
-        "operationId": "listOpsAlerts",
-        "responses": {
-          "200": {
-            "description": "Collection of unresolved alerts",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OpsAlertsResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        }
-      }
-    },
-    "/v1/ops/alerts/resolve": {
-      "post": {
-        "summary": "Resolve operational alerts",
-        "operationId": "resolveOpsAlerts",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OpsAlertsResolveRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Resolution outcome",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OpsAlertsResolveResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        }
-      }
-    },
-    "/v1/admin/api-keys": {
-      "get": {
-        "summary": "List API keys",
-        "operationId": "listAdminApiKeys",
-        "responses": {
-          "200": {
-            "description": "Collection of API keys without secrets",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdminApiKeysResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        }
-      },
-      "post": {
-        "summary": "Create a new API key",
-        "operationId": "createAdminApiKey",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminCreateApiKeyRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Created API key (raw secret is returned once)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdminCreateApiKeyResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        }
-      }
-    },
-    "/v1/admin/api-keys/{id}": {
-      "patch": {
-        "summary": "Update an API key",
-        "operationId": "updateAdminApiKey",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminUpdateApiKeyRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated API key",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdminApiKey"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete an API key",
-        "operationId": "deleteAdminApiKey",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deletion outcome",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdminDeleteApiKeyResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
           }
         }
       }
@@ -683,42 +221,6 @@
   },
   "components": {
     "schemas": {
-      "ErrorResponse": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "object",
-            "properties": {
-              "code": {
-                "type": "string"
-              },
-              "message": {
-                "type": "string"
-              },
-              "details": {
-                "type": [
-                  "object",
-                  "array",
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "code",
-              "message",
-              "details"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "error"
-        ],
-        "additionalProperties": false
-      },
       "ProgramBenefitResponse": {
         "type": "object",
         "properties": {
@@ -808,7 +310,8 @@
             "type": "string",
             "enum": [
               "US",
-              "CA"
+              "CA",
+              "UK"
             ]
           },
           "authority_level": {
@@ -970,55 +473,29 @@
             }
           },
           "meta": {
-            "$ref": "#/components/schemas/ProgramListMeta"
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number"
+              },
+              "page": {
+                "type": "number"
+              },
+              "pageSize": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "total",
+              "page",
+              "pageSize"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
           "data",
           "meta"
-        ],
-        "additionalProperties": false
-      },
-      "ProgramListMeta": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "pageSize": {
-            "type": "number"
-          },
-          "ranking": {
-            "$ref": "#/components/schemas/MetaRanking"
-          }
-        },
-        "required": [
-          "total",
-          "page",
-          "pageSize"
-        ],
-        "additionalProperties": false
-      },
-      "MetaRanking": {
-        "type": "object",
-        "properties": {
-          "mode": {
-            "type": "string",
-            "enum": [
-              "ltr"
-            ]
-          },
-          "window": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        "required": [
-          "mode",
-          "window"
         ],
         "additionalProperties": false
       },
@@ -1036,7 +513,8 @@
             "type": "string",
             "enum": [
               "US",
-              "CA"
+              "CA",
+              "UK"
             ]
           },
           "authority_level": {
@@ -1170,10 +648,66 @@
         "type": "object",
         "properties": {
           "id": {
+            "type": "string"
+          },
+          "source_id": {
             "type": "number"
           },
-          "name": {
+          "country_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "authority": {
             "type": "string"
+          },
+          "jurisdiction_code": {
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parser": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schedule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceRateResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "url": {
             "anyOf": [
@@ -1205,21 +739,51 @@
               }
             ]
           },
-          "authority_level": {
-            "type": "string"
+          "last_success_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
-          "jurisdiction_code": {
-            "type": "string"
+          "success_rate_7d": {
+            "type": "number"
           }
         },
         "required": [
           "id",
-          "name",
+          "source_id",
+          "country_code",
+          "authority",
+          "jurisdiction_code",
+          "kind",
+          "parser",
+          "schedule",
+          "rate",
           "url",
           "license",
           "tos_url",
-          "authority_level",
-          "jurisdiction_code"
+          "last_success_at",
+          "success_rate_7d"
+        ],
+        "additionalProperties": false
+      },
+      "SourceRateResponse": {
+        "type": "object",
+        "properties": {
+          "rps": {
+            "type": "number"
+          },
+          "burst": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "rps",
+          "burst"
         ],
         "additionalProperties": false
       },
@@ -1318,478 +882,6 @@
           "service"
         ],
         "additionalProperties": false
-      },
-      "OpsMetricPoint": {
-        "type": "object",
-        "properties": {
-          "bucket_ts": {
-            "type": "integer"
-          },
-          "route": {
-            "type": "string"
-          },
-          "status_class": {
-            "type": "string"
-          },
-          "count": {
-            "type": "integer"
-          },
-          "p50_ms": {
-            "type": "number"
-          },
-          "p95_ms": {
-            "type": "number"
-          },
-          "p99_ms": {
-            "type": "number"
-          },
-          "bytes_out": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "bucket_ts",
-          "route",
-          "status_class",
-          "count",
-          "p50_ms",
-          "p95_ms",
-          "p99_ms",
-          "bytes_out"
-        ],
-        "additionalProperties": false
-      },
-      "OpsMetricsResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OpsMetricPoint"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "from": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "to": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "bucket": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "from",
-              "to",
-              "bucket"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ],
-        "additionalProperties": false
-      },
-      "OpsSloRow": {
-        "type": "object",
-        "properties": {
-          "day_utc": {
-            "type": "string",
-            "format": "date"
-          },
-          "route": {
-            "type": "string"
-          },
-          "requests": {
-            "type": "integer"
-          },
-          "err_rate": {
-            "type": "number"
-          },
-          "p99_ms": {
-            "type": "number"
-          },
-          "slo_ok": {
-            "type": "boolean"
-          },
-          "budget_burn": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "day_utc",
-          "route",
-          "requests",
-          "err_rate",
-          "p99_ms",
-          "slo_ok"
-        ],
-        "additionalProperties": false
-      },
-      "OpsSloSummaryRoute": {
-        "type": "object",
-        "properties": {
-          "route": {
-            "type": "string"
-          },
-          "requests": {
-            "type": "integer"
-          },
-          "err_rate": {
-            "type": "number"
-          },
-          "availability": {
-            "type": "number"
-          },
-          "p99_ms": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "route",
-          "requests",
-          "err_rate",
-          "availability",
-          "p99_ms"
-        ],
-        "additionalProperties": false
-      },
-      "OpsSloSummary": {
-        "type": "object",
-        "properties": {
-          "overall_availability": {
-            "type": "number"
-          },
-          "overall_p99": {
-            "type": "number"
-          },
-          "routes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OpsSloSummaryRoute"
-            }
-          }
-        },
-        "required": [
-          "overall_availability",
-          "overall_p99",
-          "routes"
-        ],
-        "additionalProperties": false
-      },
-      "OpsSloResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OpsSloRow"
-            }
-          },
-          "summary": {
-            "$ref": "#/components/schemas/OpsSloSummary"
-          }
-        },
-        "required": [
-          "data",
-          "summary"
-        ],
-        "additionalProperties": false
-      },
-      "OpsAlert": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "kind": {
-            "type": "string"
-          },
-          "details": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "created_at": {
-            "type": "integer"
-          },
-          "resolved_at": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "kind",
-          "created_at"
-        ],
-        "additionalProperties": false
-      },
-      "OpsAlertsResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OpsAlert"
-            }
-          }
-        },
-        "required": [
-          "data"
-        ],
-        "additionalProperties": false
-      },
-      "OpsAlertsResolveRequest": {
-        "type": "object",
-        "properties": {
-          "ids": {
-            "type": "array",
-            "items": {
-              "type": "integer"
-            }
-          }
-        },
-        "required": [
-          "ids"
-        ],
-        "additionalProperties": false
-      },
-      "OpsAlertsResolveResponse": {
-        "type": "object",
-        "properties": {
-          "resolved": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "resolved"
-        ],
-        "additionalProperties": false
-      },
-      "AdminApiKey": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "admin",
-              "partner",
-              "read"
-            ]
-          },
-          "quota_daily": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "quota_monthly": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "last_seen_at": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "updated_at": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "role"
-        ],
-        "additionalProperties": false
-      },
-      "AdminApiKeysResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminApiKey"
-            }
-          }
-        },
-        "required": [
-          "data"
-        ],
-        "additionalProperties": false
-      },
-      "AdminCreateApiKeyRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "admin",
-              "partner",
-              "read"
-            ]
-          },
-          "quota_daily": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "quota_monthly": {
-            "type": [
-              "number",
-              "null"
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "AdminCreateApiKeyResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "raw_key": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "raw_key"
-        ],
-        "additionalProperties": false
-      },
-      "AdminUpdateApiKeyRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "admin",
-              "partner",
-              "read"
-            ]
-          },
-          "quota_daily": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "quota_monthly": {
-            "type": [
-              "number",
-              "null"
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "AdminDeleteApiKeyResponse": {
-        "type": "object",
-        "properties": {
-          "deleted": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "deleted"
-        ],
-        "additionalProperties": false
-      }
-    },
-    "responses": {
-      "Unauthorized": {
-        "description": "Authentication required"
-      },
-      "Forbidden": {
-        "description": "Access forbidden"
-      },
-      "NotFound": {
-        "description": "Resource not found"
       }
     }
   }
