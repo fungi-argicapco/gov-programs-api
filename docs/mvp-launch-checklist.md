@@ -10,11 +10,14 @@ This checklist synthesizes the repo's design docs into an ordered plan to take t
   4. `bun run typecheck` – Run type checking.
   5. `bun test` – Run tests.
 - Optional: run `bunx wrangler dev` to exercise the Worker locally once type checking and tests pass.
+- `bun run setup:local` now writes `.env.dev.local`; populate `PROGRAM_API_BASE`, `EMAIL_ADMIN`, and `EMAIL_SENDER` there to avoid runtime warnings when using `wrangler dev`.
 
 ## 2. Configure production secrets & environment
 - Export Cloudflare credentials (`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID`) in the deployment environment so the automated scripts can provision bindings and DNS.
 - Provide application-specific environment values expected by the Canvas/API surface: `PROGRAM_API_BASE`, `EMAIL_ADMIN`, `EMAIL_SENDER`, optional `SESSION_COOKIE_NAME`, and `MFA_ISSUER`. Confirm Cloudflare Email Routing is set up for the sender/forwarding rules.
+- The production `.env` stores Cloudflare identifiers plus the Canvas/API vars above; run `bun run setup:remote` after updating the file to ensure bindings are rendered into `wrangler.toml` without prompting Cloudflare to recreate existing resources.
 - Ensure Durable Object support is enabled for the Workers plan, and keep `WORKERS_EMAIL_R2_BUCKET` ready if email templating is externalised later.
+- Manage sensitive keys (e.g. `OPENAI_API_KEY`, `GITHUB_TOKEN`) with `bunx wrangler secret put`; plain-text configuration such as `PROGRAM_API_BASE` can stay under `[vars]` in `wrangler.toml` or be supplied at deploy time via `bunx wrangler deploy --var KEY=VALUE`.
 
 ## 3. Database migrations & schema readiness
 - Apply existing D1 migrations through `bun run setup:remote` and explicit migration commands so tables such as `ingestion_runs`, `program_diffs`, and `canvas` onboarding structures are live before ingestion.
@@ -45,4 +48,3 @@ This checklist synthesizes the repo's design docs into an ordered plan to take t
 - Execute the rollout plan: apply schema migrations locally first, enable the catalog-driven ingestion loop behind a feature flag or staged cron, and monitor observability dashboards for healthy runs.
 - Validate `/v1/sources` and `/v1/stats/coverage` payloads for completeness, ensuring new fields do not break downstream consumers.
 - Once stable, expand the catalog to additional jurisdictions while tracking success criteria (all sources ingest within SLA, coverage endpoints accurate, automation passing).
-

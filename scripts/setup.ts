@@ -21,6 +21,10 @@ if (argv.has('--local')) mode = 'local';
 if (argv.has('--remote')) mode = 'remote';
 
 const cwd = process.cwd();
+const LOCAL_ENV_FILE = '.env.dev.local';
+const PROD_ENV_FILE = '.env';
+const REQUIRED_APP_VARS = ['PROGRAM_API_BASE', 'EMAIL_ADMIN', 'EMAIL_SENDER'] as const;
+const OPTIONAL_APP_VARS = ['SESSION_COOKIE_NAME', 'MFA_ISSUER', 'ALERTS_MAX_DELIVERY_ATTEMPTS'] as const;
 
 function info(message: string) {
   console.log(message);
@@ -69,53 +73,195 @@ async function maybeInitTsconfig() {
   }
 }
 
+type D1ListItem = { name?: string; uuid?: string };
+type KvNamespace = { title?: string; id?: string };
+type R2Bucket = { name?: string };
+
+const CF_API_BASE = 'https://api.cloudflare.com/client/v4';
+
+function cfHeaders(apiToken: string) {
+  return {
+    Authorization: `Bearer ${apiToken}`,
+    'Content-Type': 'application/json'
+  } satisfies HeadersInit;
+}
+
+async function listD1Databases(): Promise<D1ListItem[]> {
+  try {
+    const raw = await $`bunx wrangler d1 list --json`.text();
+    const data = JSON.parse(raw);
+    return Array.isArray(data) ? (data as D1ListItem[]) : [];
+  } catch (error) {
+    console.warn('⚠️ Unable to list D1 databases:', error);
+    return [];
+  }
+}
+
+async function ensureD1Database(): Promise<string> {
+  const existing = (await listD1Databases()).find((db) => db.name === DB_NAME && db.uuid);
+  if (existing?.uuid) {
+    info(`ℹ️ D1 database already present: ${existing.uuid}`);
+    return existing.uuid;
+  }
+  info(`➡️ Creating D1 database ${DB_NAME}…`);
+  await $`bunx wrangler d1 create ${DB_NAME}`;
+  const created = (await listD1Databases()).find((db) => db.name === DB_NAME && db.uuid);
+  if (!created?.uuid) {
+    throw new Error('❌ Could not determine D1 database id after creation');
+  }
+  return created.uuid;
+}
+
+async function listKvNamespaces(accountId: string, apiToken: string): Promise<KvNamespace[]> {
+  const namespaces: KvNamespace[] = [];
+  let page = 1;
+  const headers = cfHeaders(apiToken);
+
+  while (true) {
+    const url = `${CF_API_BASE}/accounts/${accountId}/storage/kv/namespaces?page=${page}&per_page=100`;
+    const response = await fetch(url, { headers });
+    const body = (await response.json()) as {
+      success: boolean;
+      result?: KvNamespace[];
+      result_info?: { total_pages?: number };
+      errors?: Array<{ message?: string }>;
+    };
+    if (!response.ok || !body.success || !body.result) {
+      const reason = body.errors?.map((err) => err.message).join(', ') ?? response.statusText;
+      throw new Error(`Failed to list KV namespaces: ${reason}`);
+    }
+    namespaces.push(...body.result);
+    const totalPages = body.result_info?.total_pages ?? 1;
+    if (page >= totalPages) {
+      break;
+    }
+    page += 1;
+  }
+
+  return namespaces;
+}
+
+async function ensureKvNamespace(title: string, accountId: string, apiToken: string): Promise<string> {
+  let namespaces = await listKvNamespaces(accountId, apiToken);
+  let existing = namespaces.find((ns) => ns.title === title && ns.id);
+  if (existing?.id) {
+    info(`ℹ️ KV namespace already present for ${title}: ${existing.id}`);
+    return existing.id;
+  }
+
+  info(`➡️ Creating KV namespace ${title}…`);
+  const response = await fetch(`${CF_API_BASE}/accounts/${accountId}/storage/kv/namespaces`, {
+    method: 'POST',
+    headers: cfHeaders(apiToken),
+    body: JSON.stringify({ title })
+  });
+  const body = (await response.json()) as {
+    success: boolean;
+    result?: KvNamespace;
+    errors?: Array<{ message?: string }>;
+  };
+  if (!response.ok || !body.success) {
+    if (body.errors?.some((err) => err.message?.includes('already exists'))) {
+      namespaces = await listKvNamespaces(accountId, apiToken);
+      existing = namespaces.find((ns) => ns.title === title && ns.id);
+      if (existing?.id) {
+        info(`ℹ️ KV namespace already present for ${title}: ${existing.id}`);
+        return existing.id;
+      }
+    }
+    const reason = body.errors?.map((err) => err.message).join(', ') ?? response.statusText;
+    throw new Error(`Failed to create KV namespace ${title}: ${reason}`);
+  }
+
+  if (body.result?.id) {
+    return body.result.id;
+  }
+
+  namespaces = await listKvNamespaces(accountId, apiToken);
+  existing = namespaces.find((ns) => ns.title === title && ns.id);
+  if (!existing?.id) {
+    throw new Error(`❌ Could not determine ${title} KV namespace id after creation`);
+  }
+  return existing.id;
+}
+
+async function listR2Buckets(accountId: string, apiToken: string): Promise<R2Bucket[]> {
+  const response = await fetch(`${CF_API_BASE}/accounts/${accountId}/r2/buckets`, {
+    headers: cfHeaders(apiToken)
+  });
+  const body = (await response.json()) as {
+    success: boolean;
+    result?: R2Bucket[] | { buckets?: R2Bucket[] };
+    errors?: Array<{ message?: string }>;
+  };
+  if (!response.ok || !body.success || !body.result) {
+    const reason = body.errors?.map((err) => err.message).join(', ') ?? response.statusText;
+    throw new Error(`Failed to list R2 buckets: ${reason}`);
+  }
+  if (Array.isArray(body.result)) {
+    return body.result;
+  }
+  if (Array.isArray(body.result.buckets)) {
+    return body.result.buckets;
+  }
+  return [];
+}
+
+async function ensureR2Bucket(name: string, accountId: string, apiToken: string): Promise<string> {
+  const buckets = await listR2Buckets(accountId, apiToken);
+  const existing = buckets.find((bucket) => bucket.name === name);
+  if (existing) {
+    info(`ℹ️ R2 bucket already present: ${name}`);
+    return name;
+  }
+
+  info(`➡️ Creating R2 bucket ${name}…`);
+  const response = await fetch(`${CF_API_BASE}/accounts/${accountId}/r2/buckets`, {
+    method: 'POST',
+    headers: cfHeaders(apiToken),
+    body: JSON.stringify({ name })
+  });
+  const body = (await response.json()) as {
+    success: boolean;
+    errors?: Array<{ message?: string }>;
+  };
+  if (!response.ok || !body.success) {
+    if (body.errors?.some((err) => err.message?.includes('already exists'))) {
+      info(`ℹ️ R2 bucket already present: ${name}`);
+      return name;
+    }
+    const reason = body.errors?.map((err) => err.message).join(', ') ?? response.statusText;
+    throw new Error(`Failed to create R2 bucket ${name}: ${reason}`);
+  }
+
+  return name;
+}
+
 async function provisionRemoteResources() {
   info('➡️ Creating Cloudflare resources via wrangler (bunx)…');
   const env = { ...process.env };
-  const requireEnv = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN'];
-  const missing = requireEnv.filter((key) => !env[key] || env[key]?.trim() === '');
-  if (missing.length) {
-    throw new Error(`Missing Cloudflare credentials: ${missing.join(', ')}`);
+  const accountId = env.CLOUDFLARE_ACCOUNT_ID?.trim();
+  const apiToken = env.CLOUDFLARE_API_TOKEN?.trim();
+  if (!accountId || !apiToken) {
+    throw new Error('Missing Cloudflare credentials: CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN are required');
   }
 
   const bucketName = `${R2_BUCKET_BASE}`;
-  // D1 database
-  await $`bunx wrangler d1 create ${DB_NAME}`.nothrow();
-  const d1ListRaw = await $`bunx wrangler d1 list --json`.text();
-  const d1List = JSON.parse(d1ListRaw) as Array<{ name?: string; uuid?: string }>;
-  const dbMatch = d1List.find((db) => db.name === DB_NAME);
-  if (!dbMatch?.uuid) {
-    throw new Error('❌ Could not determine D1 database id');
-  }
 
-  // KV namespaces
-  await $`bunx wrangler kv namespace create ${KV_LOOKUPS}`.nothrow();
-  await $`bunx wrangler kv namespace create ${KV_API_KEYS}`.nothrow();
-  const kvListRaw = await $`bunx wrangler kv namespace list`.text();
-  const kvList = JSON.parse(kvListRaw) as Array<{ title?: string; id?: string }>;
-  const lookupNamespace = kvList.find((ns) => ns.title === KV_LOOKUPS);
-  const apiKeysNamespace = kvList.find((ns) => ns.title === KV_API_KEYS);
-  if (!lookupNamespace?.id) {
-    throw new Error(`❌ Could not determine ${KV_LOOKUPS} KV id`);
-  }
-  if (!apiKeysNamespace?.id) {
-    throw new Error(`❌ Could not determine ${KV_API_KEYS} KV id`);
-  }
-
-  // R2 bucket
-  await $`bunx wrangler r2 bucket create ${bucketName}`.nothrow();
+  const d1Id = await ensureD1Database();
+  const lookupsId = await ensureKvNamespace(KV_LOOKUPS, accountId, apiToken);
+  const apiKeysId = await ensureKvNamespace(KV_API_KEYS, accountId, apiToken);
+  await ensureR2Bucket(bucketName, accountId, apiToken);
 
   return {
-    d1Id: dbMatch.uuid,
-    lookupsId: lookupNamespace.id,
-    apiKeysId: apiKeysNamespace.id,
+    d1Id,
+    lookupsId,
+    apiKeysId,
     r2Bucket: bucketName
   };
 }
 
-function writeEnv(updates: Record<string, string>) {
-  info('➡️ Writing .env with resolved identifiers…');
-  const envPath = resolve(cwd, '.env');
+function loadEnvMap(envPath: string): Map<string, string> {
   const existing = existsSync(envPath) ? readFileSync(envPath, 'utf8') : '';
   const lines = existing ? existing.split(/\r?\n/) : [];
   const map = new Map<string, string>();
@@ -129,14 +275,48 @@ function writeEnv(updates: Record<string, string>) {
       map.set(key, value);
     }
   }
+  return map;
+}
+
+function writeEnv(updates: Record<string, string>, targetFile: string, options?: { ensureKeys?: readonly string[] }) {
+  info(`➡️ Writing ${targetFile} with resolved identifiers…`);
+  const envPath = resolve(cwd, targetFile);
+  const map = loadEnvMap(envPath);
+
   for (const [key, value] of Object.entries(updates)) {
     map.set(key, value);
   }
+
+  if (options?.ensureKeys) {
+    for (const key of options.ensureKeys) {
+      if (!map.has(key)) {
+        map.set(key, '');
+      }
+    }
+  }
+
   const serialized = Array.from(map.entries())
     .map(([key, value]) => `${key}=${value}`)
     .join('\n');
   writeFileSync(envPath, serialized ? `${serialized}\n` : '', 'utf8');
-  info('ℹ️  .env updated: CF_* IDs available to scripts & tests.');
+  info(`ℹ️  ${targetFile} updated: CF_* IDs available to scripts & tests.`);
+}
+
+function warnMissingAppVars(targetFile: string) {
+  const envPath = resolve(cwd, targetFile);
+  if (!existsSync(envPath)) return;
+  const map = loadEnvMap(envPath);
+  const missingRequired = REQUIRED_APP_VARS.filter((key) => {
+    const value = map.get(key)?.trim();
+    return !value;
+  });
+  if (missingRequired.length > 0) {
+    console.warn(`⚠️ Missing required application vars in ${targetFile}: ${missingRequired.join(', ')}`);
+  }
+  const missingOptional = OPTIONAL_APP_VARS.filter((key) => !map.has(key));
+  if (missingOptional.length > 0) {
+    console.warn(`ℹ️ Optional vars can be configured in ${targetFile}: ${missingOptional.join(', ')}`);
+  }
 }
 
 function renderWranglerToml(envValues: Record<string, string>) {
@@ -236,7 +416,10 @@ async function main() {
     };
   }
 
-  writeEnv(envValues);
+  const envTarget = mode === 'local' ? LOCAL_ENV_FILE : PROD_ENV_FILE;
+  const ensureKeys = [...REQUIRED_APP_VARS, ...OPTIONAL_APP_VARS];
+  writeEnv(envValues, envTarget, { ensureKeys });
+  warnMissingAppVars(envTarget);
   renderWranglerToml(envValues);
 
   info('🔐 (Optional) set secrets via wrangler:');

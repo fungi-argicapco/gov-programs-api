@@ -2,6 +2,8 @@ node_modules
 bun.lockb
 dist
 .env
+.env.dev
+.env.dev.local
 .env.d/
 *.bak
 wrangler.toml
