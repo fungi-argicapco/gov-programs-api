@@ -3,7 +3,12 @@
 This checklist synthesizes the repo's design docs into an ordered plan to take the US/Canada MVP live.
 
 ## 1. Local bootstrap & verification
-- Install dependencies and render local configuration with Bun-only tooling: `bun install`, `bash codex/env.setup.sh`, `bun run setup:local`, then run type checking and tests via `bun run typecheck` and `bun test`. These commands are required before any deploys. 
+- Install dependencies and render local configuration with Bun-only tooling. These commands are required before any deploys:
+  1. `bun install` – Install project dependencies.
+  2. `bash codex/env.setup.sh` – Render local environment configuration.
+  3. `bun run setup:local` – Set up local project state.
+  4. `bun run typecheck` – Run type checking.
+  5. `bun test` – Run tests.
 - Optional: run `bunx wrangler dev` to exercise the Worker locally once type checking and tests pass.
 
 ## 2. Configure production secrets & environment
