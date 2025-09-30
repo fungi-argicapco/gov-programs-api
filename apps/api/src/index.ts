@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import type { Context } from 'hono';
 import openapiDocument from '../../../openapi.json';
 import { Env } from './db';
 import { buildProgramsQuery } from './query';
