@@ -263,6 +263,11 @@ describe('coverage integration flow', () => {
 
     await writeDailyCoverage({ DB: db, LOOKUPS_KV: lookups }, COVERAGE_DAY);
 
+    expect(lookupsGet).toHaveBeenCalledWith(`metrics:deadlinks:${COVERAGE_DAY}`, 'json');
+    expect(lookups.put).not.toHaveBeenCalled();
+    expect(lookups.delete).not.toHaveBeenCalled();
+    expect(lookups.list).not.toHaveBeenCalled();
+
     const reportRows = await db
       .prepare(
         `SELECT day, with_tags, without_tags, with_naics, missing_naics, validation_issues, created_at
