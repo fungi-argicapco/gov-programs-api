@@ -121,7 +121,7 @@ function evaluateProgramIssues(
   if (!program.url || program.url.trim().length === 0) {
     issues.push('missing_url');
   }
-  const hasBenefits = benefits.length > 0 || hasBenefitAmounts(benefits);
+  const hasBenefits = benefits.length > 0 && hasBenefitAmounts(benefits);
   if (!hasBenefits) {
     issues.push('missing_benefit_info');
   }
