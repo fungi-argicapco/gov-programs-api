@@ -50,13 +50,16 @@ export function mapGrantsGov(row: any): MapperResult {
   const url =
     normalized?.url ??
     (opportunityNumber ? `https://www.grants.gov/search-results-detail/${opportunityNumber}` : undefined);
-  const categories = Array.isArray(normalized?.category)
-    ? normalized.category
-    : normalized?.Category
-      ? [normalized.Category]
-      : Array.isArray(normalized?.categories)
-        ? normalized.categories
-        : undefined;
+  let categories;
+  if (Array.isArray(normalized?.category)) {
+    categories = normalized.category;
+  } else if (normalized?.Category) {
+    categories = [normalized.Category];
+  } else if (Array.isArray(normalized?.categories)) {
+    categories = normalized.categories;
+  } else {
+    categories = undefined;
+  }
   const eligibility = Array.isArray(normalized?.eligibilityCategory)
     ? normalized.eligibilityCategory
     : Array.isArray(normalized?.eligibility)
