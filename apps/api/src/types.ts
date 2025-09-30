@@ -66,6 +66,7 @@ export interface SourceResponse {
   source_id: number;
   country_code: string | null;
   authority: string;
+  authority_level?: string; // Backward compatibility with previous field name
   jurisdiction_code: string;
   kind: string | null;
   parser: string | null;
