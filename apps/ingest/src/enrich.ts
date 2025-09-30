@@ -32,7 +32,7 @@ let mappingCacheStatus: 'ok' | 'error' | null = null;
 
 async function loadSampleLookup(): Promise<NaicsEntry[]> {
   try {
-    const module = await import('../../../data/lookups/naics.sample.json', { assert: { type: 'json' } });
+    const module = await import('../../../data/lookups/naics.sample.json', { with: { type: 'json' } });
     const data = module.default ?? module;
     if (Array.isArray(data)) {
       return data
