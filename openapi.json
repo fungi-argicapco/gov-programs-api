@@ -648,7 +648,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "number"
           },
           "source_id": {
             "type": "number"
@@ -664,6 +664,9 @@
             ]
           },
           "authority": {
+            "type": "string"
+          },
+          "authority_level": {
             "type": "string"
           },
           "jurisdiction_code": {
@@ -816,11 +819,150 @@
             "items": {
               "$ref": "#/components/schemas/CoverageByBenefitType"
             }
+          },
+          "fresh_sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "last_success_at": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "last_success_at"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "completeness": {
+            "type": "object",
+            "properties": {
+              "US": {
+                "type": "object",
+                "properties": {
+                  "federal": {
+                    "type": "boolean"
+                  },
+                  "states": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "federal",
+                  "states"
+                ],
+                "additionalProperties": false
+              },
+              "CA": {
+                "type": "object",
+                "properties": {
+                  "federal": {
+                    "type": "boolean"
+                  },
+                  "provinces": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "federal",
+                  "provinces"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "US",
+              "CA"
+            ],
+            "additionalProperties": false
+          },
+          "naics_density": {
+            "type": "number"
+          },
+          "deadlink_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "fresh_sources": {
+                "type": "number"
+              },
+              "completeness": {
+                "type": "number"
+              },
+              "naics_density": {
+                "type": "number"
+              },
+              "deadlink_rate": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "fresh_sources",
+              "completeness",
+              "naics_density",
+              "deadlink_rate"
+            ],
+            "additionalProperties": false
+          },
+          "tagCoverage": {
+            "$ref": "#/components/schemas/CoverageTagCoverage"
+          },
+          "naicsCoverage": {
+            "$ref": "#/components/schemas/CoverageNaicsCoverage"
+          },
+          "validationIssues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoverageValidationIssue"
+            }
+          },
+          "reports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoverageReportSummary"
+            }
           }
         },
         "required": [
           "byJurisdiction",
-          "byBenefit"
+          "byBenefit",
+          "fresh_sources",
+          "completeness",
+          "naics_density",
+          "deadlink_rate",
+          "metrics",
+          "tagCoverage",
+          "naicsCoverage",
+          "validationIssues",
+          "reports"
         ],
         "additionalProperties": false
       },
@@ -864,6 +1006,85 @@
         "required": [
           "benefit_type",
           "n"
+        ],
+        "additionalProperties": false
+      },
+      "CoverageTagCoverage": {
+        "type": "object",
+        "properties": {
+          "withTags": {
+            "type": "number"
+          },
+          "withoutTags": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "withTags",
+          "withoutTags"
+        ],
+        "additionalProperties": false
+      },
+      "CoverageNaicsCoverage": {
+        "type": "object",
+        "properties": {
+          "withNaics": {
+            "type": "number"
+          },
+          "missingNaics": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "withNaics",
+          "missingNaics"
+        ],
+        "additionalProperties": false
+      },
+      "CoverageValidationIssue": {
+        "type": "object",
+        "properties": {
+          "issue": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "issue",
+          "count"
+        ],
+        "additionalProperties": false
+      },
+      "CoverageReportSummary": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "number"
+          },
+          "tagCoverage": {
+            "$ref": "#/components/schemas/CoverageTagCoverage"
+          },
+          "naicsCoverage": {
+            "$ref": "#/components/schemas/CoverageNaicsCoverage"
+          },
+          "validationIssues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoverageValidationIssue"
+            }
+          }
+        },
+        "required": [
+          "day",
+          "created_at",
+          "tagCoverage",
+          "naicsCoverage",
+          "validationIssues"
         ],
         "additionalProperties": false
       },

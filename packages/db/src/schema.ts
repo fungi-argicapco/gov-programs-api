@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text, index } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text, index, uniqueIndex, real } from 'drizzle-orm/sqlite-core';
 
 export const programs = sqliteTable('programs', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -89,6 +89,21 @@ export const countryPlaybooks = sqliteTable('country_playbooks', {
   updatedAt: integer('updated_at').notNull()                                // epoch ms
 });
 
+export const industryMappings = sqliteTable(
+  'industry_mappings',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    naicsCode: text('naics_code').notNull(),
+    tags: text('tags').notNull().default('[]'),
+    confidence: real('confidence'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    codeIdx: uniqueIndex('idx_industry_mappings_code').on(table.naicsCode)
+  })
+);
+
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   email: text('email').notNull().unique(),
@@ -158,6 +173,39 @@ export const canvases = sqliteTable('canvases', {
 }, (table) => ({
   ownerIdx: index('idx_canvases_owner').on(table.ownerId)
 }));
+
+export const coverageAudit = sqliteTable(
+  'coverage_audit',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    programId: integer('program_id').notNull(),
+    runId: integer('run_id'),
+    issues: text('issues').notNull(),
+    createdAt: integer('created_at').notNull()
+  },
+  (table) => ({
+    programIdx: index('idx_coverage_audit_program').on(table.programId),
+    runIdx: index('idx_coverage_audit_run').on(table.runId)
+  })
+);
+
+export const coverageReports = sqliteTable(
+  'coverage_reports',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    day: text('day').notNull(),
+    runId: integer('run_id'),
+    withTags: integer('with_tags').notNull().default(0),
+    withoutTags: integer('without_tags').notNull().default(0),
+    withNaics: integer('with_naics').notNull().default(0),
+    missingNaics: integer('missing_naics').notNull().default(0),
+    validationIssues: text('validation_issues').notNull().default('[]'),
+    createdAt: integer('created_at').notNull()
+  },
+  (table) => ({
+    dayIdx: uniqueIndex('idx_coverage_reports_day').on(table.day)
+  })
+);
 
 export const canvasVersions = sqliteTable('canvas_versions', {
   id: text('id').primaryKey(),

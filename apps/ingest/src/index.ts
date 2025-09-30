@@ -6,6 +6,7 @@ import { runCatalogOnce } from './catalog';
 import { runOutbox } from './alerts.outbox';
 import { checkDeadlinks } from './deadlinks';
 import { writeDailyCoverage } from './precompute.coverage';
+import { runEnrichmentBackfill } from './backfill.enrichment';
 
 type IngestEnv = {
   DB: D1Database;
@@ -96,6 +97,7 @@ function shouldRunDailyMetrics(event: ScheduledEvent): boolean {
 
 async function runDailyMetrics(env: IngestEnv, event: ScheduledEvent): Promise<void> {
   await checkDeadlinks(env);
+  await runEnrichmentBackfill(env);
   const day = formatDay(getScheduledTime(event));
   await writeDailyCoverage(env, day);
 }

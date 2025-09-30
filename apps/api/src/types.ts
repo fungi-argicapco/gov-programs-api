@@ -94,9 +94,49 @@ export interface CoverageByBenefitType {
   n: number;
 }
 
+export interface CoverageTagCoverage {
+  withTags: number;
+  withoutTags: number;
+}
+
+export interface CoverageNaicsCoverage {
+  withNaics: number;
+  missingNaics: number;
+}
+
+export interface CoverageValidationIssue {
+  issue: string;
+  count: number;
+}
+
+export interface CoverageReportSummary {
+  day: string;
+  created_at: number;
+  tagCoverage: CoverageTagCoverage;
+  naicsCoverage: CoverageNaicsCoverage;
+  validationIssues: CoverageValidationIssue[];
+}
+
 export interface CoverageResponse {
   byJurisdiction: CoverageByJurisdiction[];
   byBenefit: CoverageByBenefitType[];
+  fresh_sources: Array<{ id: string; last_success_at: number | null }>;
+  completeness: {
+    US: { federal: boolean; states: number };
+    CA: { federal: boolean; provinces: number };
+  };
+  naics_density: number;
+  deadlink_rate: number | null;
+  metrics: {
+    fresh_sources: number;
+    completeness: number;
+    naics_density: number;
+    deadlink_rate: number | null;
+  };
+  tagCoverage: CoverageTagCoverage;
+  naicsCoverage: CoverageNaicsCoverage;
+  validationIssues: CoverageValidationIssue[];
+  reports: CoverageReportSummary[];
 }
 
 export interface HealthResponse {
