@@ -38,13 +38,30 @@ const classifyGrantStatus = (openDate?: string, closeDate?: string): MapperResul
 };
 
 export function mapGrantsGov(row: any): MapperResult {
-  const title = row?.title ?? row?.OpportunityTitle ?? 'Untitled Grant';
-  const synopsis = row?.description ?? row?.Synopsis ?? '';
-  const open = dateSafe(row?.openDate ?? row?.PostDate);
-  const close = dateSafe(row?.closeDate ?? row?.CloseDate);
-  const opportunityNumber = row?.opportunityNumber ?? row?.OpportunityNumber;
-  const url = row?.url ??
+  const normalized = row?.opportunity ?? row;
+  const title =
+    normalized?.title ?? normalized?.OpportunityTitle ?? normalized?.synopsisTitle ?? 'Untitled Grant';
+  const synopsis =
+    normalized?.description ?? normalized?.Synopsis ?? normalized?.synopsisDesc ?? normalized?.synopsis ?? '';
+  const open = dateSafe(normalized?.openDate ?? normalized?.PostDate ?? normalized?.postDate);
+  const close = dateSafe(normalized?.closeDate ?? normalized?.CloseDate ?? normalized?.closeDate);
+  const opportunityNumber =
+    normalized?.opportunityNumber ?? normalized?.OpportunityNumber ?? normalized?.oppNum ?? normalized?.id;
+  const url =
+    normalized?.url ??
     (opportunityNumber ? `https://www.grants.gov/search-results-detail/${opportunityNumber}` : undefined);
+  const categories = Array.isArray(normalized?.category)
+    ? normalized.category
+    : normalized?.Category
+      ? [normalized.Category]
+      : Array.isArray(normalized?.categories)
+        ? normalized.categories
+        : undefined;
+  const eligibility = Array.isArray(normalized?.eligibilityCategory)
+    ? normalized.eligibilityCategory
+    : Array.isArray(normalized?.eligibility)
+      ? normalized.eligibility
+      : undefined;
   return {
     title,
     summary: synopsis || undefined,
@@ -53,25 +70,43 @@ export function mapGrantsGov(row: any): MapperResult {
     end_date: close,
     benefit_type: 'grant',
     status: classifyGrantStatus(open, close),
-    tags: Array.isArray(row?.category) ? row.category : row?.Category ? [row.Category] : undefined,
-    criteria: row?.eligibilityCategory?.map?.((cat: string) => ({ kind: 'eligibility', operator: 'matches', value: cat })) ?? []
+    tags: categories?.map(String).filter(Boolean),
+    criteria:
+      eligibility?.map?.((cat: string) => ({ kind: 'eligibility', operator: 'matches', value: String(cat) })) ?? []
   };
 }
 
 export function mapSamAssistance(row: any): MapperResult {
-  const title = row?.title ?? row?.assistanceListingTitle ?? 'SAM Assistance Listing';
-  const summary = row?.summary ?? row?.assistanceListingDescription ?? row?.description ?? undefined;
-  const listingNumber = row?.assistanceListingNumber ?? row?.listingNumber;
-  const url = row?.uri ?? row?.landingPage ??
+  const descriptor = row?.matchedObjectDescriptor ?? row;
+  const title =
+    descriptor?.title ?? descriptor?.assistanceListingTitle ?? row?.title ?? 'SAM Assistance Listing';
+  const summary =
+    descriptor?.summary ??
+    descriptor?.assistanceListingDescription ??
+    descriptor?.description ??
+    row?.summary ??
+    row?.description ??
+    undefined;
+  const listingNumber =
+    descriptor?.assistanceListingNumber ?? descriptor?.listingNumber ?? row?.assistanceListingNumber ?? row?.listingNumber;
+  const url =
+    descriptor?.uri ??
+    descriptor?.landingPage ??
+    descriptor?.link ??
+    row?.uri ??
+    row?.landingPage ??
     (listingNumber ? `https://sam.gov/fal/${listingNumber}` : undefined);
+  const tags = descriptor?.businessCategories ?? row?.businessCategories ?? [];
+  const applicants = descriptor?.applicantTypes ?? descriptor?.applicantType ?? row?.applicantTypes ?? [];
   return {
     title,
     summary,
     url,
     status: 'open',
     benefit_type: 'grant',
-    tags: row?.businessCategories ?? [],
-    criteria: (row?.applicantTypes ?? []).map((type: string) => ({ kind: 'applicant_type', operator: 'eq', value: type }))
+    tags: Array.isArray(tags) ? tags.map(String).filter(Boolean) : typeof tags === 'string' ? [tags] : [],
+    criteria: (Array.isArray(applicants) ? applicants : typeof applicants === 'string' ? [applicants] : [])
+      .map((type: string) => ({ kind: 'applicant_type', operator: 'eq', value: String(type) }))
   };
 }
 
