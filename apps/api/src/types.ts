@@ -62,7 +62,7 @@ export interface SourceRateResponse {
 }
 
 export interface SourceResponse {
-  id: string;
+  id: number;
   source_id: number;
   country_code: string | null;
   authority: string;
