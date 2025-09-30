@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import openapiDocument from '../../../openapi.json';
 import { Env } from './db';
 import { buildProgramsQuery } from './query';
@@ -35,6 +36,8 @@ import {
   sendEmail
 } from './onboarding/email';
 
+type ApiBindings = { Bindings: Env; Variables: AuthVariables };
+
 const DOCS_HTML = `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -43,7 +46,9 @@ const DOCS_HTML = `<!DOCTYPE html>
     <title>Government Programs API</title>
     <link
       rel="stylesheet"
-      href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"
+      href="https://unpkg.com/swagger-ui-dist@5.29.1/swagger-ui.css"
+      integrity="sha384-++DMKo1369T5pxDNqojF1F91bYxYiT1N7b1M15a7oCzEodfljztKlApQoH6eQSKI"
+      crossorigin="anonymous"
     />
     <style>
       body {
@@ -88,8 +93,16 @@ const DOCS_HTML = `<!DOCTYPE html>
       </p>
     </header>
     <div id="swagger-ui"></div>
-    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js" crossorigin="anonymous"></script>
+    <script
+      src="https://unpkg.com/swagger-ui-dist@5.29.1/swagger-ui-bundle.js"
+      integrity="sha384-vsfVr6fXVrrOm42TcHdaLKHXXf7CfnGXHeGS9Y5bviKkuel3s7eN1WqMOqJMbM3m"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/swagger-ui-dist@5.29.1/swagger-ui-standalone-preset.js"
+      integrity="sha384-Se2dMItBjKehkhvdy8ZDK8Qbj8wWIgvme6DMtaefAPiGI75QN4jG8LS/eFfkUxi2"
+      crossorigin="anonymous"
+    ></script>
     <script>
       const specUrl = new URL('/openapi.json', window.location.origin).toString();
       window.addEventListener('load', () => {
@@ -277,9 +290,9 @@ function computeTimingFeature(
   return Math.min(1, Math.max(0, overlapDuration / reference));
 }
 
-const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
+const app = new Hono<ApiBindings>();
 
-const serveDocs = (c: Context<{ Bindings: Env; Variables: AuthVariables }>) => {
+const serveDocs = (c: Context<ApiBindings>) => {
   const res = c.html(DOCS_HTML);
   res.headers.set('Cache-Control', 'public, max-age=300');
   return res;
