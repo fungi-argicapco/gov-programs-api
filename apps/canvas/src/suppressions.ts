@@ -141,7 +141,7 @@ export async function recordSuppressionEvent(env: CanvasEnv, payload: PostmarkWe
   await env.DB.prepare(
     `INSERT INTO email_suppressions
       (email, suppressed, last_event_type, last_event_at, reason, description, details, message_stream, record_id, metadata, created_at, updated_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
      ON CONFLICT(email) DO UPDATE SET
        suppressed = excluded.suppressed,
        last_event_type = excluded.last_event_type,
@@ -165,6 +165,7 @@ export async function recordSuppressionEvent(env: CanvasEnv, payload: PostmarkWe
       normalized.messageStream ?? null,
       normalized.recordId ?? null,
       metadataJson,
+      recordedAt,
       recordedAt
     )
     .run();
