@@ -35,7 +35,10 @@ This checklist synthesizes the repo's design docs into an ordered plan to take t
 - Add optional ingestion dry-run coverage that uses fixtures/stubs to simulate scheduled execution without network calls.
 
 ## 7. Deployment & DNS
-- With secrets configured, run `bun run setup:remote` to render `wrangler.toml` with production bindings, then `bun run deploy` to publish the Worker and enforce the DNS record (`program.fungiagricap.com` by default). Override DNS environment variables only if a different hostname is required.
+- Ensure all required secrets are configured in the deployment environment.
+- Run `bun run setup:remote` to render `wrangler.toml` with production bindings.
+- Run `bun run deploy` to publish the Worker and enforce the DNS record (`program.fungiagricap.com` by default).
+- Override DNS environment variables only if a different hostname is required.
 - After deployment, verify the Worker responds on the target domain and that DNS propagation completed successfully.
 
 ## 8. Post-deploy validation & rollout
