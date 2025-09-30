@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+import type { DurableObjectNamespace } from '@cloudflare/workers-types';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createTestDB } from './helpers/d1';
@@ -117,5 +118,56 @@ describe('request metrics reporter', () => {
     // The formula below is mathematically equivalent: total * (200 + total - 1) / 2.
     const expectedBytes = total * (200 + total - 1) / 2;
     expect(Number(row!.bytes_out)).toBe(expectedBytes);
+  });
+});
+
+describe('durable object reporter', () => {
+  it('fetches a fresh stub for each report and flush call', async () => {
+    const fetchCalls: Array<ReturnType<typeof vi.fn>> = [];
+    const namespace = {
+      idFromName: vi.fn(() => ({
+        toString() {
+          return 'metrics';
+        }
+      })),
+      get: vi.fn(() => {
+        const fetch = vi.fn(async () => new Response('ok', { status: 202 }));
+        fetchCalls.push(fetch);
+        return { fetch };
+      })
+    } satisfies DurableObjectNamespace as DurableObjectNamespace;
+
+    const env = {
+      DB: createTestDB(),
+      CF_DO_METRICS_BINDING: 'METRICS_AGG',
+      METRICS_AGG: namespace
+    } as any;
+
+    const reporter = getMetricsReporter(env);
+
+    await reporter.reportRequest({
+      route: '/docs',
+      status: 200,
+      dur_ms: 12,
+      bytes_out: 1024,
+      ts: Date.now()
+    });
+
+    await reporter.reportRequest({
+      route: '/openapi.json',
+      status: 200,
+      dur_ms: 18,
+      bytes_out: 2048,
+      ts: Date.now()
+    });
+
+    await reporter.flush();
+
+    expect(namespace.idFromName).toHaveBeenCalledTimes(3);
+    expect(namespace.get).toHaveBeenCalledTimes(3);
+    expect(fetchCalls).toHaveLength(3);
+    for (const fetch of fetchCalls) {
+      expect(fetch).toHaveBeenCalledTimes(1);
+    }
   });
 });

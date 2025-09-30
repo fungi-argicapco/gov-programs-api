@@ -215,11 +215,14 @@ export class MetricsDO {
 }
 
 function createDurableReporter(env: MetricsEnv, namespace: DurableObjectNamespace): MetricsReporter {
-  const id = namespace.idFromName('metrics');
-  const stub = namespace.get(id);
   const base = 'https://metrics';
+  const getStub = () => {
+    const id = namespace.idFromName('metrics');
+    return namespace.get(id);
+  };
   return {
     async reportRequest(metric: RequestMetricInput) {
+      const stub = getStub();
       await stub.fetch(`${base}/request`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -227,6 +230,7 @@ function createDurableReporter(env: MetricsEnv, namespace: DurableObjectNamespac
       });
     },
     async flush() {
+      const stub = getStub();
       await stub.fetch(`${base}/flush`, { method: 'POST' });
     }
   };
