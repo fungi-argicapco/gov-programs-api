@@ -39,6 +39,31 @@ bun add -d wrangler bun-types >/dev/null 2>&1 || true
 
 touch .env
 ensure_kv () { local K="$1" V="$2"; if grep -q "^${K}=" .env 2>/dev/null; then sed -i.bak "s#^${K}=.*#${K}=${V}#g" .env; else echo "${K}=${V}" >> .env; fi; }
+kv_namespace_lookup() {
+  local kv_list_json="$1" kv_title="$2"
+  KV_LIST_JSON="$kv_list_json" KV_TITLE="$kv_title" "$PYBIN" - <<'PY'
+import json
+import os
+
+data = os.environ.get("KV_LIST_JSON", "")
+target = os.environ.get("KV_TITLE", "")
+
+try:
+    payload = json.loads(data)
+except Exception:
+    payload = []
+
+if isinstance(payload, list):
+    for entry in payload:
+        if isinstance(entry, dict):
+            title = entry.get("title") or entry.get("name") or entry.get("binding")
+            if title and title.lower() == target.lower():
+                namespace_id = entry.get("id") or entry.get("namespace_id")
+                if namespace_id:
+                    print(namespace_id)
+                    break
+PY
+}
 
 CF_TOKEN="${CLOUDFLARE_API_TOKEN:-${CF_API_TOKEN:-}}"
 CF_ACCOUNT="${CLOUDFLARE_ACCOUNT_ID:-${CF_ACCOUNT_ID:-}}"
@@ -86,58 +111,14 @@ PY
   K1="$(bunx wrangler kv:namespace create "$KV_LOOKUPS" --account-id "$CF_ACCOUNT" 2>&1 || true)"
   LOOKUPS_ID="$(printf "%s" "$K1" | grep -oE '[a-z0-9]{32}' | head -n1)"
   if [ -z "$LOOKUPS_ID" ]; then
-    KL="$(bunx wrangler kv:namespace list --account-id "$CF_ACCOUNT" --json 2>/dev/null || true)"
-    LOOKUPS_ID="$(KV_LIST_JSON="$KL" KV_TITLE="$KV_LOOKUPS" "$PYBIN" - <<'PY'
-import json
-import os
-
-data = os.environ.get("KV_LIST_JSON", "")
-target = os.environ.get("KV_TITLE", "")
-
-try:
-    payload = json.loads(data)
-except Exception:
-    payload = []
-
-if isinstance(payload, list):
-    for entry in payload:
-        if isinstance(entry, dict):
-            title = entry.get("title") or entry.get("name") or entry.get("binding")
-            if title and title.lower() == target.lower():
-                namespace_id = entry.get("id") or entry.get("namespace_id")
-                if namespace_id:
-                    print(namespace_id)
-                    break
-PY
-)"
+    KL="$(CLOUDFLARE_ACCOUNT_ID="$CF_ACCOUNT" bunx wrangler kv:namespace list 2>/dev/null || true)"
+    LOOKUPS_ID="$(kv_namespace_lookup "$KL" "$KV_LOOKUPS")"
   fi
   K2="$(bunx wrangler kv:namespace create "$KV_API_KEYS" --account-id "$CF_ACCOUNT" 2>&1 || true)"
   APIKEYS_ID="$(printf "%s" "$K2" | grep -oE '[a-z0-9]{32}' | head -n1)"
   if [ -z "$APIKEYS_ID" ]; then
-    KL2="$(bunx wrangler kv:namespace list --account-id "$CF_ACCOUNT" --json 2>/dev/null || true)"
-    APIKEYS_ID="$(KV_LIST_JSON="$KL2" KV_TITLE="$KV_API_KEYS" "$PYBIN" - <<'PY'
-import json
-import os
-
-data = os.environ.get("KV_LIST_JSON", "")
-target = os.environ.get("KV_TITLE", "")
-
-try:
-    payload = json.loads(data)
-except Exception:
-    payload = []
-
-if isinstance(payload, list):
-    for entry in payload:
-        if isinstance(entry, dict):
-            title = entry.get("title") or entry.get("name") or entry.get("binding")
-            if title and title.lower() == target.lower():
-                namespace_id = entry.get("id") or entry.get("namespace_id")
-                if namespace_id:
-                    print(namespace_id)
-                    break
-PY
-)"
+    KL2="$(CLOUDFLARE_ACCOUNT_ID="$CF_ACCOUNT" bunx wrangler kv:namespace list 2>/dev/null || true)"
+    APIKEYS_ID="$(kv_namespace_lookup "$KL2" "$KV_API_KEYS")"
   fi
 
     if [ -z "$R2_BUCKET" ]; then
