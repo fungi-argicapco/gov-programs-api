@@ -18,51 +18,68 @@ describe('runCatalogOnce', () => {
     responses.clear();
     responses.set(
       'https://www.grants.gov/grantsws/rest/opportunities/search?filter=active&sortBy=closeDate',
-      JSON.stringify([
-        {
-          title: 'Test Grants.gov Program',
-          description: 'Agriculture support for farms',
-          openDate: '2025-01-01',
-          closeDate: '2025-12-31',
-          opportunityNumber: 'TEST-123',
-          category: ['agriculture'],
-          eligibilityCategory: ['county governments']
-        }
-      ])
+      JSON.stringify({
+        opportunities: [
+          {
+            OpportunityTitle: 'Test Grants.gov Program',
+            Synopsis: 'Agriculture support for farms',
+            PostDate: '2025-01-01',
+            CloseDate: '2025-12-31',
+            OpportunityNumber: 'TEST-123',
+            Category: 'agriculture',
+            eligibilityCategory: ['county governments']
+          }
+        ]
+      })
     );
     responses.set(
       'https://sam.gov/api/prod/sgs/v1/search?index=assistancelisting&q=*&sort=-modifiedDate',
-      JSON.stringify([
-        {
-          assistanceListingTitle: 'SAM Listing',
-          assistanceListingNumber: '12.345',
-          assistanceListingDescription: 'Energy upgrades',
-          applicantTypes: ['state'],
-          businessCategories: ['energy']
+      JSON.stringify({
+        searchResult: {
+          searchResultItems: [
+            {
+              matchedObjectId: '12.345',
+              matchedObjectDescriptor: {
+                assistanceListingTitle: 'SAM Listing',
+                assistanceListingNumber: '12.345',
+                assistanceListingDescription: 'Energy upgrades',
+                applicantTypes: ['state'],
+                businessCategories: ['energy']
+              }
+            }
+          ]
         }
-      ])
+      })
     );
     responses.set(
       'https://open.canada.ca/data/en/api/3/action/package_search?q=assistance%20program&rows=100',
-      JSON.stringify([
-        {
-          title: 'Canada Assistance',
-          notes: 'Manufacturing support',
-          resources: [{ url: 'https://open.canada.ca/program' }],
-          tags: [{ name: 'manufacturing' }]
+      JSON.stringify({
+        result: {
+          results: [
+            {
+              title: 'Canada Assistance',
+              notes: 'Manufacturing support',
+              resources: [{ url: 'https://open.canada.ca/program', format: 'HTML' }],
+              tags: [{ name: 'manufacturing' }]
+            }
+          ]
         }
-      ])
+      })
     );
     responses.set(
       'https://data.ontario.ca/en/api/3/action/package_search?q=grant&rows=100',
-      JSON.stringify([
-        {
-          title: 'Ontario Innovation',
-          notes: 'Tech support',
-          resources: [{ url: 'https://data.ontario.ca/program' }],
-          tags: [{ name: 'tech' }]
+      JSON.stringify({
+        result: {
+          results: [
+            {
+              title: 'Ontario Innovation',
+              notes: 'Tech support',
+              resources: [{ url: 'https://data.ontario.ca/program', format: 'HTML' }],
+              tags: [{ name: 'tech' }]
+            }
+          ]
         }
-      ])
+      })
     );
     globalThis.fetch = vi.fn(async (url: RequestInfo) => {
       const body = responses.get(String(url));
@@ -97,5 +114,11 @@ describe('runCatalogOnce', () => {
 
     const insertedSum = await env.prepare('SELECT SUM(inserted) as n FROM ingestion_runs').first<{ n: number }>();
     expect(Number(insertedSum?.n ?? 0)).toBeGreaterThan(0);
+
+    const sourceRows = await env
+      .prepare('SELECT name, url, authority_level, jurisdiction_code FROM sources ORDER BY name')
+      .all<{ name: string; url: string; authority_level: string; jurisdiction_code: string }>();
+    expect(sourceRows.results.length).toBeGreaterThanOrEqual(4);
+    expect(sourceRows.results[0]?.name).toBe('ca-fed-open-gov');
   });
 });

@@ -6,6 +6,7 @@ export type SourceDef = {
   kind: 'json' | 'rss' | 'html';
   entrypoint: string;
   parser: 'json_api_generic' | 'rss_generic' | 'html_table_generic';
+  path?: string;
   mapFn?: string;
   rate: { rps: number; burst: number };
   schedule: '4h' | 'daily';
@@ -23,6 +24,7 @@ export const SOURCES: SourceDef[] = [
     entrypoint:
       'https://www.grants.gov/grantsws/rest/opportunities/search?filter=active&sortBy=closeDate',
     parser: 'json_api_generic',
+    path: 'opportunities',
     mapFn: 'mapGrantsGov',
     rate: { rps: 2, burst: 5 },
     schedule: '4h',
@@ -38,6 +40,7 @@ export const SOURCES: SourceDef[] = [
     entrypoint:
       'https://sam.gov/api/prod/sgs/v1/search?index=assistancelisting&q=*&sort=-modifiedDate',
     parser: 'json_api_generic',
+    path: 'searchResult.searchResultItems',
     mapFn: 'mapSamAssistance',
     rate: { rps: 1, burst: 3 },
     schedule: 'daily',
@@ -53,6 +56,7 @@ export const SOURCES: SourceDef[] = [
     entrypoint:
       'https://open.canada.ca/data/en/api/3/action/package_search?q=assistance%20program&rows=100',
     parser: 'json_api_generic',
+    path: 'result.results',
     mapFn: 'mapCkanGC',
     rate: { rps: 1, burst: 2 },
     schedule: 'daily',
@@ -67,6 +71,7 @@ export const SOURCES: SourceDef[] = [
     entrypoint:
       'https://data.ontario.ca/en/api/3/action/package_search?q=grant&rows=100',
     parser: 'json_api_generic',
+    path: 'result.results',
     mapFn: 'mapCkanProvON',
     rate: { rps: 1, burst: 2 },
     schedule: 'daily',

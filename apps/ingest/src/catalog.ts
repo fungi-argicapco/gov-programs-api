@@ -213,6 +213,7 @@ export async function runCatalogOnce(env: IngestEnv, now: Date = new Date()): Pr
           const result = await ingestJsonApiGeneric(env, {
             url: source.entrypoint,
             data: parsed,
+            path: source.path,
             country: source.country,
             authority: source.authority,
             jurisdiction: source.jurisdiction,
