@@ -56,14 +56,27 @@ export interface ProgramListResponse {
 
 export interface ProgramDetailResponse extends ProgramResponse {}
 
+export interface SourceRateResponse {
+  rps: number;
+  burst: number;
+}
+
 export interface SourceResponse {
   id: number;
-  name: string;
+  source_id: number;
+  country_code: string | null;
+  authority: string;
+  authority_level?: string; // Backward compatibility with previous field name
+  jurisdiction_code: string;
+  kind: string | null;
+  parser: string | null;
+  schedule: string | null;
+  rate: SourceRateResponse | null;
   url: string | null;
   license: string | null;
   tos_url: string | null;
-  authority_level: string;
-  jurisdiction_code: string;
+  last_success_at: number | null;
+  success_rate_7d: number;
 }
 
 export interface SourcesResponse {

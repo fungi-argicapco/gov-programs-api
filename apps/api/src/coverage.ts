@@ -1,6 +1,6 @@
 import type { Env } from './db';
 import { formatDay } from '@common/dates';
-import { SOURCES } from '../../../data/sources/phase2';
+import { SOURCES, type SourceDef } from '../../../data/sources/phase2';
 
 type SourceRow = {
   id: number;
@@ -15,8 +15,13 @@ type SourceRow = {
 type SourceMetrics = {
   id: string;
   source_id: number;
+  country_code: SourceDef['country'] | null;
   authority: string;
   jurisdiction_code: string;
+  kind: SourceDef['kind'] | null;
+  parser: SourceDef['parser'] | null;
+  schedule: SourceDef['schedule'] | null;
+  rate: SourceDef['rate'] | null;
   url: string | null;
   license: string | null;
   tos_url: string | null;
@@ -79,11 +84,17 @@ export async function listSourcesWithMetrics(env: Env): Promise<SourceMetrics[]>
   return sourceRows.map((row) => {
     const agg = rateAggregates.get(row.id);
     const lastSuccess = lastSuccessMap.get(row.id)?.last_success_at ?? null;
+    const def = SOURCES.find((source) => source.id === row.name);
     return {
       id: row.name,
       source_id: row.id,
+      country_code: def?.country ?? null,
       authority: row.authority_level,
       jurisdiction_code: row.jurisdiction_code,
+      kind: def?.kind ?? null,
+      parser: def?.parser ?? null,
+      schedule: def?.schedule ?? null,
+      rate: def?.rate ? { ...def.rate } : null,
       url: row.url ?? null,
       license: row.license ?? null,
       tos_url: row.tos_url ?? null,
