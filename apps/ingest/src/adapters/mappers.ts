@@ -37,6 +37,12 @@ const classifyGrantStatus = (openDate?: string, closeDate?: string): MapperResul
   return 'unknown';
 };
 
+const normalizeStringList = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  if (typeof value === 'string') return value ? [value] : [];
+  return [];
+};
+
 export function mapGrantsGov(row: any): MapperResult {
   const normalized = row?.opportunity ?? row;
   const title =
@@ -99,17 +105,18 @@ export function mapSamAssistance(row: any): MapperResult {
     row?.uri ??
     row?.landingPage ??
     (listingNumber ? `https://sam.gov/fal/${listingNumber}` : undefined);
-  const tags = descriptor?.businessCategories ?? row?.businessCategories ?? [];
-  const applicants = descriptor?.applicantTypes ?? descriptor?.applicantType ?? row?.applicantTypes ?? [];
+  const tags = normalizeStringList(descriptor?.businessCategories ?? row?.businessCategories);
+  const applicants = normalizeStringList(
+    descriptor?.applicantTypes ?? descriptor?.applicantType ?? row?.applicantTypes
+  );
   return {
     title,
     summary,
     url,
     status: 'open',
     benefit_type: 'grant',
-    tags: Array.isArray(tags) ? tags.map(String).filter(Boolean) : typeof tags === 'string' ? [tags] : [],
-    criteria: (Array.isArray(applicants) ? applicants : typeof applicants === 'string' ? [applicants] : [])
-      .map((type: string) => ({ kind: 'applicant_type', operator: 'eq', value: String(type) }))
+    tags,
+    criteria: applicants.map((type: string) => ({ kind: 'applicant_type', operator: 'eq', value: type }))
   };
 }
 
