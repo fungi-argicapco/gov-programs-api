@@ -1,4 +1,6 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
+import openapiDocument from '../../../openapi.json';
 import { Env } from './db';
 import { buildProgramsQuery } from './query';
 import { listSourcesWithMetrics, buildCoverageResponse, type CoverageResponse } from './coverage';
@@ -33,6 +35,90 @@ import {
   buildDecisionResultEmail,
   sendEmail
 } from './onboarding/email';
+
+type ApiBindings = { Bindings: Env; Variables: AuthVariables };
+
+const DOCS_HTML = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Government Programs API</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/swagger-ui-dist@5.29.1/swagger-ui.css"
+      integrity="sha384-++DMKo1369T5pxDNqojF1F91bYxYiT1N7b1M15a7oCzEodfljztKlApQoH6eQSKI"
+      crossorigin="anonymous"
+    />
+    <style>
+      body {
+        margin: 0;
+        background: #f8f9fa;
+      }
+      header {
+        background: #0f172a;
+        color: #f8fafc;
+        padding: 24px 32px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+      }
+      header p {
+        margin: 8px 0 0 0;
+        max-width: 720px;
+        line-height: 1.4;
+      }
+      #swagger-ui {
+        margin: 24px auto;
+        max-width: 1200px;
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+        border-radius: 12px;
+      }
+      @media (max-width: 1024px) {
+        #swagger-ui {
+          margin: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Government Programs API</h1>
+      <p>
+        Explore the available endpoints, schemas, and example requests using the
+        interactive documentation below.
+      </p>
+    </header>
+    <div id="swagger-ui"></div>
+    <script
+      src="https://unpkg.com/swagger-ui-dist@5.29.1/swagger-ui-bundle.js"
+      integrity="sha384-vsfVr6fXVrrOm42TcHdaLKHXXf7CfnGXHeGS9Y5bviKkuel3s7eN1WqMOqJMbM3m"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/swagger-ui-dist@5.29.1/swagger-ui-standalone-preset.js"
+      integrity="sha384-Se2dMItBjKehkhvdy8ZDK8Qbj8wWIgvme6DMtaefAPiGI75QN4jG8LS/eFfkUxi2"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      const specUrl = new URL('/openapi.json', window.location.origin).toString();
+      window.addEventListener('load', () => {
+        window.ui = SwaggerUIBundle({
+          url: specUrl,
+          dom_id: '#swagger-ui',
+          deepLinking: true,
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+          layout: 'BaseLayout',
+          docExpansion: 'none',
+          defaultModelRendering: 'schema',
+        });
+      });
+    </script>
+  </body>
+</html>`;
 
 const MATCH_RESPONSE_LIMIT = 50;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -204,9 +290,23 @@ function computeTimingFeature(
   return Math.min(1, Math.max(0, overlapDuration / reference));
 }
 
-const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
+const app = new Hono<ApiBindings>();
+
+const serveDocs = (c: Context<ApiBindings>) => {
+  const res = c.html(DOCS_HTML);
+  res.headers.set('Cache-Control', 'public, max-age=300');
+  return res;
+};
 
 app.use('*', mwMetrics);
+
+app.get('/', serveDocs);
+app.get('/docs', serveDocs);
+app.get('/openapi.json', (c) => {
+  const res = c.json(openapiDocument);
+  res.headers.set('Cache-Control', 'public, max-age=300');
+  return res;
+});
 
 function parseIndustryCodes(raw: string | null | undefined): string[] {
   if (!raw) return [];
