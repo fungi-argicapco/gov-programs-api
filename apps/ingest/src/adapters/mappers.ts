@@ -113,13 +113,25 @@ export function mapSamAssistance(row: any): MapperResult {
   };
 }
 
+interface CkanTag {
+  name: string;
+}
+
+const isCkanTag = (tag: unknown): tag is CkanTag => {
+  return (
+    typeof tag === 'object' &&
+    tag !== null &&
+    typeof (tag as { name?: unknown }).name === 'string'
+  );
+};
+
 const normalizeCkanTags = (tags: unknown): string[] => {
   if (Array.isArray(tags)) {
     return tags
       .map((tag) => {
         if (typeof tag === 'string') return tag;
-        if (tag && typeof tag === 'object' && typeof (tag as any).name === 'string') {
-          return (tag as any).name;
+        if (isCkanTag(tag)) {
+          return tag.name;
         }
         return undefined;
       })
