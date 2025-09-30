@@ -58,6 +58,7 @@ export async function handlePostmarkWebhook(req: Request, env: CanvasEnv): Promi
 
   try {
     for (const event of events) {
+      // TODO: persist suppression, metrics, etc.
       await recordSuppressionEvent(env, event);
     }
   } catch (error) {
