@@ -31,8 +31,10 @@ This checklist synthesizes the repo's design docs into an ordered plan to take t
 
 ## 5. Enrichment, coverage, and observability
 - Ensure NAICS enrichment via `enrichNaics` is wired to Cloudflare KV fallback behaviour so programs carry industry codes even when remote lookups are missing.
-- Populate coverage metrics (`/v1/sources`, `/v1/stats/coverage`) using the new observability tables; validate freshness windows (≤6h for 4h sources, ≤30h for daily) and NAICS density calculations.
+- Populate coverage metrics (`/v1/sources`, `/v1/stats/coverage`) using the new observability tables.
 - Confirm `ingestion_runs` and `program_diffs` are being written each cycle and that partial/error runs still log diagnostics for debugging.
+- Track NAICS density and tag coverage targets (≥90% of programs with at least one NAICS code, ≥95% with tags) through `/v1/stats/coverage` and alert on regressions.
+- Build or update dashboards that surface ingestion run counts, last-success timestamps, NAICS density trends, and stale-source thresholds for ops readiness.
 
 ## 6. Automated testing & CI
 - Maintain unit tests for NAICS enrichment, catalog dispatch, and query builders alongside Bun type checking to keep CI green.
@@ -47,5 +49,10 @@ This checklist synthesizes the repo's design docs into an ordered plan to take t
 
 ## 8. Post-deploy validation & rollout
 - Execute the rollout plan: apply schema migrations locally first, enable the catalog-driven ingestion loop behind a feature flag or staged cron, and monitor observability dashboards for healthy runs.
+- Run `bun run postdeploy:validate --base-url=https://programs.api.example.com` (override the URL as needed) after each deploy to confirm:
+  - `/v1/sources` freshness adheres to SLA windows (≤6h for `4h` sources, ≤30h for `daily`).
+  - `/v1/stats/coverage` NAICS density remains ≥90% and tag coverage stays on target.
+  - Coverage report history trends are being persisted for dashboards.
 - Validate `/v1/sources` and `/v1/stats/coverage` payloads for completeness, ensuring new fields do not break downstream consumers.
+- Review the [progressive rollout plan](./progressive-rollout-plan.md) before adding new jurisdictions; confirm data quality exit criteria (freshness, NAICS/tag density, alert coverage) are met for each cohort.
 - Once stable, expand the catalog to additional jurisdictions while tracking success criteria (all sources ingest within SLA, coverage endpoints accurate, automation passing).

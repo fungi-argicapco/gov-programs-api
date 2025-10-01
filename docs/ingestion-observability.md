@@ -66,6 +66,27 @@ The ingestion worker logs JSON payloads such as:
 
 These logs can be consumed by Cloudflare Logpush or Workers Analytics to create dashboards and alert on error or critical-change thresholds.
 
+### Dashboard checklist
+
+- **Freshness heatmap** – build a `/v1/sources` view grouped by jurisdiction showing `last_success_at` vs. SLA windows (≤6h for `4h`, ≤30h for `daily`). Highlight stale sources (>SLA) with alert thresholds at 24 hours.
+- **Coverage trends** – chart `/v1/stats/coverage.naics_density` and tag coverage over 14 days. Break out NAICS density by rollout cohort tags to watch for regressions during expansion.
+- **Run stability** – overlay 7-day success rates from `ingestion_runs` with cumulative error counts. Trigger a warning when success rate drops below 85% or when error rate exceeds 20%.
+- **Diff reviews** – surface `program_diffs` flagged `critical` so reviewers can sign off on impactful changes as part of rollout exit criteria.
+
+### Alert thresholds & playbooks
+
+- **Error rate >20%**: Page the ingestion on-call rotation. Consult adapter-specific runbooks and pause scheduled cron jobs for affected sources if errors persist beyond two runs.
+- **Stale source >24h**: Trigger Slack + PagerDuty alerts. Use the post-deploy validation script to confirm the stale status and disable the source via `INGEST_SOURCES_ALLOWLIST` until backfill completes.
+- **NAICS density <90%**: Notify enrichment owners. Validate KV lookups and rerun enrichment backfill if coverage drops after a rollout.
+- **Diff backlog >10 critical entries**: Escalate to product/ops for review before continuing rollout.
+
+### Post-deploy validation workflow
+
+1. Deploy the worker and confirm metrics ingestion is active.
+2. Run `bun run postdeploy:validate --base-url=<environment-url>` to capture `/v1/sources` freshness, NAICS density, and tag coverage snapshots.
+3. Upload the JSON artifact to the release ticket and compare against the previous deploy to spot regressions.
+4. Update dashboards with any new cohort tags or sources before widening rollout.
+
 ## Testing
 
 Vitest covers the diff utility (`apps/ingest/src/diff/json.test.ts`) and catalog ingestion (`tests/ingest.catalog.test.ts`). Run `bun test` or `bun run typecheck` before deploying.

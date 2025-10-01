@@ -17,7 +17,8 @@
     "typecheck": "bunx tsc -p tsconfig.json",
     "lint": "bun run typecheck",
     "openapi": "bun run scripts/generate-openapi.ts",
-    "ingest:once": "bun run scripts/ingest-once.ts"
+    "ingest:once": "bun run scripts/ingest-once.ts",
+    "postdeploy:validate": "bun run scripts/postdeploy.validate.ts"
   },
   "dependencies": {
     "@cloudflare/d1": "^1.4.1",
