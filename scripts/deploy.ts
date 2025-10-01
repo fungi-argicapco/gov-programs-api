@@ -82,6 +82,8 @@ async function ensureDnsRecord(): Promise<void> {
 async function deployWorker(): Promise<void> {
   requireEnv('CLOUDFLARE_ACCOUNT_ID', accountId);
   requireEnv('CLOUDFLARE_API_TOKEN', apiToken);
+  console.log('➡️ Building frontend assets…');
+  await $`bun run web:build`;
   await ensureDnsRecord();
   console.log('➡️ Deploying Worker via wrangler…');
   await $`bunx wrangler deploy`;

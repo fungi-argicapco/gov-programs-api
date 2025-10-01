@@ -7,8 +7,9 @@ This checklist synthesizes the repo's design docs into an ordered plan to take t
   1. `bun install` – Install project dependencies (also invoked automatically by setup scripts).
   2. `bash codex/env.setup.sh` – Ensure Bun is installed and render local scaffolding.
   3. `bun run setup:local` – Generate `.env.dev.local`, `wrangler.toml`, and placeholder bindings.
-  4. `bun run typecheck` – Run strict TypeScript checks.
-  5. `bun test` – Execute the test suite.
+  4. `bun run web:build` – Compile the Svelte access portal into `apps/web/dist` so Wrangler can serve fresh assets.
+  5. `bun run typecheck` – Run strict TypeScript checks.
+  6. `bun test` – Execute the test suite.
 - Populate `PROGRAM_API_BASE`, `EMAIL_ADMIN`, and `EMAIL_SENDER` inside `.env.dev.local` before running `bunx wrangler dev --local`; optional keys (`SESSION_COOKIE_NAME`, `MFA_ISSUER`, `ALERTS_MAX_DELIVERY_ATTEMPTS`) are scaffolded for convenience.
 - Smoke-test the worker locally with `bunx wrangler dev --local` once type checking and tests pass to ensure scheduled handlers and bindings resolve correctly.
 

@@ -8,5 +8,6 @@ export type Env = {
   EMAIL_SENDER?: string;
   PROGRAM_API_BASE?: string;
   SESSION_COOKIE_NAME?: string;
+  ASSETS?: Fetcher;
 };
 export const getDb = (env: Env) => drizzle(env.DB);

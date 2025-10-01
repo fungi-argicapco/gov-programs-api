@@ -13,3 +13,4 @@ coverage/
 .DS_Store
 gov-programs-api.code-workspace
 .wrangler/
+data/ingest.dev.sqlite

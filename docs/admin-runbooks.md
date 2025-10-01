@@ -1,6 +1,8 @@
 # Admin Runbooks: Account & Canvas Operations
 
 ## Approving Account Requests
+Inbound requests flow through the Svelte access portal served at `/`, which writes to `account_requests` and emails the operator distribution list configured via `EMAIL_ADMIN`.
+
 1. Navigate to the Cloudflare Worker admin decision console at `/admin/account/decision`.
 2. Verify the requester context (email, justification, requested apps).
 3. Approve via the generated decision token link; this will automatically:

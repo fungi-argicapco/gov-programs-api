@@ -2,6 +2,10 @@ name = "gov-programs-api"
 main = "apps/api/src/index.ts"
 compatibility_date = "2025-09-21"
 
+[assets]
+directory = "apps/web/dist"
+binding = "ASSETS"
+
 [vars]
 NODE_ENV = "production"
 

@@ -43,6 +43,11 @@ async function runInstall() {
   await $`bun install`;
 }
 
+async function buildWebAssets() {
+  info('➡️ Building frontend assets (apps/web)…');
+  await $`bun run web:build`;
+}
+
 async function maybeInitTsconfig() {
   const tsconfigPath = resolve(cwd, 'tsconfig.json');
   if (!existsSync(tsconfigPath)) {
@@ -62,7 +67,7 @@ async function maybeInitTsconfig() {
         resolveJsonModule: true,
         forceConsistentCasingInFileNames: true,
         skipLibCheck: true,
-        lib: ['ES2022', 'WebWorker'],
+        lib: ['ES2022', 'WebWorker', 'DOM'],
         types: ['@cloudflare/workers-types', 'vitest/globals']
       };
       data.include = Array.from(new Set([...(data.include ?? []), 'apps', 'packages', 'scripts', 'vitest.config.ts']));
@@ -387,6 +392,7 @@ async function main() {
   ensureDirs();
   await runInstall();
   await maybeInitTsconfig();
+  await buildWebAssets();
 
   let envValues: Record<string, string>;
 

@@ -126,7 +126,16 @@ function parseArgs(): CliOptions {
   return { sources, dbPath };
 }
 
+function isIgnorableMigrationError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  const message = error.message.toLowerCase();
+  return message.includes('already exists') || message.includes('duplicate column name');
+}
+
 async function applyMigrations(db: D1Like) {
+
   const migrationsDir = resolve(process.cwd(), 'migrations');
   if (!existsSync(migrationsDir)) {
     return;
@@ -136,7 +145,15 @@ async function applyMigrations(db: D1Like) {
     .sort();
   for (const file of files) {
     const sql = readFileSync(join(migrationsDir, file), 'utf8');
-    await db.exec(sql);
+    try {
+      await db.exec(sql);
+    } catch (error) {
+      if (isIgnorableMigrationError(error)) {
+        console.warn(`⚠️ Skipping migration ${file} because schema changes already exist.`);
+        continue;
+      }
+      throw error;
+    }
   }
 }
 

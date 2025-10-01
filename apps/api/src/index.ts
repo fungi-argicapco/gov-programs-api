@@ -300,9 +300,38 @@ const serveDocs = (c: Context<ApiBindings>) => {
   return res;
 };
 
+const serveStaticAsset = (c: Context<ApiBindings>) => {
+  if (!c.env.ASSETS) {
+    return c.text('Static assets not configured', 500);
+  }
+  return c.env.ASSETS.fetch(c.req.raw);
+};
+
+const serveSite = (c: Context<ApiBindings>) => {
+  if (!c.env.ASSETS) {
+    return serveDocs(c);
+  }
+  const url = new URL(c.req.url);
+  const needsSpaFallback = url.pathname === '/' || url.pathname.startsWith('/signup');
+  if (needsSpaFallback) {
+    const assetUrl = new URL('/index.html', c.req.url);
+    return c.env.ASSETS.fetch(
+      new Request(assetUrl.toString(), {
+        method: 'GET',
+        headers: c.req.raw.headers
+      })
+    );
+  }
+  return c.env.ASSETS.fetch(c.req.raw);
+};
+
 app.use('*', mwMetrics);
 
-app.get('/', serveDocs);
+app.get('/', serveSite);
+app.get('/signup', serveSite);
+app.get('/signup/*', serveSite);
+app.get('/assets/*', serveStaticAsset);
+app.get('/favicon.ico', serveStaticAsset);
 app.get('/docs', serveDocs);
 app.get('/openapi.json', (c) => {
   const res = c.json(openapiDocument);
