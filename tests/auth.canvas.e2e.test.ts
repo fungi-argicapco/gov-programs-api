@@ -403,31 +403,37 @@ describe('email templates', () => {
 
   it('logs email send operations when routing is configured', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const envWithSender = { DB: createTestDB(), EMAIL_SENDER: 'register@fungiagricap.com' } as any;
-    await sendEmail(envWithSender, {
-      to: 'user@example.com',
-      subject: 'Test',
-      html: '<p>Test</p>',
-    });
-    expect(logSpy).toHaveBeenCalledWith('Email send requested', {
-      from: 'register@fungiagricap.com',
-      to: 'user@example.com',
-      subject: 'Test',
-    });
-    logSpy.mockRestore();
+    try {
+      const envWithSender = { DB: createTestDB(), EMAIL_SENDER: 'register@fungiagricap.com' } as any;
+      await sendEmail(envWithSender, {
+        to: 'user@example.com',
+        subject: 'Test',
+        html: '<p>Test</p>',
+      });
+      expect(logSpy).toHaveBeenCalledWith('Email send requested', {
+        from: 'register@fungiagricap.com',
+        to: 'user@example.com',
+        subject: 'Test',
+      });
+    } finally {
+      logSpy.mockRestore();
+    }
   });
 
   it('warns when email sender is not configured', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    await sendEmail({ DB: createTestDB() } as any, {
-      to: 'user@example.com',
-      subject: 'Missing sender',
-      html: '<p>Missing sender</p>',
-    });
-    expect(warnSpy).toHaveBeenCalledWith('EMAIL_SENDER not configured; skipping email send', {
-      to: 'user@example.com',
-      subject: 'Missing sender',
-    });
-    warnSpy.mockRestore();
+    try {
+      await sendEmail({ DB: createTestDB() } as any, {
+        to: 'user@example.com',
+        subject: 'Missing sender',
+        html: '<p>Missing sender</p>',
+      });
+      expect(warnSpy).toHaveBeenCalledWith('EMAIL_SENDER not configured; skipping email send', {
+        to: 'user@example.com',
+        subject: 'Missing sender',
+      });
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });
