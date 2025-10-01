@@ -8,10 +8,10 @@ This roadmap sequences the Phase 2 scope into themed sprints that align ingestio
 **Deliverables**
 - Verified local setup scripts and documentation updates covering Bun-only workflows and Cloudflare prerequisites.
 - Passing baseline automation: `bun run typecheck`, `bun test`, and `bunx wrangler dev` smoke validation.
-- Hardened migration runbooks for D1 schemas up to `0010_canvas_onboarding.sql`.
+- Hardened migration runbooks for D1 schemas up to `0010_canvas_onboarding.sql`, including dry-run guidance, rollback verification, and checkpointed schema validation steps.
 
 **Backlog Highlights**
-- Run and document `bun install`, `bash codex/env.setup.sh`, and `bun run setup:local`, calling out `.env.dev.local` values to unblock `wrangler dev` usage.
+- Run and document `bun install`, `bash codex/env.setup.sh`, and `bun run setup:local`, calling out `.env.dev.local` values to unblock `wrangler dev` usage so new contributors don't stall on missing Cloudflare bindings.
 - Capture production secret requirements (`CLOUDFLARE_*`, `PROGRAM_API_BASE`, `EMAIL_*`) in launch docs and verify `bun run setup:remote` idempotence.
 - Exercise `bun run deploy` in a sandbox, confirming DNS enforcement behavior and Durable Object prerequisites.
 
