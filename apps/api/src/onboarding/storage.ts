@@ -1,4 +1,11 @@
-import { exampleCanvasContent, schemaVersion } from '../schemas';
+import {
+  canvasCreateSchema,
+  canvasSchema,
+  canvasUpdateSchema,
+  canvasVersionSchema,
+  exampleCanvasContent,
+  schemaVersion,
+} from '../schemas';
 import type { Env } from '../db';
 
 type DateTimeString = string;
@@ -27,7 +34,7 @@ type AccountRequestRecord = {
   reviewer_comment: string | null;
 };
 
-type EmailTokenRecord = {
+export type EmailTokenRecord = {
   id: string;
   token: string;
   purpose: string;
@@ -78,6 +85,7 @@ type SessionRecord = {
   user_id: string;
   issued_at: string;
   expires_at: string;
+  refresh_expires_at?: string | null;
   mfa_required: number;
   ip: string | null;
   user_agent: string | null;
@@ -118,6 +126,13 @@ async function insertEmailToken(env: Env, options: {
     createdAt
   ).run();
   return { id, token, expiresAt, createdAt };
+}
+
+export async function createEmailToken(
+  env: Env,
+  options: { purpose: string; accountRequestId?: string; userId?: string; expiresAt?: string }
+) {
+  return insertEmailToken(env, options);
 }
 
 export async function createAccountRequest(
@@ -300,21 +315,33 @@ export async function ensureUserWithDefaultCanvas(env: Env, profile: {
 export async function createSession(
   env: Env,
   userId: string,
-  options: { mfaRequired: boolean; ip?: string; userAgent?: string; refreshTokenHash?: string }
+  options: {
+    mfaRequired: boolean;
+    ip?: string;
+    userAgent?: string;
+    refreshTokenHash?: string;
+    refreshExpiresAt?: string;
+    issuedAt?: string;
+    expiresAt?: string;
+  }
 ) {
   const id = randomId('sess');
-  const issuedAt = now();
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 8).toISOString();
+  const issuedAt = options.issuedAt ?? now();
+  const expiresAt = options.expiresAt ?? new Date(Date.now() + 1000 * 60 * 60 * 8).toISOString();
+  const refreshExpiresAt = options.refreshTokenHash
+    ? options.refreshExpiresAt ?? new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString()
+    : null;
 
   await env.DB.prepare(
-    `INSERT INTO sessions (id, user_id, issued_at, expires_at, mfa_required, ip, user_agent, refresh_token_hash, created_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
+    `INSERT INTO sessions (id, user_id, issued_at, expires_at, refresh_expires_at, mfa_required, ip, user_agent, refresh_token_hash, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`
   )
     .bind(
       id,
       userId,
       issuedAt,
       expiresAt,
+      refreshExpiresAt,
       options.mfaRequired ? 1 : 0,
       options.ip ?? null,
       options.userAgent ?? null,
@@ -331,12 +358,15 @@ export async function createSession(
     expires_at: expiresAt,
     mfa_required: options.mfaRequired,
     ip: options.ip,
-    ua: options.userAgent
+    ua: options.userAgent,
+    refresh_expires_at: refreshExpiresAt ?? undefined,
   };
 }
 
 export async function getSession(env: Env, sessionId: string) {
-  const record = await env.DB.prepare(`SELECT * FROM sessions WHERE id = ?1`).bind(sessionId).first<SessionRecord>();
+  const record = await env.DB.prepare(`SELECT * FROM sessions WHERE id = ?1`).bind(sessionId).first<SessionRecord & {
+    refresh_expires_at: string | null;
+  }>();
   if (!record) return null;
   return {
     schema_version: SCHEMA_VERSION,
@@ -346,8 +376,64 @@ export async function getSession(env: Env, sessionId: string) {
     expires_at: record.expires_at,
     mfa_required: Boolean(record.mfa_required),
     ip: record.ip ?? undefined,
-    ua: record.user_agent ?? undefined
+    ua: record.user_agent ?? undefined,
+    refresh_expires_at: record.refresh_expires_at ?? undefined,
   };
+}
+
+export async function getSessionWithSecrets(env: Env, sessionId: string) {
+  const record = await env.DB.prepare(`SELECT * FROM sessions WHERE id = ?1`).bind(sessionId).first<SessionRecord & {
+    refresh_expires_at: string | null;
+  }>();
+  if (!record) return null;
+  return {
+    session: {
+      schema_version: SCHEMA_VERSION,
+      id: record.id,
+      user_id: record.user_id,
+      issued_at: record.issued_at,
+      expires_at: record.expires_at,
+      mfa_required: Boolean(record.mfa_required),
+      ip: record.ip ?? undefined,
+      ua: record.user_agent ?? undefined,
+      refresh_expires_at: record.refresh_expires_at ?? undefined,
+    },
+    refreshTokenHash: record.refresh_token_hash ?? undefined,
+  };
+}
+
+export async function rotateSession(
+  env: Env,
+  sessionId: string,
+  updates: {
+    issuedAt: string;
+    expiresAt: string;
+    refreshTokenHash: string;
+    refreshExpiresAt: string;
+    ip?: string;
+    userAgent?: string;
+  }
+) {
+  await env.DB.prepare(
+    `UPDATE sessions
+     SET issued_at = ?1,
+         expires_at = ?2,
+         refresh_expires_at = ?3,
+         refresh_token_hash = ?4,
+         ip = COALESCE(?5, ip),
+         user_agent = COALESCE(?6, user_agent)
+     WHERE id = ?7`
+  )
+    .bind(
+      updates.issuedAt,
+      updates.expiresAt,
+      updates.refreshExpiresAt,
+      updates.refreshTokenHash,
+      updates.ip ?? null,
+      updates.userAgent ?? null,
+      sessionId
+    )
+    .run();
 }
 
 export async function deleteSession(env: Env, sessionId: string): Promise<void> {
@@ -356,23 +442,25 @@ export async function deleteSession(env: Env, sessionId: string): Promise<void> 
 
 export async function listCanvases(env: Env, userId: string) {
   const { results } = await env.DB.prepare(`SELECT * FROM canvases WHERE owner_id = ?1 ORDER BY created_at DESC`).bind(userId).all<CanvasRecord>();
-  return results.map((row) => ({
-    schema_version: SCHEMA_VERSION,
-    id: row.id,
-    owner_id: row.owner_id,
-    title: row.title,
-    summary: row.summary ?? undefined,
-    content: parseJson(row.content, {} as Record<string, unknown>),
-    status: row.status,
-    created_at: row.created_at,
-    updated_at: row.updated_at
-  }));
+  return results.map((row) =>
+    canvasSchema.parse({
+      schema_version: SCHEMA_VERSION,
+      id: row.id,
+      owner_id: row.owner_id,
+      title: row.title,
+      summary: row.summary ?? undefined,
+      content: parseJson(row.content, {} as Record<string, unknown>),
+      status: row.status,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    })
+  );
 }
 
 export async function getCanvas(env: Env, userId: string, canvasId: string) {
   const record = await env.DB.prepare(`SELECT * FROM canvases WHERE id = ?1 AND owner_id = ?2`).bind(canvasId, userId).first<CanvasRecord>();
   if (!record) return null;
-  return {
+  return canvasSchema.parse({
     schema_version: SCHEMA_VERSION,
     id: record.id,
     owner_id: record.owner_id,
@@ -381,8 +469,8 @@ export async function getCanvas(env: Env, userId: string, canvasId: string) {
     content: parseJson(record.content, {} as Record<string, unknown>),
     status: record.status,
     created_at: record.created_at,
-    updated_at: record.updated_at
-  };
+    updated_at: record.updated_at,
+  });
 }
 
 export async function saveCanvas(
@@ -394,14 +482,27 @@ export async function saveCanvas(
   const existing = await getCanvas(env, userId, canvasId);
   if (!existing) return null;
 
-  const updated = {
+  const validated = canvasUpdateSchema.parse(updates);
+
+  const latestVersion = await env.DB.prepare(
+    `SELECT revision FROM canvas_versions WHERE canvas_id = ?1 ORDER BY revision DESC LIMIT 1`
+  )
+    .bind(canvasId)
+    .first<{ revision: number }>();
+
+  const currentRevision = latestVersion?.revision ?? 1;
+  if (validated.revision !== undefined && validated.revision !== currentRevision) {
+    throw new Error('revision_conflict');
+  }
+
+  const updated = canvasSchema.parse({
     ...existing,
-    title: updates.title ?? existing.title,
-    summary: updates.summary ?? existing.summary,
-    content: updates.content ?? existing.content,
-    status: (updates.status as 'active' | 'archived' | undefined) ?? existing.status,
-    updated_at: now()
-  };
+    title: validated.title ?? existing.title,
+    summary: validated.summary ?? existing.summary,
+    content: validated.content ?? existing.content,
+    status: validated.status ?? existing.status,
+    updated_at: now(),
+  });
 
   await env.DB.prepare(
     `UPDATE canvases
@@ -419,10 +520,6 @@ export async function saveCanvas(
     )
     .run();
 
-  const { revision } = (await env.DB.prepare(
-    `SELECT revision FROM canvas_versions WHERE canvas_id = ?1 ORDER BY revision DESC LIMIT 1`
-  ).bind(canvasId).first<{ revision: number }>()) ?? { revision: 0 };
-
   await env.DB.prepare(
     `INSERT INTO canvas_versions (id, canvas_id, revision, content, diff, created_at, created_by)
      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
@@ -430,9 +527,9 @@ export async function saveCanvas(
     .bind(
       randomId('cver'),
       canvasId,
-      revision + 1,
+      currentRevision + 1,
       JSON.stringify(updated.content),
-      updates.revision ? JSON.stringify({ base_revision: updates.revision }) : null,
+      validated.revision !== undefined ? JSON.stringify({ base_revision: validated.revision }) : null,
       updated.updated_at,
       userId
     )
@@ -448,6 +545,7 @@ export async function createCanvas(
 ) {
   const id = randomId('canvas');
   const createdAt = now();
+  const validated = canvasCreateSchema.parse(payload);
 
   await env.DB.batch([
     env.DB.prepare(
@@ -456,30 +554,30 @@ export async function createCanvas(
     ).bind(
       id,
       userId,
-      payload.title,
-      payload.summary ?? null,
-      JSON.stringify(payload.content),
-      payload.status,
+      validated.title,
+      validated.summary ?? null,
+      JSON.stringify(validated.content),
+      validated.status,
       SCHEMA_VERSION,
       createdAt
     ),
     env.DB.prepare(
       `INSERT INTO canvas_versions (id, canvas_id, revision, content, created_at, created_by)
        VALUES (?1, ?2, 1, ?3, ?4, ?5)`
-    ).bind(randomId('cver'), id, JSON.stringify(payload.content), createdAt, userId)
+    ).bind(randomId('cver'), id, JSON.stringify(validated.content), createdAt, userId)
   ]);
 
-  return {
+  return canvasSchema.parse({
     schema_version: SCHEMA_VERSION,
     id,
     owner_id: userId,
-    title: payload.title,
-    summary: payload.summary,
-    content: payload.content,
-    status: payload.status,
+    title: validated.title,
+    summary: validated.summary,
+    content: validated.content,
+    status: validated.status,
     created_at: createdAt,
-    updated_at: createdAt
-  };
+    updated_at: createdAt,
+  });
 }
 
 export async function listCanvasVersions(env: Env, userId: string, canvasId: string) {
@@ -490,16 +588,18 @@ export async function listCanvasVersions(env: Env, userId: string, canvasId: str
     `SELECT * FROM canvas_versions WHERE canvas_id = ?1 ORDER BY revision DESC`
   ).bind(canvasId).all<CanvasVersionRecord>();
 
-  return results.map((row) => ({
-    schema_version: SCHEMA_VERSION,
-    id: row.id,
-    canvas_id: row.canvas_id,
-    revision: row.revision,
-    content: parseJson(row.content, {} as Record<string, unknown>),
-    diff: row.diff ? parseJson(row.diff, {} as Record<string, unknown>) : undefined,
-    created_at: row.created_at,
-    created_by: row.created_by
-  }));
+  return results.map((row) =>
+    canvasVersionSchema.parse({
+      schema_version: SCHEMA_VERSION,
+      id: row.id,
+      canvas_id: row.canvas_id,
+      revision: row.revision,
+      content: parseJson(row.content, {} as Record<string, unknown>),
+      diff: row.diff ? parseJson(row.diff, {} as Record<string, unknown>) : undefined,
+      created_at: row.created_at,
+      created_by: row.created_by,
+    })
+  );
 }
 
 export async function deleteCanvas(env: Env, userId: string, canvasId: string) {
@@ -521,6 +621,15 @@ export async function getEmailToken(env: Env, token: string, expectedPurpose: st
   const record = await env.DB.prepare(
     `SELECT * FROM email_tokens WHERE token = ?1 AND purpose = ?2`
   ).bind(token, expectedPurpose).first<EmailTokenRecord>();
+  if (!record) return null;
+  const nowTs = Date.now();
+  const expires = Date.parse(record.expires_at);
+  if (Number.isFinite(expires) && expires < nowTs) {
+    return null;
+  }
+  if (record.used_at) {
+    return null;
+  }
   return record;
 }
 

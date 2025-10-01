@@ -86,7 +86,7 @@ async function loadSampleLookup(): Promise<NaicsEntry[]> {
 
 async function loadLookup(env: EnrichEnv): Promise<NaicsEntry[]> {
   const hasValidCache = lookupCache !== null && Date.now() - lookupCache.ts < CACHE_TTL_MS;
-  if (hasValidCache && (!env.LOOKUPS_KV || lookupCacheSource === 'kv')) {
+  if (hasValidCache && lookupCache && (!env.LOOKUPS_KV || lookupCacheSource === 'kv')) {
     return lookupCache.entries;
   }
 
@@ -149,7 +149,7 @@ async function loadIndustryMappings(env: EnrichEnv): Promise<Map<string, Industr
     return new Map();
   }
   const hasValidCache = mappingCache !== null && Date.now() - mappingCache.ts < CACHE_TTL_MS;
-  if (hasValidCache && mappingCacheStatus === 'ok') {
+  if (hasValidCache && mappingCache && mappingCacheStatus === 'ok') {
     return mappingCache.entries;
   }
 
