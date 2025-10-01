@@ -185,7 +185,6 @@ function mergeSorted(a: number[], b: number[]): number[] {
 }
 
 function toSortedDurations(durations: number[]): number[] {
-  if (durations.length <= 1) return durations.slice();
   return durations.slice().sort((a, b) => a - b);
 }
 
