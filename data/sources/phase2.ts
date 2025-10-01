@@ -1,3 +1,12 @@
+type RequestValue = string | number | boolean | { env: string };
+
+export type SourceRequest = {
+  method?: 'GET' | 'POST';
+  headers?: Record<string, RequestValue>;
+  body?: unknown;
+  query?: Record<string, RequestValue>;
+};
+
 export type SourceDef = {
   id: string;
   authority: 'federal' | 'state' | 'prov' | 'territory';
@@ -12,6 +21,7 @@ export type SourceDef = {
   schedule: '4h' | 'daily';
   license?: string;
   tosUrl?: string;
+  request?: SourceRequest;
 };
 
 export const SOURCES: SourceDef[] = [
@@ -21,15 +31,38 @@ export const SOURCES: SourceDef[] = [
     country: 'US',
     jurisdiction: 'US-FED',
     kind: 'json',
-    entrypoint:
-      'https://www.grants.gov/grantsws/rest/opportunities/search?filter=active&sortBy=closeDate',
+    entrypoint: 'https://apply07.grants.gov/grantsws/rest/opportunities/search',
     parser: 'json_api_generic',
-    path: 'opportunities',
+    path: 'oppHits',
     mapFn: 'mapGrantsGov',
     rate: { rps: 2, burst: 5 },
     schedule: '4h',
     license: 'https://www.grants.gov/help/html/help/Register/SAM.gov-Data-Usage-Agreement.htm',
-    tosUrl: 'https://www.grants.gov/web/grants/policy/policy-guidance/sam-gov-data-usage-agreement.html'
+    tosUrl: 'https://www.grants.gov/web/grants/policy/policy-guidance/sam-gov-data-usage-agreement.html',
+    request: {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: {
+        searchParams: {
+          resultType: 'json',
+          searchOnly: false,
+          oppNum: '',
+          cfda: '',
+          sortBy: 'closeDate',
+          oppStatuses: 'forecasted|posted',
+          startRecordNum: 0,
+          eligibilities: '',
+          fundingInstruments: '',
+          fundingCategories: '',
+          agencies: '',
+          rows: 200,
+          keyword: '',
+          keywordEncoded: false
+        }
+      }
+    }
   },
   {
     id: 'us-fed-sam-assistance',
@@ -37,15 +70,25 @@ export const SOURCES: SourceDef[] = [
     country: 'US',
     jurisdiction: 'US-FED',
     kind: 'json',
-    entrypoint:
-      'https://sam.gov/api/prod/sgs/v1/search?index=assistancelisting&q=*&sort=-modifiedDate',
+    entrypoint: 'https://api.sam.gov/prod/sgs/v1/search',
     parser: 'json_api_generic',
     path: 'searchResult.searchResultItems',
     mapFn: 'mapSamAssistance',
     rate: { rps: 1, burst: 3 },
     schedule: 'daily',
     license: 'https://open.gsa.gov/api/sam/#terms',
-    tosUrl: 'https://sam.gov/content/privacy-policy'
+    tosUrl: 'https://sam.gov/content/privacy-policy',
+    request: {
+      method: 'GET',
+      query: {
+        index: 'assistancelisting',
+        q: '*',
+        sort: '-modifiedDate',
+        page: 0,
+        size: 200,
+        'api_key': { env: 'SAM_API_KEY' }
+      }
+    }
   },
   {
     id: 'ca-fed-open-gov',

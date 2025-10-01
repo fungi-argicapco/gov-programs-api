@@ -68,6 +68,8 @@ Adapters: rss_generic, html_table_generic, json_api_generic
 
 Run `bun run ingest:once` to apply migrations against `data/ingest.dev.sqlite`, fetch all catalog sources once, and log diff summaries. Pass `--source us-fed-grants-gov` to target a specific adapter during development.
 
+- `SAM_API_KEY` must be configured (and surfaced in `.env`/Wrangler vars) so the SAM Assistance Listing API accepts requests. Request a key from [sam.gov data services](https://sam.gov/data-services/assistance-listing-api) and rerun ingestion after setting it.
+
 Phase 1 ships with fixture-backed sources for U.S. federal, U.S. state, and Canadian provincial programs under `data/sources/phase1.ts`. These populate D1 along with R2 snapshots and drive `/v1/sources` coverage data.
 
 Normalization → upsertPrograms (idempotent), snapshots now persist raw payloads to R2 and catalog entries in the `snapshots` table.

@@ -42,7 +42,100 @@ type RunCatalogOptions = {
   metricsAdapter?: MetricsAdapter;
 };
 
+type EnvRecord = Record<string, unknown>;
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function lookupEnvValue(env: IngestEnv, key: string): string | undefined {
+  const record = env as EnvRecord;
+  const direct = record[key];
+  if (typeof direct === 'string' && direct.trim() !== '') {
+    return direct;
+  }
+  if (typeof direct === 'number' || typeof direct === 'boolean') {
+    return String(direct);
+  }
+  if (typeof process !== 'undefined' && process.env) {
+    const fallback = process.env[key];
+    if (fallback && fallback.trim() !== '') {
+      return fallback;
+    }
+  }
+  return undefined;
+}
+
+function isEnvPlaceholder(candidate: unknown): candidate is { env: string } {
+  return typeof candidate === 'object' && candidate !== null && 'env' in candidate;
+}
+
+function resolveRequestValue(value: unknown, env: IngestEnv): unknown {
+  if (isEnvPlaceholder(value)) {
+    const envKey = String((value as { env: string }).env);
+    const resolved = lookupEnvValue(env, envKey);
+    if (resolved === undefined) {
+      throw new Error(`missing_env:${envKey}`);
+    }
+    return resolved;
+  }
+  return value;
+}
+
+function resolveRequestBody(body: unknown, env: IngestEnv): unknown {
+  if (Array.isArray(body)) {
+    return body.map((item) => resolveRequestBody(item, env));
+  }
+  if (typeof body === 'object' && body !== null) {
+    if (isEnvPlaceholder(body)) {
+      return resolveRequestValue(body, env);
+    }
+    const entries = Object.entries(body as Record<string, unknown>).map(([key, value]) => [key, resolveRequestBody(value, env)]);
+    return Object.fromEntries(entries);
+  }
+  return resolveRequestValue(body, env);
+}
+
+function buildRequest(source: SourceDef, env: IngestEnv): { url: string; init: RequestInit } {
+  const url = new URL(source.entrypoint);
+  if (source.request?.query) {
+    for (const [key, raw] of Object.entries(source.request.query)) {
+      const resolved = resolveRequestValue(raw, env);
+      if (resolved === undefined || resolved === null) {
+        throw new Error(`missing_query:${key}`);
+      }
+      url.searchParams.set(key, String(resolved));
+    }
+  }
+
+  const method = source.request?.method ?? 'GET';
+  const headers = new Headers();
+  headers.set('User-Agent', 'gov-programs-ingest/2.0 (+https://program.fungiagricap.com)');
+
+  if (source.request?.headers) {
+    for (const [key, raw] of Object.entries(source.request.headers)) {
+      const resolved = resolveRequestValue(raw, env);
+      if (resolved === undefined || resolved === null) {
+        throw new Error(`missing_header:${key}`);
+      }
+      headers.set(key, String(resolved));
+    }
+  }
+
+  const init: RequestInit = { method, headers, redirect: 'follow' };
+
+  if (source.request?.body !== undefined && method !== 'GET') {
+    const resolvedBody = resolveRequestBody(source.request.body, env);
+    if (typeof resolvedBody === 'string') {
+      init.body = resolvedBody;
+    } else {
+      if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+      }
+      init.body = JSON.stringify(resolvedBody);
+    }
+  }
+
+  return { url: url.toString(), init };
+}
 
 async function ensureSource(env: IngestEnv, source: SourceDef): Promise<number> {
   const existing = await env.DB.prepare(`SELECT id FROM sources WHERE name = ? LIMIT 1`)
@@ -283,9 +376,9 @@ export async function runCatalogOnce(
     let outcomes: UpsertOutcome[] = [];
 
     try {
-      const url = new URL(source.entrypoint);
-      await consumeRate(env, url.host, source.rate);
-      const response = await fetch(source.entrypoint, { headers: { 'User-Agent': 'gov-programs-ingest/2.0' } });
+      const { url, init } = buildRequest(source, env);
+      await consumeRate(env, new URL(url).host, source.rate);
+      const response = await fetch(url, init);
       if (!response.ok) {
         throw new Error(`http_${response.status}`);
       }
@@ -296,7 +389,7 @@ export async function runCatalogOnce(
         case 'json_api_generic': {
           const parsed = body.length ? JSON.parse(body) : {};
           const result = await ingestJsonApiGeneric(env, {
-            url: source.entrypoint,
+            url,
             data: parsed,
             path: source.path,
             country: source.country,
@@ -312,7 +405,7 @@ export async function runCatalogOnce(
         }
         case 'rss_generic': {
           const result = await ingestRssGeneric(env, {
-            url: source.entrypoint,
+            url,
             feed: body,
             country: source.country,
             authority: source.authority,
@@ -326,7 +419,7 @@ export async function runCatalogOnce(
         }
         case 'html_table_generic': {
           const result = await ingestHtmlTableGeneric(env, {
-            url: source.entrypoint,
+            url,
             html: body,
             tableSelector: 'table',
             columns: { title: 'td:first-child' },

@@ -16,6 +16,7 @@ This checklist synthesizes the repo's design docs into an ordered plan to take t
 ## 2. Configure production secrets & environment
 - Export Cloudflare credentials (`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID`) in the deployment environment so the automated scripts can provision bindings and DNS.
 - Provide application-specific environment values expected by the worker: `PROGRAM_API_BASE`, `EMAIL_ADMIN`, `EMAIL_SENDER`, optional `SESSION_COOKIE_NAME`, `MFA_ISSUER`, and `ALERTS_MAX_DELIVERY_ATTEMPTS`. Mirror them in `.env.dev.local` for `wrangler dev` parity.
+- Obtain and surface a `SAM_API_KEY` (from https://sam.gov/data-services/assistance-listing-api) so the US federal assistance listing adapter can authenticate; add it to `.env` and Wrangler vars before enabling ingestion.
 - After updating `.env`, run `bun run setup:remote` to render `wrangler.toml`. The command is idempotent—it discovers existing D1, KV, R2, and Durable Object resources and only creates what is missing while preserving identifiers in the environment file.
 - Ensure Durable Object support is enabled for the target Workers account; Metrics and rate-limiter classes are declared automatically by the setup script.
 - Manage sensitive keys (e.g. `OPENAI_API_KEY`, `POSTMARK_TOKEN`, `GITHUB_TOKEN`) with `bunx wrangler secret put`; plain-text configuration such as `PROGRAM_API_BASE` can stay under `[vars]` in `wrangler.toml` or be supplied at deploy time via `bunx wrangler deploy --var KEY=VALUE`.
