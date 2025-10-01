@@ -281,7 +281,7 @@ export async function login(
         methods: ['totp'],
       };
     }
-    if (!verifyTotpToken(verifiedTotp.secret, params.totpCode)) {
+    if (!verifiedTotp.secret || !verifyTotpToken(verifiedTotp.secret, params.totpCode)) {
       throw new Error('invalid_mfa');
     }
   }
