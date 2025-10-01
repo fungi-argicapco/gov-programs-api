@@ -84,7 +84,8 @@ function parseArgs(argv: string[]): CliOptions {
     const token = argv[i];
     if (!token) continue;
     if (token.startsWith('--base-url=')) {
-      options.baseUrl = token.split('=')[1] ?? options.baseUrl;
+      const baseUrlValue = token.split('=')[1];
+      options.baseUrl = baseUrlValue && baseUrlValue.trim() !== '' ? baseUrlValue : options.baseUrl;
       continue;
     }
     if (token === '--base-url' && argv[i + 1]) {
