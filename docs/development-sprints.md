@@ -13,7 +13,7 @@ This roadmap sequences the Phase 2 scope into themed sprints that align ingestio
 **Backlog Highlights**
 - Run and document `bun install`, `bash codex/env.setup.sh`, and `bun run setup:local`, calling out `.env.dev.local` values to unblock `wrangler dev` usage.
 - Capture production secret requirements (`CLOUDFLARE_*`, `PROGRAM_API_BASE`, `EMAIL_*`) in launch docs and verify `bun run setup:remote` idempotence.
-- Exercise `bun run deploy` in a sandbox, confirming DNS enforcement behaviour and Durable Object prerequisites.
+- Exercise `bun run deploy` in a sandbox, confirming DNS enforcement behavior and Durable Object prerequisites.
 
 ## Sprint 1: Live Source Catalog Launch (2 weeks)
 **Goal:** Replace fixture-driven ingestion with the Phase 2 live source catalog and adapters.
