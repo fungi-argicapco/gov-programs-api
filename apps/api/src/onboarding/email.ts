@@ -1,4 +1,5 @@
 import type { Env } from '../db';
+import { createMailService } from '../email/provider';
 
 export type EmailPayload = {
   to: string;
@@ -14,12 +15,22 @@ export async function sendEmail(env: Env, payload: EmailPayload): Promise<void> 
     return;
   }
 
-  // TODO: integrate with Cloudflare Email Routing once register@fungiagricap.com is verified.
-  console.log('Email send requested', {
-    from: sender,
-    to: payload.to,
-    subject: payload.subject
-  });
+  try {
+    const service = createMailService(env);
+    await service.send({
+      from: sender,
+      to: payload.to,
+      subject: payload.subject,
+      html: payload.html,
+      text: payload.text,
+    });
+  } catch (error) {
+    console.error('Email send failed', {
+      error: error instanceof Error ? error.message : String(error),
+      to: payload.to,
+      subject: payload.subject
+    });
+  }
 }
 
 export function buildDecisionEmail(options: {
