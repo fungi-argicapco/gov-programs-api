@@ -86,7 +86,7 @@ async function loadSampleLookup(): Promise<NaicsEntry[]> {
 
 async function loadLookup(env: EnrichEnv): Promise<NaicsEntry[]> {
   const hasValidCache = lookupCache !== null && Date.now() - lookupCache.ts < CACHE_TTL_MS;
-  if (lookupCache && hasValidCache && (!env.LOOKUPS_KV || lookupCacheSource === 'kv')) {
+  if (hasValidCache && (!env.LOOKUPS_KV || lookupCacheSource === 'kv')) {
     return lookupCache.entries;
   }
 
