@@ -94,7 +94,10 @@ function parseArgs(argv: string[]): CliOptions {
       continue;
     }
     if (token.startsWith('--output=')) {
-      options.output = token.split('=')[1];
+      const outputValue = token.split('=')[1];
+      if (outputValue !== undefined && outputValue !== '') {
+        options.output = outputValue;
+      }
       continue;
     }
     if (token === '--output' && argv[i + 1]) {
