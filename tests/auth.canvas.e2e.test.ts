@@ -402,7 +402,7 @@ describe('email templates', () => {
   });
 
   it('logs email send operations when routing is configured', async () => {
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
     try {
       const envWithSender = { DB: createTestDB(), EMAIL_SENDER: 'register@fungiagricap.com' } as any;
       await sendEmail(envWithSender, {
@@ -410,13 +410,13 @@ describe('email templates', () => {
         subject: 'Test',
         html: '<p>Test</p>',
       });
-      expect(logSpy).toHaveBeenCalledWith('Email send requested', {
+      expect(infoSpy).toHaveBeenCalledWith('Email send (console provider)', expect.objectContaining({
         from: 'register@fungiagricap.com',
         to: 'user@example.com',
         subject: 'Test',
-      });
+      }));
     } finally {
-      logSpy.mockRestore();
+      infoSpy.mockRestore();
     }
   });
 

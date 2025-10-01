@@ -6,6 +6,9 @@ export type Env = {
   RAW_R2?: R2Bucket;
   EMAIL_ADMIN?: string;
   EMAIL_SENDER?: string;
+  EMAIL_PROVIDER?: string;
+  POSTMARK_TOKEN?: string;
+  POSTMARK_API_BASE?: string;
   PROGRAM_API_BASE?: string;
   SESSION_COOKIE_NAME?: string;
   ASSETS?: Fetcher;

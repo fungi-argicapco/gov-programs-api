@@ -76,6 +76,27 @@ export const programs = sqliteTable('programs', {
   sourceId: integer('source_id'),
   createdAt: integer('created_at'),                                        // epoch ms
   updatedAt: integer('updated_at'),                                        // epoch ms
+  programCategory: text('program_category'),
+  investorThesis: text('investor_thesis'),
+  fundingMinValue: integer('funding_min_value'),
+  fundingMaxValue: integer('funding_max_value'),
+  fundingCurrency: text('funding_currency'),
+  fundingBracket: text('funding_bracket'),
+  applicationStatus: text('application_status'),
+  problemKeywords: text('problem_keywords'),
+  esgFocus: text('esg_focus'),
+  verificationDate: text('verification_date'),
+  dataRefreshFrequency: text('data_refresh_frequency'),
+  contactChannel: text('contact_channel'),
+  notesInternal: text('notes_internal'),
+  automationReady: text('automation_ready'),
+  apiEndpoint: text('api_endpoint'),
+  apiParameters: text('api_parameters'),
+  apiAuthentication: text('api_authentication'),
+  apiRateLimit: text('api_rate_limit'),
+  apiUpdateCadence: text('api_update_cadence'),
+  apiChangeDetection: text('api_change_detection'),
+  apiStatusPage: text('api_status_page'),
 });
 
 export const benefits = sqliteTable('benefits', {
@@ -101,6 +122,255 @@ export const tags = sqliteTable('tags', {
   programId: integer('program_id').notNull(),
   tag: text('tag').notNull()
 });
+
+export const macroMetrics = sqliteTable(
+  'macro_metrics',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    countryCode: text('country_code', { length: 2 }).notNull(),
+    adminUnitCode: text('admin_unit_code').notNull(),
+    adminUnitName: text('admin_unit_name'),
+    adminUnitLevel: text('admin_unit_level'),
+    metricGroup: text('metric_group'),
+    metricName: text('metric_name').notNull(),
+    metricValue: real('metric_value'),
+    valueText: text('value_text'),
+    metricUnit: text('metric_unit'),
+    metricYear: integer('metric_year'),
+    sourceUrl: text('source_url'),
+    verificationDate: text('verification_date'),
+    automationMetadata: text('automation_metadata'),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    unitMetricIdx: index('idx_macro_metrics_unit_metric').on(table.adminUnitCode, table.metricName)
+  })
+);
+
+export const industryClusters = sqliteTable(
+  'industry_clusters',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    countryCode: text('country_code', { length: 2 }).notNull(),
+    adminUnitCode: text('admin_unit_code').notNull(),
+    adminUnitLevel: text('admin_unit_level'),
+    clusterName: text('cluster_name').notNull(),
+    clusterDescription: text('cluster_description'),
+    employment: integer('employment'),
+    gdpContribution: real('gdp_contribution'),
+    growthRate: real('growth_rate'),
+    keyEmployers: text('key_employers'),
+    partnerOrgs: text('partner_orgs'),
+    unsdgAlignment: text('unsdg_alignment'),
+    problemKeywords: text('problem_keywords'),
+    sourceUrl: text('source_url'),
+    verificationDate: text('verification_date'),
+    automationMetadata: text('automation_metadata'),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    unitIdx: index('idx_industry_clusters_unit').on(table.adminUnitCode)
+  })
+);
+
+export const workforceEcosystem = sqliteTable(
+  'workforce_ecosystem',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    countryCode: text('country_code', { length: 2 }).notNull(),
+    adminUnitCode: text('admin_unit_code').notNull(),
+    adminUnitLevel: text('admin_unit_level'),
+    programName: text('program_name').notNull(),
+    provider: text('provider'),
+    deliveryModel: text('delivery_model'),
+    focusArea: text('focus_area'),
+    capacity: integer('capacity'),
+    fundingSources: text('funding_sources'),
+    technologyPartners: text('technology_partners'),
+    esgFocus: text('esg_focus'),
+    problemKeywords: text('problem_keywords'),
+    sourceUrl: text('source_url'),
+    verificationDate: text('verification_date'),
+    automationMetadata: text('automation_metadata'),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    unitIdx: index('idx_workforce_ecosystem_unit').on(table.adminUnitCode)
+  })
+);
+
+export const infrastructureAssets = sqliteTable(
+  'infrastructure_assets',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    countryCode: text('country_code', { length: 2 }).notNull(),
+    adminUnitCode: text('admin_unit_code').notNull(),
+    adminUnitLevel: text('admin_unit_level'),
+    assetName: text('asset_name'),
+    assetType: text('asset_type').notNull(),
+    status: text('status'),
+    capacityValue: real('capacity_value'),
+    capacityUnit: text('capacity_unit'),
+    costEstimate: real('cost_estimate'),
+    currencyCode: text('currency_code'),
+    owner: text('owner'),
+    esgRating: text('esg_rating'),
+    availability: text('availability'),
+    location: text('location'),
+    sourceUrl: text('source_url'),
+    verificationDate: text('verification_date'),
+    automationMetadata: text('automation_metadata'),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    unitIdx: index('idx_infrastructure_assets_unit').on(table.adminUnitCode)
+  })
+);
+
+export const regulatoryProfiles = sqliteTable(
+  'regulatory_profiles',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    countryCode: text('country_code', { length: 2 }).notNull(),
+    adminUnitCode: text('admin_unit_code').notNull(),
+    adminUnitLevel: text('admin_unit_level'),
+    policyArea: text('policy_area').notNull(),
+    description: text('description'),
+    requirementLevel: text('requirement_level'),
+    riskLevel: text('risk_level'),
+    complianceWindow: text('compliance_window'),
+    effectiveDate: text('effective_date'),
+    reviewDate: text('review_date'),
+    mitigationPlan: text('mitigation_plan'),
+    sourceUrl: text('source_url'),
+    verificationDate: text('verification_date'),
+    automationMetadata: text('automation_metadata'),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    unitIdx: index('idx_regulatory_profiles_unit').on(table.adminUnitCode)
+  })
+);
+
+export const partnerships = sqliteTable(
+  'partnerships',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    countryCode: text('country_code', { length: 2 }).notNull(),
+    adminUnitCode: text('admin_unit_code').notNull(),
+    adminUnitLevel: text('admin_unit_level'),
+    partnerType: text('partner_type').notNull(),
+    organizationName: text('organization_name').notNull(),
+    thesis: text('thesis'),
+    offering: text('offering'),
+    contactChannel: text('contact_channel'),
+    status: text('status'),
+    esgFocus: text('esg_focus'),
+    problemKeywords: text('problem_keywords'),
+    capitalCommitment: real('capital_commitment'),
+    currencyCode: text('currency_code'),
+    sourceUrl: text('source_url'),
+    verificationDate: text('verification_date'),
+    automationMetadata: text('automation_metadata'),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    unitIdx: index('idx_partnerships_unit').on(table.adminUnitCode)
+  })
+);
+
+export const financialAssumptions = sqliteTable(
+  'financial_assumptions',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    scenarioId: text('scenario_id').notNull(),
+    countryCode: text('country_code', { length: 2 }).notNull(),
+    adminUnitCode: text('admin_unit_code').notNull(),
+    adminUnitLevel: text('admin_unit_level'),
+    scenarioName: text('scenario_name'),
+    revenueDrivers: text('revenue_drivers'),
+    costDrivers: text('cost_drivers'),
+    sensitivityInputs: text('sensitivity_inputs'),
+    timeline: text('timeline'),
+    notes: text('notes'),
+    sourceUrl: text('source_url'),
+    verificationDate: text('verification_date'),
+    automationMetadata: text('automation_metadata'),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    unitIdx: index('idx_financial_assumptions_unit').on(table.adminUnitCode),
+    scenarioIdx: index('idx_financial_assumptions_scenario').on(table.scenarioId)
+  })
+);
+
+export const capitalStackEntries = sqliteTable(
+  'capital_stack_entries',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    scenarioId: text('scenario_id').notNull(),
+    countryCode: text('country_code', { length: 2 }),
+    adminUnitCode: text('admin_unit_code'),
+    instrumentType: text('instrument_type').notNull(),
+    provider: text('provider'),
+    amount: real('amount'),
+    currencyCode: text('currency_code'),
+    terms: text('terms'),
+    seniority: text('seniority'),
+    riskMitigation: text('risk_mitigation'),
+    sourceUrl: text('source_url'),
+    verificationDate: text('verification_date'),
+    automationMetadata: text('automation_metadata'),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    scenarioIdx: index('idx_capital_stack_scenario').on(table.scenarioId)
+  })
+);
+
+export const roadmapMilestones = sqliteTable(
+  'roadmap_milestones',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    countryCode: text('country_code', { length: 2 }).notNull(),
+    adminUnitCode: text('admin_unit_code').notNull(),
+    adminUnitLevel: text('admin_unit_level'),
+    milestoneName: text('milestone_name').notNull(),
+    description: text('description'),
+    startDate: text('start_date'),
+    endDate: text('end_date'),
+    owner: text('owner'),
+    status: text('status'),
+    stageGate: text('stage_gate'),
+    dependencies: text('dependencies'),
+    riskLevel: text('risk_level'),
+    sourceUrl: text('source_url'),
+    verificationDate: text('verification_date'),
+    automationMetadata: text('automation_metadata'),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    unitIdx: index('idx_roadmap_milestones_unit').on(table.adminUnitCode)
+  })
+);
 
 export const sources = sqliteTable('sources', {
   id: integer('id').primaryKey({ autoIncrement: true }),
