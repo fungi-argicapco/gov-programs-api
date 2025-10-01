@@ -12,7 +12,7 @@
 ## Revoking Sessions & Refresh Tokens
 1. Look up the session ID via the admin metrics console or database tooling.
 2. Call `POST /v1/auth/logout` (planned) or directly delete the session row in D1: `DELETE FROM sessions WHERE id = ?`.
-3. Our refresh rotation helper removes stale sessions automatically if an invalid refresh token is presented. You can also proactively expire a session by setting `refresh_expires_at` to a past timestamp and forcing clients to reauthenticate.
+3. Our refresh rotation helper removes stale sessions automatically if an invalid refresh token is presented or the refresh TTL has elapsed. You can also proactively expire a session by setting `refresh_expires_at` to a past timestamp and forcing clients to reauthenticate.
 4. When investigating compromised accounts, clear all sessions for the user (`DELETE FROM sessions WHERE user_id = ?`) and issue a password reset token with `purpose = 'signup'`.
 
 ## Archiving Canvases

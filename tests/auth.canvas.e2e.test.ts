@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { TOTP } from 'otpauth';
 import { createTestDB } from './helpers/d1';
 import {
@@ -19,9 +19,10 @@ import {
   verifyMfaChallenge,
   startTotpEnrollment,
   confirmTotpEnrollment,
+  logout,
   refreshSession,
 } from '../apps/api/src/security/auth';
-import { buildDecisionEmail, buildSignupEmail } from '../apps/api/src/onboarding/email';
+import { buildDecisionEmail, buildDecisionResultEmail, buildSignupEmail, sendEmail } from '../apps/api/src/onboarding/email';
 
 const schema = `
 PRAGMA foreign_keys=ON;
@@ -213,6 +214,15 @@ describe('account onboarding, auth, and canvas lifecycle', () => {
     });
     expect(newCanvas.title).toBe('Expansion Plan');
 
+    const loggedOut = await logout(env, { sessionId: accepted.session.id });
+    expect(loggedOut).toEqual({ status: 'ok', revoked: true });
+    const removedSession = await env.DB.prepare('SELECT id FROM sessions WHERE id = ?1')
+      .bind(accepted.session.id)
+      .first<{ id: string }>();
+    expect(removedSession).toBeNull();
+    const secondLogout = await logout(env, { sessionId: accepted.session.id });
+    expect(secondLogout.revoked).toBe(false);
+
     const passwordLogin = await login(env, {
       email: 'founder@example.com',
       password: 'Sup3rSecure!PW',
@@ -267,35 +277,89 @@ describe('account onboarding, auth, and canvas lifecycle', () => {
       .run();
     expect(await getEmailToken(env, expiring.token, 'mfa-challenge')).toBeNull();
 
-    const refreshed = await refreshSession(env, {
-      sessionId: mfaSession.session.id,
-      refreshToken: mfaSession.refresh_token,
+    const thirdCode = totp.generate();
+    const directMfaLogin = await login(env, {
+      email: 'founder@example.com',
+      password: 'Sup3rSecure!PW',
+      totpCode: thirdCode,
       ip: '203.0.113.12',
-      userAgent: 'vitest-refresh',
+      userAgent: 'vitest-mfa-direct',
     });
-    expect(refreshed.status).toBe('ok');
-    expect(refreshed.refresh_token).not.toBe(mfaSession.refresh_token);
-    expect(refreshed.session.id).toBe(mfaSession.session.id);
+    expect(directMfaLogin.status).toBe('ok');
+    if (directMfaLogin.status !== 'ok') {
+      throw new Error('expected successful mfa login');
+    }
+
+    const rotated = await refreshSession(env, {
+      sessionId: directMfaLogin.session.id,
+      refreshToken: directMfaLogin.refresh_token,
+      ip: '203.0.113.13',
+      userAgent: 'vitest-refresh-initial',
+    });
+    expect(rotated.status).toBe('ok');
+    expect(rotated.refresh_token).not.toBe(directMfaLogin.refresh_token);
+    expect(rotated.session.id).toBe(directMfaLogin.session.id);
 
     const storedBeforeInvalid = await env.DB.prepare(
       'SELECT refresh_token_hash, refresh_expires_at FROM sessions WHERE id = ?1'
     )
-      .bind(refreshed.session.id)
+      .bind(rotated.session.id)
       .first<{ refresh_token_hash: string; refresh_expires_at: string }>();
     expect(typeof storedBeforeInvalid?.refresh_token_hash).toBe('string');
     expect(Date.parse(storedBeforeInvalid?.refresh_expires_at ?? '')).toBeGreaterThan(Date.now());
 
     await expect(
       refreshSession(env, {
-        sessionId: mfaSession.session.id,
-        refreshToken: mfaSession.refresh_token,
+        sessionId: rotated.session.id,
+        refreshToken: directMfaLogin.refresh_token,
       })
-    ).rejects.toThrow();
+    ).rejects.toThrow('invalid_refresh');
 
-    const storedSession = await env.DB.prepare('SELECT refresh_token_hash, refresh_expires_at FROM sessions WHERE id = ?1')
-      .bind(refreshed.session.id)
+    const deletedAfterInvalid = await env.DB.prepare(
+      'SELECT refresh_token_hash, refresh_expires_at FROM sessions WHERE id = ?1'
+    )
+      .bind(rotated.session.id)
       .first<{ refresh_token_hash: string; refresh_expires_at: string }>();
-    expect(storedSession).toBeNull();
+    expect(deletedAfterInvalid).toBeNull();
+
+    const fourthCode = totp.generate();
+    const secondMfaLogin = await login(env, {
+      email: 'founder@example.com',
+      password: 'Sup3rSecure!PW',
+      totpCode: fourthCode,
+      ip: '203.0.113.14',
+      userAgent: 'vitest-mfa-expiry',
+    });
+    expect(secondMfaLogin.status).toBe('ok');
+    if (secondMfaLogin.status !== 'ok') {
+      throw new Error('expected successful mfa login for expiry case');
+    }
+
+    const rotatedForExpiry = await refreshSession(env, {
+      sessionId: secondMfaLogin.session.id,
+      refreshToken: secondMfaLogin.refresh_token,
+      ip: '203.0.113.15',
+      userAgent: 'vitest-refresh-expiry',
+    });
+    expect(rotatedForExpiry.status).toBe('ok');
+
+    await env.DB.prepare('UPDATE sessions SET refresh_expires_at = ?1 WHERE id = ?2')
+      .bind(new Date(Date.now() - 60_000).toISOString(), rotatedForExpiry.session.id)
+      .run();
+
+    await expect(
+      refreshSession(env, {
+        sessionId: rotatedForExpiry.session.id,
+        refreshToken: rotatedForExpiry.refresh_token,
+      })
+    ).rejects.toThrow('expired_refresh');
+
+    const deletedAfterExpiry = await env.DB.prepare(
+      'SELECT refresh_token_hash, refresh_expires_at FROM sessions WHERE id = ?1'
+    )
+      .bind(rotatedForExpiry.session.id)
+      .first<{ refresh_token_hash: string; refresh_expires_at: string }>();
+    expect(deletedAfterExpiry).toBeNull();
   });
 });
 
@@ -308,5 +372,62 @@ describe('email templates', () => {
     });
     expect(payload.subject).toContain('canvas access request');
     expect(payload.html).toContain('decision_abc');
+  });
+
+  it('renders decision results for both approval and decline paths', () => {
+    const approved = buildDecisionResultEmail({ recipient: 'team@example.com', decision: 'approved' });
+    expect(approved.subject).toContain('approved');
+    expect(approved.html.toLowerCase()).toContain('approved');
+
+    const declined = buildDecisionResultEmail({ recipient: 'team@example.com', decision: 'declined' });
+    expect(declined.subject.toLowerCase()).toContain('request');
+    expect(declined.html.toLowerCase()).toContain('unfortunately');
+  });
+
+  it('builds signup emails with text fallbacks and expiry metadata', () => {
+    const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+    const token = 'signup_token_xyz';
+    const email = buildSignupEmail({
+      recipient: 'user@example.com',
+      token,
+      activationBaseUrl: 'https://program.fungiagricap.com/account/activate',
+      expiresAt,
+    });
+
+    expect(email.html).toContain('Activate your account');
+    expect(email.html).toContain('fungiagricap');
+    expect(email.html).toContain(token);
+    expect(email.text).toBeDefined();
+    expect(email.text?.includes(token)).toBe(true);
+  });
+
+  it('logs email send operations when routing is configured', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const envWithSender = { DB: createTestDB(), EMAIL_SENDER: 'register@fungiagricap.com' } as any;
+    await sendEmail(envWithSender, {
+      to: 'user@example.com',
+      subject: 'Test',
+      html: '<p>Test</p>',
+    });
+    expect(logSpy).toHaveBeenCalledWith('Email send requested', {
+      from: 'register@fungiagricap.com',
+      to: 'user@example.com',
+      subject: 'Test',
+    });
+    logSpy.mockRestore();
+  });
+
+  it('warns when email sender is not configured', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await sendEmail({ DB: createTestDB() } as any, {
+      to: 'user@example.com',
+      subject: 'Missing sender',
+      html: '<p>Missing sender</p>',
+    });
+    expect(warnSpy).toHaveBeenCalledWith('EMAIL_SENDER not configured; skipping email send', {
+      to: 'user@example.com',
+      subject: 'Missing sender',
+    });
+    warnSpy.mockRestore();
   });
 });

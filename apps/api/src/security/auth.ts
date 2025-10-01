@@ -377,6 +377,17 @@ export async function confirmTotpEnrollment(env: Env, params: { userId: string; 
   return user.profile;
 }
 
+export type LogoutResult = { status: 'ok'; revoked: boolean };
+
+export async function logout(env: Env, params: { sessionId: string }): Promise<LogoutResult> {
+  const existing = await getSession(env, params.sessionId);
+  if (!existing) {
+    return { status: 'ok', revoked: false };
+  }
+  await deleteSession(env, params.sessionId);
+  return { status: 'ok', revoked: true };
+}
+
 export async function refreshSession(
   env: Env,
   params: { sessionId: string; refreshToken: string; ip?: string; userAgent?: string }
