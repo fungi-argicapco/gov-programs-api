@@ -149,7 +149,7 @@ async function loadIndustryMappings(env: EnrichEnv): Promise<Map<string, Industr
     return new Map();
   }
   const hasValidCache = mappingCache !== null && Date.now() - mappingCache.ts < CACHE_TTL_MS;
-  if (mappingCache && hasValidCache && mappingCacheStatus === 'ok') {
+  if (hasValidCache && mappingCacheStatus === 'ok') {
     return mappingCache.entries;
   }
 
