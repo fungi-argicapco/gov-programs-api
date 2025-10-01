@@ -3,6 +3,7 @@ import type { D1Database } from '@cloudflare/workers-types';
 import { formatDay } from '@common/dates';
 
 import { runCatalogOnce } from './catalog';
+import { getIngestionMetricsAdapter } from './metrics';
 import { runOutbox } from './alerts.outbox';
 import { checkDeadlinks } from './deadlinks';
 import { writeDailyCoverage } from './precompute.coverage';
@@ -104,7 +105,9 @@ async function runDailyMetrics(env: IngestEnv, event: ScheduledEvent): Promise<v
 
 export default {
   async scheduled(event: ScheduledEvent, env: IngestEnv, _ctx: ExecutionContext) {
-    await runCatalogOnce(env);
+    await runCatalogOnce(env, new Date(), {
+      metricsAdapter: getIngestionMetricsAdapter(env as any)
+    });
 
     if (shouldRunOutbox(event)) {
       await runOutbox(env);

@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect } from 'vitest';
 import type { KVNamespace } from '@cloudflare/workers-types';
-import { enrichNaics } from '../apps/ingest/src/enrich';
+import { enrichNaics, resetEnrichmentCaches } from '../apps/ingest/src/enrich';
 
 const mockKV = (data: any) => ({
   async get(_key: string) {
@@ -19,6 +19,10 @@ const mockDb = (rows: any[]) => ({
 });
 
 describe('enrichNaics', () => {
+  beforeEach(() => {
+    resetEnrichmentCaches();
+  });
+
   it('assigns NAICS codes from lookup synonyms', async () => {
     const env = { LOOKUPS_KV: mockKV([{ code: '111110', synonyms: ['agriculture'] }]) };
     const program = {

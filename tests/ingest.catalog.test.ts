@@ -4,7 +4,7 @@ import { createTestDB } from './helpers/d1';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const migrations = ['0001_init.sql', '0002_fts.sql', '0003_ingest_obs.sql'];
+const migrations = ['0001_init.sql', '0002_fts.sql', '0003_ingest_obs.sql', '0013_ingest_diff_metrics.sql'];
 
 const readMigration = (name: string) =>
   fs.readFileSync(path.join(process.cwd(), 'migrations', name), 'utf-8');
@@ -100,8 +100,13 @@ describe('runCatalogOnce', () => {
       env.__db__.exec(readMigration(file));
     }
 
-    const metrics = await runCatalogOnce({ DB: env } as any);
+    const rawBucket = {
+      put: vi.fn(async () => undefined)
+    } as unknown as R2Bucket;
+
+    const metrics = await runCatalogOnce({ DB: env, RAW_R2: rawBucket } as any);
     expect(metrics.length).toBeGreaterThan(0);
+    expect(metrics.some((entry) => entry.diffSummary.totalProgramsChanged > 0)).toBe(true);
 
     const runCount = await env.prepare('SELECT COUNT(*) as n FROM ingestion_runs').first<{ n: number }>();
     expect(Number(runCount?.n ?? 0)).toBe(metrics.length);
@@ -112,8 +117,18 @@ describe('runCatalogOnce', () => {
     const diffCount = await env.prepare('SELECT COUNT(*) as n FROM program_diffs').first<{ n: number }>();
     expect(Number(diffCount?.n ?? 0)).toBeGreaterThan(0);
 
+    const snapshotDiffCount = await env
+      .prepare('SELECT COUNT(*) as n FROM snapshot_diffs')
+      .first<{ n: number }>();
+    expect(Number(snapshotDiffCount?.n ?? 0)).toBeGreaterThan(0);
+
     const insertedSum = await env.prepare('SELECT SUM(inserted) as n FROM ingestion_runs').first<{ n: number }>();
     expect(Number(insertedSum?.n ?? 0)).toBeGreaterThan(0);
+
+    const criticalFlag = await env
+      .prepare('SELECT SUM(critical) as n FROM program_diffs')
+      .first<{ n: number }>();
+    expect(Number(criticalFlag?.n ?? 0)).toBeGreaterThanOrEqual(0);
 
     const sourceRows = await env
       .prepare('SELECT name, url, authority_level, jurisdiction_code FROM sources ORDER BY name')

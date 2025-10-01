@@ -5,6 +5,13 @@ import {
   ingestRssGeneric
 } from './adapters';
 import type { UpsertOutcome } from './upsert';
+import {
+  createConsoleMetricsAdapter,
+  summarizeOutcomes,
+  type MetricsAdapter,
+  type RunDiffSummary,
+  type RunStatus
+} from './metrics';
 
 type IngestEnv = {
   DB: D1Database;
@@ -13,18 +20,26 @@ type IngestEnv = {
   [key: string]: unknown;
 };
 
-type RunStatus = 'ok' | 'error' | 'partial';
-
 type CatalogRunMetrics = {
   source: SourceDef;
   sourceRowId: number;
+  runId: number | null;
   status: RunStatus;
   fetched: number;
   inserted: number;
   updated: number;
   unchanged: number;
   errors: number;
-  message?: string;
+  durationMs: number;
+  startedAt: number;
+  endedAt: number;
+  notes: string[];
+  diffSummary: RunDiffSummary;
+};
+
+type RunCatalogOptions = {
+  sourceIds?: string[];
+  metricsAdapter?: MetricsAdapter;
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -173,29 +188,99 @@ function deriveFailureStatus({
   return 'error';
 }
 
-export async function runCatalogOnce(env: IngestEnv, now: Date = new Date()): Promise<CatalogRunMetrics[]> {
+export async function runCatalogOnce(
+  env: IngestEnv,
+  now: Date = new Date(),
+  options: RunCatalogOptions = {}
+): Promise<CatalogRunMetrics[]> {
   const metrics: CatalogRunMetrics[] = [];
-  for (const source of SOURCES) {
+  const adapter = options.metricsAdapter ?? createConsoleMetricsAdapter();
+  const sources = options.sourceIds && options.sourceIds.length > 0
+    ? SOURCES.filter((src) => options.sourceIds?.includes(src.id))
+    : SOURCES;
+
+  const emptySummary = () => summarizeOutcomes([]);
+
+  for (const source of sources) {
     const startedAt = Date.now();
-    const started = new Date(startedAt);
     let fetched = 0;
     let inserted = 0;
     let updated = 0;
     let unchanged = 0;
     let errors = 0;
     let status: RunStatus = 'ok';
-    let message: string | undefined;
-
+    const notes: string[] = [];
+    let diffSummary: RunDiffSummary = emptySummary();
+    let runId: number | null = null;
     let sourceRowId = -1;
+
     try {
       sourceRowId = await ensureSource(env, source);
     } catch (err: any) {
+      errors = 1;
       status = 'error';
-      errors += 1;
-      message = `ensure_source_failed:${err?.message ?? String(err)}`;
-      metrics.push({ source, sourceRowId, status, fetched, inserted, updated, unchanged, errors, message });
+      notes.push(`ensure_source_failed:${err?.message ?? String(err)}`);
+      const endedAt = Date.now();
+      const durationMs = Math.max(0, endedAt - startedAt);
+      const event = {
+        sourceId: source.id,
+        sourceRowId,
+        runId: null,
+        status,
+        startedAt,
+        endedAt,
+        durationMs,
+        fetched,
+        inserted,
+        updated,
+        unchanged,
+        errors,
+        notes: notes.slice(),
+        diffSummary: emptySummary()
+      } satisfies Parameters<NonNullable<MetricsAdapter['onRunComplete']>>[0];
+      await adapter.onRunComplete?.(event);
+      metrics.push({
+        source,
+        sourceRowId,
+        runId: null,
+        status,
+        fetched,
+        inserted,
+        updated,
+        unchanged,
+        errors,
+        durationMs,
+        startedAt,
+        endedAt,
+        notes: notes.slice(),
+        diffSummary: emptySummary()
+      });
       continue;
     }
+
+    try {
+      const runInsert = await env.DB.prepare(
+        `INSERT INTO ingestion_runs (source_id, started_at, ended_at, status, fetched, inserted, updated, unchanged, errors, message, notes, critical)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+        .bind(sourceRowId, startedAt, startedAt, 'ok', 0, 0, 0, 0, 0, null, null, 0)
+        .run();
+      const insertedId = Number((runInsert as any)?.meta?.last_row_id ?? 0);
+      if (Number.isFinite(insertedId) && insertedId > 0) {
+        runId = insertedId;
+      }
+    } catch (err: any) {
+      notes.push(`run_init_failed:${err?.message ?? String(err)}`);
+    }
+
+    await adapter.onRunStart?.({
+      sourceId: source.id,
+      sourceRowId,
+      runId,
+      startedAt
+    });
+
+    let outcomes: UpsertOutcome[] = [];
 
     try {
       const url = new URL(source.entrypoint);
@@ -205,7 +290,7 @@ export async function runCatalogOnce(env: IngestEnv, now: Date = new Date()): Pr
         throw new Error(`http_${response.status}`);
       }
       const body = await response.text();
-      await writeSnapshot(env, source, started, body);
+      await writeSnapshot(env, source, new Date(startedAt), body);
 
       switch (source.parser) {
         case 'json_api_generic': {
@@ -218,10 +303,11 @@ export async function runCatalogOnce(env: IngestEnv, now: Date = new Date()): Pr
             authority: source.authority,
             jurisdiction: source.jurisdiction,
             sourceId: sourceRowId,
-            mapFn: source.mapFn
+            mapFn: source.mapFn,
+            runId: runId ?? undefined
           });
           fetched = result.attempted;
-          ({ inserted, updated, unchanged } = aggregate(result.outcomes));
+          outcomes = result.outcomes;
           break;
         }
         case 'rss_generic': {
@@ -231,10 +317,11 @@ export async function runCatalogOnce(env: IngestEnv, now: Date = new Date()): Pr
             country: source.country,
             authority: source.authority,
             jurisdiction: source.jurisdiction,
-            sourceId: sourceRowId
+            sourceId: sourceRowId,
+            runId: runId ?? undefined
           });
           fetched = result.attempted;
-          ({ inserted, updated, unchanged } = aggregate(result.outcomes));
+          outcomes = result.outcomes;
           break;
         }
         case 'html_table_generic': {
@@ -246,41 +333,103 @@ export async function runCatalogOnce(env: IngestEnv, now: Date = new Date()): Pr
             country: source.country,
             authority: source.authority,
             jurisdiction: source.jurisdiction,
-            sourceId: sourceRowId
+            sourceId: sourceRowId,
+            runId: runId ?? undefined
           });
           fetched = result.attempted;
-          ({ inserted, updated, unchanged } = aggregate(result.outcomes));
+          outcomes = result.outcomes;
           break;
         }
         default:
           throw new Error(`unsupported_parser:${source.parser}`);
       }
+
+      ({ inserted, updated, unchanged } = aggregate(outcomes));
+      diffSummary = summarizeOutcomes(outcomes);
     } catch (err: any) {
       status = deriveFailureStatus({ fetched, inserted, updated });
       errors += 1;
-      message = err?.message ? String(err.message) : String(err);
+      notes.push(`ingest_error:${err?.message ?? String(err)}`);
+    }
+
+    if (errors > 0 && status === 'ok') {
+      status = deriveFailureStatus({ fetched, inserted, updated });
     }
 
     const endedAt = Date.now();
-    await env.DB.prepare(
-      `INSERT INTO ingestion_runs (source_id, started_at, ended_at, status, fetched, inserted, updated, unchanged, errors, message)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-      .bind(
-        sourceRowId,
-        startedAt,
-        endedAt,
-        status,
-        fetched,
-        inserted,
-        updated,
-        unchanged,
-        errors,
-        message ?? null
-      )
-      .run();
+    const durationMs = Math.max(0, endedAt - startedAt);
 
-    metrics.push({ source, sourceRowId, status, fetched, inserted, updated, unchanged, errors, message });
+    if (runId) {
+      try {
+        await env.DB.prepare(
+          `UPDATE ingestion_runs
+             SET ended_at = ?,
+                 status = ?,
+                 fetched = ?,
+                 inserted = ?,
+                 updated = ?,
+                 unchanged = ?,
+                 errors = ?,
+                 message = ?,
+                 notes = ?,
+                 critical = ?
+           WHERE id = ?`
+        )
+          .bind(
+            endedAt,
+            status,
+            fetched,
+            inserted,
+            updated,
+            unchanged,
+            errors,
+            notes[0] ?? null,
+            notes.length > 0 ? JSON.stringify(notes) : null,
+            diffSummary.criticalChanges > 0 ? 1 : 0,
+            runId
+          )
+          .run();
+      } catch (err: any) {
+        notes.push(`run_update_failed:${err?.message ?? String(err)}`);
+      }
+    }
+
+    const event = {
+      sourceId: source.id,
+      sourceRowId,
+      runId,
+      status,
+      startedAt,
+      endedAt,
+      durationMs,
+      fetched,
+      inserted,
+      updated,
+      unchanged,
+      errors,
+      notes: notes.slice(),
+      diffSummary
+    } satisfies Parameters<NonNullable<MetricsAdapter['onRunComplete']>>[0];
+
+    await adapter.onRunComplete?.(event);
+
+    metrics.push({
+      source,
+      sourceRowId,
+      runId,
+      status,
+      fetched,
+      inserted,
+      updated,
+      unchanged,
+      errors,
+      durationMs,
+      startedAt,
+      endedAt,
+      notes: notes.slice(),
+      diffSummary
+    });
   }
+
   return metrics;
 }

@@ -27,6 +27,7 @@ export async function ingestRssGeneric(env: IngestEnv, opts: {
   }>;
   limit?: number;
   sourceId?: number;
+  runId?: number;
 }): Promise<RssResult> {
   const xml = opts.feed ?? await (await fetch(opts.url)).text();
   const $ = cheerio.load(xml, { xmlMode: true });
@@ -59,6 +60,6 @@ export async function ingestRssGeneric(env: IngestEnv, opts: {
       }
     };
   });
-  const outcomes = await upsertPrograms(env, payload as any);
+  const outcomes = await upsertPrograms(env, payload as any, { runId: opts.runId });
   return { attempted: payload.length, outcomes };
 }

@@ -3,6 +3,7 @@ import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
 
 import { buildCoverageResponse } from '../apps/api/src/coverage';
 import { runEnrichmentBackfill } from '../apps/ingest/src/backfill.enrichment';
+import { resetEnrichmentCaches } from '../apps/ingest/src/enrich';
 import { writeDailyCoverage } from '../apps/ingest/src/precompute.coverage';
 import { createTestDB } from './helpers/d1';
 
@@ -234,6 +235,7 @@ describe('coverage integration flow', () => {
     db = createTestDB();
     await createSchema(db);
     await seedFixtures(db, COVERAGE_TIME.getTime());
+    resetEnrichmentCaches();
   });
 
   afterEach(() => {
