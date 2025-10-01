@@ -13,18 +13,22 @@ NODE_ENV = "production"
 binding = "DB"
 database_name = "gov-programs-api-db"
 database_id = "__D1_DATABASE_ID__"
+preview_database_id = "__D1_DATABASE_ID__"
 
 [[kv_namespaces]]
 binding = "LOOKUPS_KV"
 id = "__KV_LOOKUPS_ID__"
+preview_id = "__KV_LOOKUPS_ID__"
 
 [[kv_namespaces]]
 binding = "API_KEYS"
 id = "__KV_API_KEYS_ID__"
+preview_id = "__KV_API_KEYS_ID__"
 
 [[r2_buckets]]
 binding = "RAW_R2"
 bucket_name = "__R2_BUCKET__"
+preview_bucket_name = "__R2_BUCKET__"
 
 [[durable_objects.bindings]]
 name = "__DO_BINDING__"
