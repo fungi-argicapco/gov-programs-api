@@ -390,7 +390,7 @@ export async function refreshSession(
     throw new Error('invalid_session');
   }
   const expiresAtTs = Date.parse(session.refresh_expires_at);
-  if (Number.isFinite(expiresAtTs) && expiresAtTs < Date.now()) {
+  if (expiresAtTs < Date.now()) {
     await deleteSession(env, session.id);
     throw new Error('expired_refresh');
   }
