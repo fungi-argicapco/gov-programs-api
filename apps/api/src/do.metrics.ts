@@ -29,6 +29,11 @@ type Aggregation = {
   bytesOut: number;
 };
 
+type AccumulatedAggregation = {
+  durations: number[];
+  bytesOut: number;
+};
+
 const REPORTER_SYMBOL = Symbol.for('gov-programs.metrics.reporter');
 const DEFAULT_THRESHOLD = 200;
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
@@ -60,7 +65,7 @@ class MetricsBuffer {
   private currentBucket: number | null = null;
   private totalCount = 0;
   private readonly buffer = new Map<AggregationKey, Aggregation>();
-  private readonly accumulated = new Map<AggregationKey, { durations: number[]; bytesOut: number }>();
+  private readonly accumulated = new Map<AggregationKey, AccumulatedAggregation>();
 
   constructor(db: D1Database, threshold = DEFAULT_THRESHOLD) {
     this.db = db;
@@ -121,7 +126,7 @@ class MetricsBuffer {
 
     const statements: ReturnType<D1Database['prepare']>[] = [];
     for (const [key, agg] of this.buffer.entries()) {
-      const batchDurations = agg.durations.slice().sort((a, b) => a - b);
+      const batchDurations = toSortedDurations(agg.durations);
       const existing = this.accumulated.get(key);
       const mergedDurations = existing
         ? mergeSorted(existing.durations, batchDurations)
@@ -177,6 +182,11 @@ function mergeSorted(a: number[], b: number[]): number[] {
     result[k++] = b[j++];
   }
   return result;
+}
+
+function toSortedDurations(durations: number[]): number[] {
+  if (durations.length <= 1) return durations.slice();
+  return durations.slice().sort((a, b) => a - b);
 }
 
 function hasDurableObjectNamespace(binding: unknown): binding is DurableObjectNamespace {

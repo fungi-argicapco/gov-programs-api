@@ -93,6 +93,10 @@ type SessionRecord = {
   created_at: string;
 };
 
+type SessionRecordWithRefresh = SessionRecord & {
+  refresh_expires_at: string | null;
+};
+
 function parseJson<T>(value: string | null | undefined, fallback: T): T {
   if (!value) return fallback;
   try {
@@ -364,9 +368,9 @@ export async function createSession(
 }
 
 export async function getSession(env: Env, sessionId: string) {
-  const record = await env.DB.prepare(`SELECT * FROM sessions WHERE id = ?1`).bind(sessionId).first<SessionRecord & {
-    refresh_expires_at: string | null;
-  }>();
+  const record = await env.DB.prepare(`SELECT * FROM sessions WHERE id = ?1`)
+    .bind(sessionId)
+    .first<SessionRecordWithRefresh>();
   if (!record) return null;
   return {
     schema_version: SCHEMA_VERSION,
@@ -382,9 +386,9 @@ export async function getSession(env: Env, sessionId: string) {
 }
 
 export async function getSessionWithSecrets(env: Env, sessionId: string) {
-  const record = await env.DB.prepare(`SELECT * FROM sessions WHERE id = ?1`).bind(sessionId).first<SessionRecord & {
-    refresh_expires_at: string | null;
-  }>();
+  const record = await env.DB.prepare(`SELECT * FROM sessions WHERE id = ?1`)
+    .bind(sessionId)
+    .first<SessionRecordWithRefresh>();
   if (!record) return null;
   return {
     session: {
