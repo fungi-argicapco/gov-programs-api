@@ -1,15 +1,33 @@
 import type { ProgramBenefit, ProgramCriterion } from '@common/types';
 import { normalizeToProgram, UpsertProgramRecord } from './normalize';
 import { enrichNaics } from './enrich';
+import { diffJson, summarizeDiff, type DiffOptions, type JsonDiffChange } from './diff/json';
 
 type IngestEnv = { DB: D1Database; RAW_R2?: R2Bucket; LOOKUPS_KV?: KVNamespace };
 
 type UpsertStatus = 'inserted' | 'updated' | 'unchanged';
 
+export type ProgramDiffRecord = {
+  kind: 'insert' | 'update';
+  summary: {
+    totalChanges: number;
+    criticalChanges: number;
+    changedPaths: string[];
+    criticalPaths: string[];
+  };
+  changes: JsonDiffChange[];
+  before?: ProgramSnapshot;
+  after: ProgramSnapshot;
+};
+
 export type UpsertOutcome = {
   uid: string;
   status: UpsertStatus;
-  diff?: Record<string, unknown>;
+  diff?: ProgramDiffRecord;
+};
+
+export type UpsertContext = {
+  runId?: number | null;
 };
 
 const encoder = new TextEncoder();
@@ -69,15 +87,46 @@ const snapshotProgram = (program: {
   source_id: program.source_id ?? null
 });
 
-const arraysEqual = (a: unknown[], b: unknown[]) => {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (JSON.stringify(a[i]) !== JSON.stringify(b[i])) return false;
-  }
-  return true;
+export type ProgramSnapshot = ReturnType<typeof snapshotProgram>;
+
+const PROGRAM_DIFF_OPTIONS: DiffOptions = {
+  ignore: ['summary'],
+  critical: [
+    'status',
+    'benefit_type',
+    'start_date',
+    'end_date',
+    'benefits',
+    'benefits.*.min_amount_cents',
+    'benefits.*.max_amount_cents',
+    'benefits.*.currency_code'
+  ]
 };
 
-export async function upsertPrograms(env: IngestEnv, items: UpsertProgramRecord[]): Promise<UpsertOutcome[]> {
+const buildProgramDiff = (
+  kind: 'insert' | 'update',
+  before: ProgramSnapshot | null,
+  after: ProgramSnapshot
+): ProgramDiffRecord => {
+  const changes = diffJson(before ?? {}, after, PROGRAM_DIFF_OPTIONS);
+  const summary = summarizeDiff(changes);
+  const payload: ProgramDiffRecord = {
+    kind,
+    summary,
+    changes,
+    after
+  };
+  if (before) {
+    payload.before = before;
+  }
+  return payload;
+};
+
+export async function upsertPrograms(
+  env: IngestEnv,
+  items: UpsertProgramRecord[],
+  context: UpsertContext = {}
+): Promise<UpsertOutcome[]> {
   const outcomes: UpsertOutcome[] = [];
   for (const record of items) {
     const normalized = await normalizeToProgram(record.program);
@@ -92,8 +141,11 @@ export async function upsertPrograms(env: IngestEnv, items: UpsertProgramRecord[
       .first<any>()
       .catch(() => null);
 
+    const sourceIdForDiff = enriched.source_id ?? existingRow?.source_id ?? null;
+
     let programId: number | null = null;
     let outcome: UpsertOutcome = { uid: enriched.uid, status: 'unchanged' };
+    let snapshotId: number | null = null;
 
     if (!existingRow) {
       const insertResult = await env.DB.prepare(
@@ -131,22 +183,26 @@ export async function upsertPrograms(env: IngestEnv, items: UpsertProgramRecord[
         await writeRelations(env, programId, enriched.benefits ?? [], enriched.criteria ?? [], enriched.tags ?? []);
       }
 
+      const afterSnapshot = snapshotProgram({
+        ...enriched,
+        industry_codes: enriched.industry_codes ?? [],
+        benefits: enriched.benefits ?? [],
+        criteria: enriched.criteria ?? [],
+        tags: enriched.tags ?? []
+      });
+      const diffRecord = buildProgramDiff('insert', null, afterSnapshot);
       outcome = {
         uid: enriched.uid,
         status: 'inserted',
-        diff: {
-          type: 'insert',
-          after: snapshotProgram({
-            ...enriched,
-            industry_codes: enriched.industry_codes ?? [],
-            benefits: enriched.benefits ?? [],
-            criteria: enriched.criteria ?? [],
-            tags: enriched.tags ?? []
-          })
-        }
+        diff: diffRecord
       };
 
-      await recordDiff(env, enriched.uid, enriched.source_id ?? null, outcome.diff);
+      await recordProgramDiff(env, {
+        uid: enriched.uid,
+        sourceId: sourceIdForDiff,
+        runId: context.runId ?? null,
+        diff: diffRecord
+      });
     } else {
       programId = Number(existingRow.id);
       const existingRelations = await readRelations(env, programId);
@@ -172,16 +228,9 @@ export async function upsertPrograms(env: IngestEnv, items: UpsertProgramRecord[
         tags: enriched.tags ?? []
       });
 
-      const changedFields = Object.keys(beforeSnapshot).filter((key) => {
-        const b = (beforeSnapshot as any)[key];
-        const a = (afterSnapshot as any)[key];
-        if (Array.isArray(b) && Array.isArray(a)) {
-          return !arraysEqual(b, a);
-        }
-        return JSON.stringify(b) !== JSON.stringify(a);
-      });
+      const diffRecord = buildProgramDiff('update', beforeSnapshot, afterSnapshot);
 
-      if (changedFields.length === 0) {
+      if (diffRecord.changes.length === 0) {
         outcome = { uid: enriched.uid, status: 'unchanged' };
       } else {
         await env.DB.prepare(
@@ -213,15 +262,15 @@ export async function upsertPrograms(env: IngestEnv, items: UpsertProgramRecord[
         outcome = {
           uid: enriched.uid,
           status: 'updated',
-          diff: {
-            type: 'update',
-            changed_fields: changedFields,
-            before: beforeSnapshot,
-            after: afterSnapshot
-          }
+          diff: diffRecord
         };
 
-        await recordDiff(env, enriched.uid, enriched.source_id ?? existingRow.source_id ?? null, outcome.diff);
+        await recordProgramDiff(env, {
+          uid: enriched.uid,
+          sourceId: sourceIdForDiff,
+          runId: context.runId ?? null,
+          diff: diffRecord
+        });
       }
     }
 
@@ -231,7 +280,7 @@ export async function upsertPrograms(env: IngestEnv, items: UpsertProgramRecord[
         const rawHash = await sha256Hex(rawString);
         const key = `programs/${enriched.uid}/${now}.json`;
         await env.RAW_R2.put(key, rawString, { httpMetadata: { contentType: 'application/json' } });
-        await env.DB.prepare(
+        const snapshotResult = await env.DB.prepare(
           `INSERT INTO snapshots (program_id, raw_key, raw_hash, fetched_at, adapter, source_url)
            VALUES (?, ?, ?, ?, ?, ?)`
         )
@@ -244,9 +293,33 @@ export async function upsertPrograms(env: IngestEnv, items: UpsertProgramRecord[
             record.source_url ?? null
           )
           .run();
+        const insertedId = Number((snapshotResult as any)?.meta?.last_row_id ?? 0);
+        if (Number.isFinite(insertedId) && insertedId > 0) {
+          snapshotId = insertedId;
+        } else if (programId) {
+          const row = await env.DB.prepare(
+            `SELECT id FROM snapshots WHERE program_id = ? ORDER BY fetched_at DESC, id DESC LIMIT 1`
+          )
+            .bind(programId)
+            .first<{ id: number }>();
+          if (row?.id) {
+            snapshotId = Number(row.id);
+          }
+        }
       } catch {
         // Ignore snapshot errors to avoid blocking ingestion.
       }
+    }
+
+    if (snapshotId && outcome.diff && programId) {
+      await recordSnapshotDiff(env, {
+        uid: enriched.uid,
+        programId,
+        snapshotId,
+        runId: context.runId ?? null,
+        sourceId: sourceIdForDiff,
+        diff: outcome.diff
+      });
     }
 
     outcomes.push(outcome);
@@ -303,11 +376,67 @@ async function readRelations(env: IngestEnv, programId: number) {
   };
 }
 
-async function recordDiff(env: IngestEnv, uid: string, sourceId: number | null, diff?: Record<string, unknown>) {
-  if (!diff) return;
+type RecordProgramDiffInput = {
+  uid: string;
+  sourceId: number | null;
+  runId: number | null;
+  diff: ProgramDiffRecord;
+};
+
+async function recordProgramDiff(env: IngestEnv, input: RecordProgramDiffInput) {
+  const payload = {
+    diff: JSON.stringify(input.diff),
+    summary: JSON.stringify(input.diff.summary),
+    critical: input.diff.summary.criticalChanges > 0 ? 1 : 0
+  };
   await env.DB.prepare(
-    `INSERT INTO program_diffs (program_uid, source_id, ts, diff) VALUES (?, ?, ?, ?)`
+    `INSERT INTO program_diffs (program_uid, source_id, run_id, ts, diff, summary, critical)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
   )
-    .bind(uid, sourceId ?? null, Date.now(), JSON.stringify(diff))
+    .bind(
+      input.uid,
+      input.sourceId ?? null,
+      input.runId ?? null,
+      Date.now(),
+      payload.diff,
+      payload.summary,
+      payload.critical
+    )
+    .run();
+}
+
+type RecordSnapshotDiffInput = {
+  uid: string;
+  programId: number;
+  snapshotId: number;
+  sourceId: number | null;
+  runId: number | null;
+  diff: ProgramDiffRecord;
+};
+
+async function recordSnapshotDiff(env: IngestEnv, input: RecordSnapshotDiffInput) {
+  const prevRow = await env.DB.prepare(
+    `SELECT id FROM snapshots WHERE program_id = ? AND id != ? ORDER BY fetched_at DESC, id DESC LIMIT 1`
+  )
+    .bind(input.programId, input.snapshotId)
+    .first<{ id: number }>();
+  const payload = {
+    diff: JSON.stringify(input.diff),
+    critical: input.diff.summary.criticalChanges > 0 ? 1 : 0
+  };
+  await env.DB.prepare(
+    `INSERT INTO snapshot_diffs (program_uid, snapshot_id, prev_snapshot_id, run_id, source_id, ts, diff, critical)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      input.uid,
+      input.snapshotId,
+      prevRow?.id ?? null,
+      input.runId ?? null,
+      input.sourceId ?? null,
+      Date.now(),
+      payload.diff,
+      payload.critical
+    )
     .run();
 }

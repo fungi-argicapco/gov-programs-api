@@ -85,8 +85,8 @@ async function loadSampleLookup(): Promise<NaicsEntry[]> {
 }
 
 async function loadLookup(env: EnrichEnv): Promise<NaicsEntry[]> {
-  const hasValidCache = lookupCache && Date.now() - lookupCache.ts < CACHE_TTL_MS;
-  if (hasValidCache && (!env.LOOKUPS_KV || lookupCacheSource === 'kv')) {
+  const hasValidCache = lookupCache !== null && Date.now() - lookupCache.ts < CACHE_TTL_MS;
+  if (lookupCache && hasValidCache && (!env.LOOKUPS_KV || lookupCacheSource === 'kv')) {
     return lookupCache.entries;
   }
 
@@ -148,8 +148,8 @@ async function loadIndustryMappings(env: EnrichEnv): Promise<Map<string, Industr
   if (!env.DB) {
     return new Map();
   }
-  const hasValidCache = mappingCache && Date.now() - mappingCache.ts < CACHE_TTL_MS;
-  if (hasValidCache && mappingCacheStatus === 'ok') {
+  const hasValidCache = mappingCache !== null && Date.now() - mappingCache.ts < CACHE_TTL_MS;
+  if (mappingCache && hasValidCache && mappingCacheStatus === 'ok') {
     return mappingCache.entries;
   }
 
@@ -258,4 +258,11 @@ export async function enrichNaics(program: NormalizedProgram, env: EnrichEnv): P
     industry_codes: codeList,
     tags: mergedTags
   };
+}
+
+export function resetEnrichmentCaches(): void {
+  lookupCache = null;
+  lookupCacheSource = null;
+  mappingCache = null;
+  mappingCacheStatus = null;
 }

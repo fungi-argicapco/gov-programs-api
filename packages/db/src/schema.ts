@@ -1,5 +1,64 @@
 import { sqliteTable, integer, text, index, uniqueIndex, real } from 'drizzle-orm/sqlite-core';
 
+export const ingestionRuns = sqliteTable(
+  'ingestion_runs',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    sourceId: integer('source_id').notNull(),
+    startedAt: integer('started_at').notNull(),
+    endedAt: integer('ended_at').notNull(),
+    status: text('status').notNull(),
+    fetched: integer('fetched').notNull().default(0),
+    inserted: integer('inserted').notNull().default(0),
+    updated: integer('updated').notNull().default(0),
+    unchanged: integer('unchanged').notNull().default(0),
+    errors: integer('errors').notNull().default(0),
+    critical: integer('critical', { mode: 'boolean' }).notNull().default(false),
+    message: text('message'),
+    notes: text('notes')
+  },
+  (table) => ({
+    sourceIdx: index('idx_ingestion_runs_source_time').on(table.sourceId, table.startedAt)
+  })
+);
+
+export const programDiffs = sqliteTable(
+  'program_diffs',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    programUid: text('program_uid').notNull(),
+    sourceId: integer('source_id'),
+    runId: integer('run_id'),
+    ts: integer('ts').notNull(),
+    diff: text('diff').notNull(),
+    summary: text('summary'),
+    critical: integer('critical', { mode: 'boolean' }).notNull().default(false)
+  },
+  (table) => ({
+    programIdx: index('idx_program_diffs_program_time').on(table.programUid, table.ts),
+    runIdx: index('idx_program_diffs_run').on(table.runId)
+  })
+);
+
+export const snapshotDiffs = sqliteTable(
+  'snapshot_diffs',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    programUid: text('program_uid').notNull(),
+    snapshotId: integer('snapshot_id').notNull(),
+    prevSnapshotId: integer('prev_snapshot_id'),
+    runId: integer('run_id'),
+    sourceId: integer('source_id'),
+    ts: integer('ts').notNull(),
+    diff: text('diff').notNull(),
+    critical: integer('critical', { mode: 'boolean' }).notNull().default(false)
+  },
+  (table) => ({
+    programIdx: index('idx_snapshot_diffs_program_time').on(table.programUid, table.ts),
+    runIdx: index('idx_snapshot_diffs_run').on(table.runId)
+  })
+);
+
 export const programs = sqliteTable('programs', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   uid: text('uid').notNull().unique(),                                     // stable deterministic id

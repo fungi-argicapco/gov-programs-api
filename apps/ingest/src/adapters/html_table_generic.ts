@@ -25,6 +25,7 @@ export async function ingestHtmlTableGeneric(env: IngestEnv, opts: {
   jurisdiction: string;
   limit?: number;
   sourceId?: number;
+  runId?: number;
 }): Promise<HtmlResult> {
   const html = opts.html ?? await (await fetch(opts.url)).text();
   const $ = cheerio.load(html);
@@ -62,6 +63,6 @@ export async function ingestHtmlTableGeneric(env: IngestEnv, opts: {
       }
     };
   });
-  const outcomes = await upsertPrograms(env, payload as any);
+  const outcomes = await upsertPrograms(env, payload as any, { runId: opts.runId });
   return { attempted: payload.length, outcomes };
 }

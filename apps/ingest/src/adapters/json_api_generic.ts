@@ -44,6 +44,7 @@ export async function ingestJsonApiGeneric(env: IngestEnv, opts: {
   jurisdiction: string;
   limit?: number;
   sourceId?: number;
+  runId?: number;
 }): Promise<JsonApiResult> {
   const mapper = resolveMapper(opts.map, opts.mapFn);
   const json = opts.data ?? await (await fetch(opts.url)).json();
@@ -74,6 +75,6 @@ export async function ingestJsonApiGeneric(env: IngestEnv, opts: {
       }
     };
   });
-  const outcomes = await upsertPrograms(env, payload as any);
+  const outcomes = await upsertPrograms(env, payload as any, { runId: opts.runId });
   return { attempted: payload.length, outcomes };
 }
