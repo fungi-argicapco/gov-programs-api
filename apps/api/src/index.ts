@@ -28,11 +28,13 @@ import {
   getAccountRequestByToken,
   markDecisionTokenUsed,
   updateAccountRequestStatus,
-  ensureUserWithDefaultCanvas
+  ensureUserWithDefaultCanvas,
+  createSignupToken,
 } from './onboarding/storage';
 import {
   buildDecisionEmail,
   buildDecisionResultEmail,
+  buildSignupEmail,
   sendEmail
 } from './onboarding/email';
 
@@ -564,6 +566,8 @@ app.post('/v1/account/decision', async (c) => {
     return apiError(c, 404, 'invalid_token', 'Decision token is not valid.');
   }
 
+  const baseUrl = c.env.PROGRAM_API_BASE ?? `https://${c.req.header('host') ?? 'program.fungiagricap.com'}`;
+
   const expiresAt = Date.parse(tokenRecord.token.expires_at);
   if (Number.isNaN(expiresAt) || expiresAt < Date.now()) {
     return apiError(c, 410, 'token_expired', 'Decision token has expired.');
@@ -621,11 +625,23 @@ app.post('/v1/account/decision', async (c) => {
       user_id: profile.id
     });
 
+    const signupToken = await createSignupToken(c.env, userId);
+    const activationBase = new URL('/account/activate', baseUrl).toString();
+    const activationEmail = buildSignupEmail({
+      recipient: profile.email,
+      token: signupToken.token,
+      activationBaseUrl: activationBase,
+      expiresAt: signupToken.expiresAt,
+    });
+
     const approvalEmail = buildDecisionResultEmail({
       recipient: profile.email,
       decision: 'approved'
     });
-    await sendEmail(c.env, approvalEmail);
+    await Promise.all([
+      sendEmail(c.env, approvalEmail),
+      sendEmail(c.env, activationEmail),
+    ]);
   } else {
     await sendEmail(c.env, buildDecisionResultEmail({
       recipient: tokenRecord.accountRequest.email,

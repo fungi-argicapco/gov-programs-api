@@ -210,6 +210,7 @@ export const sessions = sqliteTable('sessions', {
   userId: text('user_id').notNull(),
   issuedAt: text('issued_at').notNull(),
   expiresAt: text('expires_at').notNull(),
+  refreshExpiresAt: text('refresh_expires_at'),
   mfaRequired: integer('mfa_required', { mode: 'boolean' }).notNull().default(false),
   ip: text('ip'),
   userAgent: text('user_agent'),

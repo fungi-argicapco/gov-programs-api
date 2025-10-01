@@ -68,3 +68,28 @@ export function buildDecisionResultEmail(options: {
 
   return { to: recipient, subject, html } satisfies EmailPayload;
 }
+
+export function buildSignupEmail(options: {
+  recipient: string;
+  token: string;
+  activationBaseUrl: string;
+  expiresAt: string;
+}) {
+  const activationUrl = new URL(options.activationBaseUrl);
+  activationUrl.searchParams.set('token', options.token);
+  const expiresAt = new Date(options.expiresAt).toUTCString();
+  const html = `
+    <p>Your fungiagricap canvas account is ready.</p>
+    <p>
+      <a href="${activationUrl.toString()}">Activate your account</a> before <strong>${expiresAt}</strong> to set your password.
+    </p>
+    <p>If the button does not work, copy and paste this link into your browser:<br />${activationUrl.toString()}</p>
+  `;
+  const text = `Your fungiagricap canvas account is ready. Activate your account before ${expiresAt} by visiting ${activationUrl.toString()}`;
+  return {
+    to: options.recipient,
+    subject: 'Activate your fungiagricap account',
+    html,
+    text,
+  } satisfies EmailPayload;
+}
