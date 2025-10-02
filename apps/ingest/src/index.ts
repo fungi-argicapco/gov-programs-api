@@ -9,6 +9,7 @@ import { checkDeadlinks } from './deadlinks';
 import { writeDailyCoverage } from './precompute.coverage';
 import { runEnrichmentBackfill } from './backfill.enrichment';
 import { ingestMacroMetrics } from './macro';
+import { ingestTechlandDataset } from './datasets/techland_ingest';
 
 type IngestEnv = {
   DB: D1Database;
@@ -111,6 +112,22 @@ async function runDailyMetrics(env: IngestEnv, event: ScheduledEvent): Promise<v
         sourceId: summary.sourceId,
         status,
         fetched: summary.fetched,
+        inserted: summary.inserted,
+        updated: summary.updated,
+        skipped: summary.skipped,
+        errors: summary.errors
+      })
+    );
+  }
+
+  const techlandSummaries = await ingestTechlandDataset(env);
+  for (const summary of techlandSummaries) {
+    const status = summary.errors.length > 0 ? 'error' : summary.inserted + summary.updated > 0 ? 'updated' : 'ok';
+    console.log(
+      JSON.stringify({
+        event: 'techland_ingest',
+        table: summary.table,
+        status,
         inserted: summary.inserted,
         updated: summary.updated,
         skipped: summary.skipped,

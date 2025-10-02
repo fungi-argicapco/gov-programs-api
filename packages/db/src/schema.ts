@@ -372,6 +372,33 @@ export const roadmapMilestones = sqliteTable(
   })
 );
 
+export const raidLogs = sqliteTable(
+  'raid_logs',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    countryCode: text('country_code', { length: 2 }).notNull(),
+    adminUnitCode: text('admin_unit_code').notNull(),
+    adminUnitLevel: text('admin_unit_level'),
+    riskDescription: text('risk_description').notNull(),
+    assumption: text('assumption'),
+    issue: text('issue'),
+    dependency: text('dependency'),
+    severity: text('severity'),
+    impact: text('impact'),
+    mitigation: text('mitigation'),
+    notes: text('notes'),
+    sourceUrl: text('source_url'),
+    verificationDate: text('verification_date'),
+    automationMetadata: text('automation_metadata'),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    unitIdx: index('idx_raid_logs_unit').on(table.adminUnitCode)
+  })
+);
+
 export const sources = sqliteTable('sources', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
