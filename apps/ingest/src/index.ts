@@ -8,6 +8,7 @@ import { runOutbox } from './alerts.outbox';
 import { checkDeadlinks } from './deadlinks';
 import { writeDailyCoverage } from './precompute.coverage';
 import { runEnrichmentBackfill } from './backfill.enrichment';
+import { ingestMacroMetrics } from './macro';
 
 type IngestEnv = {
   DB: D1Database;
@@ -101,6 +102,22 @@ async function runDailyMetrics(env: IngestEnv, event: ScheduledEvent): Promise<v
   await runEnrichmentBackfill(env);
   const day = formatDay(getScheduledTime(event));
   await writeDailyCoverage(env, day);
+  const macroSummaries = await ingestMacroMetrics(env);
+  for (const summary of macroSummaries) {
+    const status = summary.errors.length > 0 ? 'error' : summary.inserted + summary.updated > 0 ? 'updated' : 'ok';
+    console.log(
+      JSON.stringify({
+        event: 'macro_ingest',
+        sourceId: summary.sourceId,
+        status,
+        fetched: summary.fetched,
+        inserted: summary.inserted,
+        updated: summary.updated,
+        skipped: summary.skipped,
+        errors: summary.errors
+      })
+    );
+  }
 }
 
 export default {
