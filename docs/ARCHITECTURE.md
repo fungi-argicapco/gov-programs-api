@@ -69,3 +69,4 @@ graph TD
 - Update this diagram whenever we add a new Worker, background job, or persistence layer.
 - Align any new directories or micro-services with the table above and link them from the relevant README files.
 - Keep the source registry (`data/sources`) and migration history consistent with the components referenced here.
+- Register research datasets in `apps/ingest/src/datasets/registry.ts` so ingestion captures `dataset_snapshots` and `dataset_services`; monitor and trigger reloads from the admin console.
