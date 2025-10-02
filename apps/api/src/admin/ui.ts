@@ -171,6 +171,12 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
       <div id="datasets-list"></div>
     </section>
 
+    <section id="climate-section">
+      <h2>Climate Risk Overview</h2>
+      <p>Latest ND-GAIN, INFORM, EPI, and UNEP indicators captured by the ingestion worker.</p>
+      <div id="climate-table"></div>
+    </section>
+
     <script>
       (function () {
         const STORAGE_KEY = 'opsAdminKey';
@@ -182,6 +188,7 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
         const keysList = document.getElementById('api-keys-list');
         const createForm = document.getElementById('create-key-form');
         const datasetsList = document.getElementById('datasets-list');
+        const climateTable = document.getElementById('climate-table');
 
         function getStoredKey() {
           try {
@@ -353,6 +360,17 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
           }
         }
 
+        function formatIndicatorValue(indicator, decimals) {
+          if (!indicator || indicator.value == null || Number.isNaN(Number(indicator.value))) {
+            return '—';
+          }
+          const value = Number(indicator.value);
+          const places = typeof decimals === 'number' ? decimals : 2;
+          const formatted = value.toFixed(places);
+          const yearSuffix = indicator.year != null ? ' (' + indicator.year + ')' : '';
+          return formatted + yearSuffix;
+        }
+
         async function loadSlo() {
           sloTableBody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
           try {
@@ -456,7 +474,7 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
                   const response = await authedFetch('/v1/admin/datasets/' + dataset.id + '/reload', { method: 'POST' });
                   const result = await response.json();
                   showStatus('Reloaded ' + dataset.id + ' v' + result.data.version, false);
-                  await loadDatasets();
+                  await Promise.all([loadDatasets(), loadClimate()]);
                 } catch (err) {
                   showStatus(err.message || String(err), true);
                 }
@@ -491,6 +509,57 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
             datasetsList.appendChild(fragment);
           } catch (err) {
             datasetsList.innerHTML = '<p>Failed to load datasets.</p>';
+            showStatus(err.message || String(err), true);
+          }
+        }
+
+        async function loadClimate() {
+          if (!climateTable) return;
+          climateTable.innerHTML = '<p>Loading climate metrics…</p>';
+          try {
+            const response = await authedFetch('/v1/admin/climate');
+            const payload = await response.json();
+            const summaries = Array.isArray(payload.data) ? payload.data : [];
+            if (!summaries.length) {
+              climateTable.innerHTML = '<p>No climate metrics available.</p>';
+              return;
+            }
+
+            const rowsHtml = summaries
+              .map((summary) => {
+                const ndGain = formatIndicatorValue(summary.indicators?.['nd_gain_index'], 2);
+                const inform = formatIndicatorValue(summary.indicators?.['inform_risk_score'], 2);
+                const epi = formatIndicatorValue(summary.indicators?.['epi_score'] || summary.indicators?.['epi_climate_policy_score'], 1);
+                const water = formatIndicatorValue(summary.indicators?.['permanent_surface_water_change'], 1);
+                return (
+                  '<tr>' +
+                  '<td>' + summary.iso3 + '</td>' +
+                  '<td>' + ndGain + '</td>' +
+                  '<td>' + inform + '</td>' +
+                  '<td>' + epi + '</td>' +
+                  '<td>' + water + '</td>' +
+                  '</tr>'
+                );
+              })
+              .join('');
+
+            climateTable.innerHTML = '';
+            const table = document.createElement('table');
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+            table.innerHTML =
+              '<thead><tr><th>Country</th><th>ND-GAIN Index</th><th>INFORM Risk</th><th>EPI Score</th><th>UNEP Water Change</th></tr></thead>' +
+              '<tbody>' +
+              rowsHtml +
+              '</tbody>';
+            Array.from(table.querySelectorAll('th, td')).forEach((cell) => {
+              cell.style.borderBottom = '1px solid rgba(148, 163, 184, 0.4)';
+              cell.style.padding = '6px 8px';
+              cell.style.fontSize = '14px';
+            });
+            climateTable.appendChild(table);
+          } catch (err) {
+            climateTable.innerHTML = '<p>Failed to load climate metrics.</p>';
             showStatus(err.message || String(err), true);
           }
         }
@@ -603,7 +672,7 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
           if (!getStoredKey()) {
             return;
           }
-          await Promise.all([loadMetrics(), loadSlo(), loadKeys(), loadDatasets()]);
+          await Promise.all([loadMetrics(), loadSlo(), loadKeys(), loadDatasets(), loadClimate()]);
         }
 
         if (getStoredKey()) {

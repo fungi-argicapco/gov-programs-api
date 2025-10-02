@@ -24,6 +24,49 @@ export async function recordDatasetSnapshot(
     .run();
 }
 
+export type DatasetSnapshotRecord = {
+  datasetId: string;
+  version: string;
+  capturedAt: number;
+  payload: any;
+  metadata: Record<string, unknown> | null;
+};
+
+export async function getLatestDatasetSnapshot(env: Env, datasetId: string): Promise<DatasetSnapshotRecord | null> {
+  const row = await env.DB.prepare(
+    `SELECT version, captured_at, payload, metadata FROM dataset_snapshots WHERE dataset_id = ? ORDER BY captured_at DESC LIMIT 1`
+  )
+    .bind(datasetId)
+    .first<{ version: string; captured_at: number; payload: string; metadata: string | null }>()
+    .catch(() => null);
+
+  if (!row) return null;
+
+  let payload: any = null;
+  try {
+    payload = JSON.parse(row.payload);
+  } catch (error) {
+    console.warn(`[dataset-utils] Failed to parse snapshot payload for ${datasetId}`, error);
+  }
+
+  let meta: Record<string, unknown> | null = null;
+  if (row.metadata) {
+    try {
+      meta = JSON.parse(row.metadata) as Record<string, unknown>;
+    } catch (error) {
+      console.warn(`[dataset-utils] Failed to parse snapshot metadata for ${datasetId}`, error);
+    }
+  }
+
+  return {
+    datasetId,
+    version: row.version,
+    capturedAt: Number(row.captured_at),
+    payload,
+    metadata: meta
+  };
+}
+
 type DatasetServiceConfig = {
   serviceName: string;
   endpoint: string;

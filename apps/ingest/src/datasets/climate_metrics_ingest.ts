@@ -1,21 +1,26 @@
 import type { D1Database } from '@cloudflare/workers-types';
 
 import {
-  AQUEDUCT_COUNTRY_METRICS,
-  AQUEDUCT_PROVINCE_METRICS,
   CLIMATE_ISO_CROSSWALK,
   CLIMATE_METRIC_SERVICES,
   CLIMATE_METRICS_SEED_VERSION,
-  EPI_METRICS,
-  INFORM_GLOBAL_METRICS,
-  INFORM_SUBNATIONAL_METRICS,
-  ND_GAIN_METRICS,
   NRI_COUNTY_METRICS,
-  UNEP_COUNTRY_METRICS,
-  UNEP_SUBNATIONAL_METRICS
+  type NdGainMetric,
+  type AqueductCountryMetric,
+  type AqueductProvinceMetric,
+  type InformGlobalMetric,
+  type InformSubnationalMetric,
+  type EpiMetric,
+  type UnepMetric
 } from './climate_metrics';
+import { loadClimateSourceData, sha256Hex } from './climate_fetch';
 import { stableStringify } from '../util/json';
-import { recordDatasetSnapshot, upsertDatasetServices, type DatasetIngestSummary } from './utils';
+import {
+  getLatestDatasetSnapshot,
+  recordDatasetSnapshot,
+  upsertDatasetServices,
+  type DatasetIngestSummary
+} from './utils';
 
 export const CLIMATE_METRICS_DATASET_ID = 'climate_esg_metrics';
 export const CLIMATE_METRICS_VERSION = CLIMATE_METRICS_SEED_VERSION;
@@ -134,9 +139,9 @@ async function insertSubnationalMetrics(
   await env.DB.batch(statements);
 }
 
-function buildNdGainCountryMetrics(): InsertClimateCountry[] {
+function buildNdGainCountryMetrics(metrics: readonly NdGainMetric[]): InsertClimateCountry[] {
   const records: InsertClimateCountry[] = [];
-  for (const entry of ND_GAIN_METRICS) {
+  for (const entry of metrics) {
     if (entry.index !== null) {
       records.push({
         indicator: 'nd_gain_index',
@@ -165,8 +170,8 @@ function buildNdGainCountryMetrics(): InsertClimateCountry[] {
   return records;
 }
 
-function buildAqueductCountryMetrics(): InsertClimateCountry[] {
-  return AQUEDUCT_COUNTRY_METRICS.map((entry) => ({
+function buildAqueductCountryMetrics(metrics: readonly AqueductCountryMetric[]): InsertClimateCountry[] {
+  return metrics.map((entry) => ({
     indicator: entry.indicator,
     countryIso3: entry.iso3,
     year: 2023,
@@ -174,8 +179,8 @@ function buildAqueductCountryMetrics(): InsertClimateCountry[] {
   }));
 }
 
-function buildAqueductProvinceMetrics(): InsertClimateSubnational[] {
-  return AQUEDUCT_PROVINCE_METRICS.map((entry) => ({
+function buildAqueductProvinceMetrics(metrics: readonly AqueductProvinceMetric[]): InsertClimateSubnational[] {
+  return metrics.map((entry) => ({
     indicator: entry.indicator,
     countryIso3: entry.countryIso3,
     adminLevel: 'province',
@@ -204,9 +209,9 @@ function buildNriCountyMetrics(): InsertClimateSubnational[] {
   }));
 }
 
-function buildInformCountryMetrics(): InsertClimateCountry[] {
+function buildInformCountryMetrics(metrics: readonly InformGlobalMetric[]): InsertClimateCountry[] {
   const rows: InsertClimateCountry[] = [];
-  for (const entry of INFORM_GLOBAL_METRICS) {
+  for (const entry of metrics) {
     if (entry.riskScore !== null) {
       rows.push({ indicator: 'inform_risk_score', countryIso3: entry.iso3, year: entry.year, value: entry.riskScore });
     }
@@ -238,9 +243,12 @@ function buildInformCountryMetrics(): InsertClimateCountry[] {
   return rows;
 }
 
-function buildInformSubnationalMetrics(crosswalk: Map<string, CrosswalkEntry>): InsertClimateSubnational[] {
+function buildInformSubnationalMetrics(
+  metrics: readonly InformSubnationalMetric[],
+  crosswalk: Map<string, CrosswalkEntry>
+): InsertClimateSubnational[] {
   const rows: InsertClimateSubnational[] = [];
-  for (const entry of INFORM_SUBNATIONAL_METRICS) {
+  for (const entry of metrics) {
     const key = `${entry.countryIso3}:${entry.adminCode}`;
     const mapped = crosswalk.get(key);
     const isoCode = entry.isoCode ?? mapped?.iso31662 ?? null;
@@ -268,9 +276,9 @@ function buildInformSubnationalMetrics(crosswalk: Map<string, CrosswalkEntry>): 
   return rows;
 }
 
-function buildEpiCountryMetrics(): InsertClimateCountry[] {
+function buildEpiCountryMetrics(metrics: readonly EpiMetric[]): InsertClimateCountry[] {
   const rows: InsertClimateCountry[] = [];
-  for (const entry of EPI_METRICS) {
+  for (const entry of metrics) {
     if (entry.epiScore !== null) {
       rows.push({ indicator: 'epi_score', countryIso3: entry.iso3, year: entry.year, value: entry.epiScore });
     }
@@ -294,8 +302,8 @@ function buildEpiCountryMetrics(): InsertClimateCountry[] {
   return rows;
 }
 
-function buildUnepCountryMetrics(): InsertClimateCountry[] {
-  return UNEP_COUNTRY_METRICS.map((entry) => ({
+function buildUnepCountryMetrics(metrics: readonly UnepMetric[]): InsertClimateCountry[] {
+  return metrics.map((entry) => ({
     indicator: `${entry.metric}`,
     countryIso3: entry.countryIso3,
     year: entry.year,
@@ -309,8 +317,11 @@ function buildUnepCountryMetrics(): InsertClimateCountry[] {
   }));
 }
 
-function buildUnepSubnationalMetrics(crosswalk: Map<string, CrosswalkEntry>): InsertClimateSubnational[] {
-  return UNEP_SUBNATIONAL_METRICS.map((entry) => {
+function buildUnepSubnationalMetrics(
+  metrics: readonly UnepMetric[],
+  crosswalk: Map<string, CrosswalkEntry>
+): InsertClimateSubnational[] {
+  return metrics.map((entry) => {
     const key = `${entry.countryIso3}:${entry.unitCode}`;
     const match = crosswalk.get(key);
     return {
@@ -330,39 +341,35 @@ function buildUnepSubnationalMetrics(crosswalk: Map<string, CrosswalkEntry>): In
   });
 }
 
-export async function ingestClimateMetrics(env: { DB: D1Database }): Promise<DatasetIngestSummary> {
-  const ndGainCountry = buildNdGainCountryMetrics();
-  const aqueductCountry = buildAqueductCountryMetrics();
-  const aqueductProvince = buildAqueductProvinceMetrics();
-  const nriCounties = buildNriCountyMetrics();
+export async function ingestClimateMetrics(env: { DB: D1Database; RAW_R2?: R2Bucket }): Promise<DatasetIngestSummary> {
+  const climate = await loadClimateSourceData(env);
   const crosswalk = buildCrosswalkMap();
-  const informCountry = buildInformCountryMetrics();
-  const informSubnational = buildInformSubnationalMetrics(crosswalk);
-  const epiCountry = buildEpiCountryMetrics();
-  const unepCountry = buildUnepCountryMetrics();
-  const unepSubnational = buildUnepSubnationalMetrics(crosswalk);
 
-  await insertCountryMetrics(env, ndGainCountry, 'nd_gain');
-  await insertCountryMetrics(env, aqueductCountry, 'wri_aqueduct');
-  await insertSubnationalMetrics(env, aqueductProvince, 'wri_aqueduct_province');
-  await insertSubnationalMetrics(env, nriCounties, 'fema_nri_county');
-  await insertCountryMetrics(env, informCountry, 'inform_global');
-  await insertSubnationalMetrics(env, informSubnational, 'inform_subnational');
-  await insertCountryMetrics(env, epiCountry, 'yale_epi');
-  await insertCountryMetrics(env, unepCountry, 'unep_surface_water');
-  await insertSubnationalMetrics(env, unepSubnational, 'unep_surface_water_subnational');
+  const ndGainCountry = buildNdGainCountryMetrics(climate.ndGain.metrics);
+  const aqueductCountry = buildAqueductCountryMetrics(climate.aqueductCountry.metrics);
+  const aqueductProvince = buildAqueductProvinceMetrics(climate.aqueductProvince.metrics);
+  const nriCounties = buildNriCountyMetrics();
+  const informCountry = buildInformCountryMetrics(climate.informGlobal.metrics);
+  const informSubnational = buildInformSubnationalMetrics(climate.informSubnational.metrics, crosswalk);
+  const epiCountry = buildEpiCountryMetrics(climate.epi.metrics);
+  const unepCountry = buildUnepCountryMetrics(climate.unepCountry.metrics);
+  const unepSubnational = buildUnepSubnationalMetrics(climate.unepSubnational.metrics, crosswalk);
 
-  await recordDatasetSnapshot(env, DATASET_ID, VERSION, {
-    nd_gain_records: ndGainCountry.length,
-    aqueduct_country_records: aqueductCountry.length,
-    aqueduct_province_records: aqueductProvince.length,
-    nri_records: nriCounties.length,
-    inform_country_records: informCountry.length,
-    inform_subnational_records: informSubnational.length,
-    epi_country_records: epiCountry.length,
-    unep_country_records: unepCountry.length,
-    unep_subnational_records: unepSubnational.length
-  });
+  const hashes = {
+    nd_gain: climate.ndGain.hash,
+    aqueduct_country: climate.aqueductCountry.hash,
+    aqueduct_province: climate.aqueductProvince.hash,
+    inform_global: climate.informGlobal.hash,
+    inform_subnational: climate.informSubnational.hash,
+    yale_epi: climate.epi.hash,
+    unep_country: climate.unepCountry.hash,
+    unep_subnational: climate.unepSubnational.hash,
+    nri_county: await sha256Hex(stableStringify(NRI_COUNTY_METRICS))
+  };
+
+  const previousSnapshot = await getLatestDatasetSnapshot(env, DATASET_ID);
+  const previousHashes = previousSnapshot?.payload?.hashes ? stableStringify(previousSnapshot.payload.hashes) : null;
+  const currentHashes = stableStringify(hashes);
 
   await upsertDatasetServices(
     env,
@@ -385,13 +392,65 @@ export async function ingestClimateMetrics(env: { DB: D1Database }): Promise<Dat
     }))
   );
 
+  if (previousHashes && previousHashes === currentHashes) {
+    return {
+      datasetId: DATASET_ID,
+      version: VERSION,
+      tables: [
+        { table: 'climate_country_metrics', inserted: 0, updated: 0, skipped: ndGainCountry.length + aqueductCountry.length + informCountry.length + epiCountry.length + unepCountry.length, errors: [] },
+        { table: 'climate_subnational_metrics', inserted: 0, updated: 0, skipped: aqueductProvince.length + nriCounties.length + informSubnational.length + unepSubnational.length, errors: [] }
+      ]
+    };
+  }
+
+  await insertCountryMetrics(env, ndGainCountry, 'nd_gain');
+  await insertCountryMetrics(env, aqueductCountry, 'wri_aqueduct');
+  await insertSubnationalMetrics(env, aqueductProvince, 'wri_aqueduct_province');
+  await insertSubnationalMetrics(env, nriCounties, 'fema_nri_county');
+  await insertCountryMetrics(env, informCountry, 'inform_global');
+  await insertSubnationalMetrics(env, informSubnational, 'inform_subnational');
+  await insertCountryMetrics(env, epiCountry, 'yale_epi');
+  await insertCountryMetrics(env, unepCountry, 'unep_surface_water');
+  await insertSubnationalMetrics(env, unepSubnational, 'unep_surface_water_subnational');
+
+  await recordDatasetSnapshot(env, DATASET_ID, VERSION, {
+    hashes,
+    sources: {
+      nd_gain: climate.ndGain.source,
+      aqueduct_country: climate.aqueductCountry.source,
+      aqueduct_province: climate.aqueductProvince.source,
+      inform_global: climate.informGlobal.source,
+      inform_subnational: climate.informSubnational.source,
+      yale_epi: climate.epi.source,
+      unep_country: climate.unepCountry.source,
+      unep_subnational: climate.unepSubnational.source,
+      nri_county: 'seed'
+    },
+    counts: {
+      nd_gain_country: ndGainCountry.length,
+      aqueduct_country: aqueductCountry.length,
+      aqueduct_province: aqueductProvince.length,
+      nri_county: nriCounties.length,
+      inform_country: informCountry.length,
+      inform_subnational: informSubnational.length,
+      epi_country: epiCountry.length,
+      unep_country: unepCountry.length,
+      unep_subnational: unepSubnational.length
+    }
+  });
+
   return {
     datasetId: DATASET_ID,
     version: VERSION,
     tables: [
       {
         table: 'climate_country_metrics',
-        inserted: ndGainCountry.length + aqueductCountry.length + informCountry.length + epiCountry.length + unepCountry.length,
+        inserted:
+          ndGainCountry.length +
+          aqueductCountry.length +
+          informCountry.length +
+          epiCountry.length +
+          unepCountry.length,
         updated: 0,
         skipped: 0,
         errors: []

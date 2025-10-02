@@ -1,0 +1,8 @@
+[
+  { "countryIso3": "USA", "adminCode": "CA01", "adminName": "California", "adminLevel": "GAUL1", "iso31662": "US-CA" },
+  { "countryIso3": "USA", "adminCode": "TX01", "adminName": "Texas", "adminLevel": "GAUL1", "iso31662": "US-TX" },
+  { "countryIso3": "CAN", "adminCode": "ON01", "adminName": "Ontario", "adminLevel": "GAUL1", "iso31662": "CA-ON" },
+  { "countryIso3": "CAN", "adminCode": "BC01", "adminName": "British Columbia", "adminLevel": "GAUL1", "iso31662": "CA-BC" },
+  { "countryIso3": "PER", "adminCode": "PE-LIM", "adminName": "Lima", "adminLevel": "ADM1", "iso31662": "PE-LIM" },
+  { "countryIso3": "SWE", "adminCode": "SE-AB", "adminName": "Stockholm County", "adminLevel": "ADM1", "iso31662": "SE-AB" }
+]

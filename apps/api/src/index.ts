@@ -19,6 +19,7 @@ import { adminUi } from './admin/ui';
 import { DATASET_REGISTRY } from '../../ingest/src/datasets/registry';
 import ingestWorker from '../../ingest/src/index';
 import type { ExportedHandler } from '@cloudflare/workers-types';
+import { loadClimateCountrySummaries, loadClimateCountry } from './climate';
 import {
   accountRequestCreateSchema,
   decisionTokenSchema,
@@ -1499,6 +1500,18 @@ app.get('/v1/admin/datasets', async (c) => {
   return c.json({ data: rows });
 });
 
+app.get('/v1/admin/climate', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  const country = c.req.query('country');
+  const summaries = await loadClimateCountrySummaries(c.env.DB, country ? country.toUpperCase() : undefined);
+  return c.json({ data: summaries });
+});
+
 app.post('/v1/admin/datasets/:id/reload', async (c) => {
   const auth = c.get('auth');
   if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
@@ -1514,6 +1527,20 @@ app.post('/v1/admin/datasets/:id/reload', async (c) => {
 
   const result = await def.ingest({ DB: c.env.DB });
   return c.json({ data: result });
+});
+
+app.get('/v1/playbooks/:country', async (c) => {
+  const iso3 = c.req.param('country');
+  const summary = await loadClimateCountry(c.env.DB, iso3);
+  if (!summary) {
+    return apiError(c, 404, 'not_found', 'Playbook not found for requested country.');
+  }
+  return c.json({
+    data: {
+      country: summary.iso3,
+      climate: summary
+    }
+  });
 });
 
 app.post('/v1/admin/ingest/retry', async (c) => {

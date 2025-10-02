@@ -33,11 +33,13 @@
     "cheerio": "^1.0.0-rc.12",
     "currency.js": "^2.0.4",
     "csv-parse": "^5.5.3",
+    "fflate": "^0.8.2",
     "date-fns": "^3.6.0",
     "drizzle-orm": "^0.30.10",
     "hono": "^4.9.9",
     "node-fetch": "^3.3.2",
     "otpauth": "^9.4.1",
+    "xlsx": "^0.18.5",
     "zod": "^4.1.11"
   },
   "devDependencies": {

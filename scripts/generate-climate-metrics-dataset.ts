@@ -9,6 +9,7 @@ const VERSION = '2025-10-02';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const RAW_BASE = path.join(ROOT, 'data', 'climate_esg', 'raw');
+const OVERRIDES_PATH = path.join(ROOT, 'data', 'climate_esg', 'crosswalk_overrides.json');
 const OUTPUT_DIR = path.join(ROOT, 'apps', 'ingest', 'src', 'datasets');
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'climate_metrics.ts');
 
@@ -25,6 +26,19 @@ function numberOrNull(value: string | undefined): number | null {
   return Number.isFinite(numeric) ? numeric : null;
 }
 
+async function fetchJson(url: string): Promise<any> {
+  const response = await fetch(url, {
+    headers: {
+      'accept': 'application/sparql-results+json',
+      'user-agent': 'gov-programs-api/1.0 (+https://github.com/fungi-argicapco/gov-programs-api)'
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+  }
+  return response.json();
+}
+
 type CrosswalkEntry = {
   countryIso3: string;
   adminCode: string;
@@ -33,21 +47,90 @@ type CrosswalkEntry = {
   iso31662: string | null;
 };
 
-function buildCrosswalk(): { entries: CrosswalkEntry[]; lookup: Map<string, CrosswalkEntry> } {
-  const pathCrosswalk = path.join(RAW_BASE, 'crosswalk', 'iso_crosswalk.csv');
-  const rows = readCsv(pathCrosswalk);
-  const entries = rows.map((row) => ({
-    countryIso3: row.country_iso3,
-    adminCode: row.admin_code,
-    adminName: row.admin_name,
-    adminLevel: row.admin_level,
-    iso31662: row.iso_3166_2 ?? null
-  }));
-  const lookup = new Map<string, CrosswalkEntry>();
-  for (const entry of entries) {
-    lookup.set(`${entry.countryIso3}:${entry.adminCode}`, entry);
+async function fetchCrosswalkFromWikidata(iso3List: readonly string[]): Promise<CrosswalkEntry[]> {
+  if (iso3List.length === 0) return [];
+  const values = iso3List.map((code) => `"${code}"`).join(' ');
+  const query = `
+    SELECT ?iso3 ?subdivision ?subdivisionLabel ?isoCode ?nutsCode ?gaulCode WHERE {
+      VALUES ?iso3 { ${values} }
+      ?country wdt:P298 ?iso3 .
+      ?subdivision wdt:P31/wdt:P279* wd:Q10864048 ;
+                   wdt:P17 ?country ;
+                   wdt:P300 ?isoCode .
+      OPTIONAL { ?subdivision wdt:P605 ?nutsCode . }
+      OPTIONAL { ?subdivision wdt:P2892 ?gaulCode . }
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+    }
+  `;
+  const url = `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`;
+  const data = await fetchJson(url);
+  const entries: CrosswalkEntry[] = [];
+  for (const row of data.results.bindings ?? []) {
+    const iso3 = row.iso3?.value;
+    const code = row.isoCode?.value;
+    const label = row.subdivisionLabel?.value;
+    if (!iso3 || !code || !label) continue;
+    entries.push({
+      countryIso3: iso3,
+      adminCode: code,
+      adminName: label,
+      adminLevel: row.gaulCode?.value ? 'GAUL' : row.nutsCode?.value ? 'NUTS' : 'ADM1',
+      iso31662: code
+    } satisfies CrosswalkEntry);
   }
-  return { entries, lookup };
+  return entries;
+}
+
+function loadCrosswalkOverrides(): CrosswalkEntry[] {
+  try {
+    const raw = readFileSync(OVERRIDES_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.map((entry) => ({
+        countryIso3: entry.countryIso3,
+        adminCode: entry.adminCode,
+        adminName: entry.adminName,
+        adminLevel: entry.adminLevel ?? 'override',
+        iso31662: entry.iso31662 ?? null
+      }));
+    }
+  } catch (error) {
+    console.warn(`[climate-crosswalk] Failed to read overrides at ${OVERRIDES_PATH}`, error);
+  }
+  return [];
+}
+
+function loadCrosswalkFallback(): CrosswalkEntry[] {
+  const fallbackPath = path.join(RAW_BASE, 'crosswalk', 'iso_crosswalk.csv');
+  try {
+    const rows = readCsv(fallbackPath);
+    return rows.map((row) => ({
+      countryIso3: row.country_iso3,
+      adminCode: row.admin_code,
+      adminName: row.admin_name,
+      adminLevel: row.admin_level,
+      iso31662: row.iso_3166_2 ?? null
+    }));
+  } catch (error) {
+    console.warn(`[climate-crosswalk] Failed to load fallback crosswalk from ${fallbackPath}`, error);
+    return [];
+  }
+}
+
+async function buildCrosswalkEntries(iso3List: readonly string[]): Promise<CrosswalkEntry[]> {
+  const overrides = loadCrosswalkOverrides();
+  try {
+    const remote = await fetchCrosswalkFromWikidata(iso3List);
+    const merged = [...remote];
+    for (const override of overrides) {
+      merged.push(override);
+    }
+    return merged;
+  } catch (error) {
+    console.warn('[climate-crosswalk] Falling back to local crosswalk', error);
+    const fallback = loadCrosswalkFallback();
+    return [...fallback, ...overrides];
+  }
 }
 
 function buildNdGainRecords() {
@@ -199,18 +282,36 @@ function emitArray(name: string, typeName: string, value: unknown[]): string {
   return `export const ${name}: readonly ${typeName}[] = ${json} as const;`;
 }
 
-function main() {
+async function main() {
   mkdirSync(OUTPUT_DIR, { recursive: true });
 
-  const crosswalk = buildCrosswalk();
   const ndGain = buildNdGainRecords();
   const aqueductCountry = buildAqueductCountry();
-  const aqueductProvince = buildAqueductProvince(crosswalk.lookup);
   const nriCounties = buildNriCounties();
   const informGlobal = buildInformGlobal();
-  const informSubnational = buildInformSubnational(crosswalk.lookup);
   const epiScores = buildEpiScores();
-  const unep = buildUnepMetrics(crosswalk.lookup);
+  const isoCodes = new Set<string>();
+  ndGain.forEach((row) => row.iso3 && isoCodes.add(row.iso3));
+  aqueductCountry.forEach((row) => row.iso3 && isoCodes.add(row.iso3));
+  informGlobal.forEach((row) => row.iso3 && isoCodes.add(row.iso3));
+  epiScores.forEach((row) => row.iso3 && isoCodes.add(row.iso3));
+  nriCounties.forEach((row) => row.countryIso3 && isoCodes.add(row.countryIso3));
+
+  const aqueductProvinceRaw = readCsv(path.join(RAW_BASE, 'aqueduct', 'aqueduct_province_baseline.csv'));
+  aqueductProvinceRaw.forEach((row) => row.country_iso3 && isoCodes.add(row.country_iso3));
+  const informSubRaw = readCsv(path.join(RAW_BASE, 'inform', 'inform_subnational.csv'));
+  informSubRaw.forEach((row) => row.country_iso3 && isoCodes.add(row.country_iso3));
+  const unepRaw = readCsv(path.join(RAW_BASE, 'unep', 'unep_surface_water.csv'));
+  unepRaw.forEach((row) => row.country_iso3 && isoCodes.add(row.country_iso3));
+
+  const crosswalkEntries = await buildCrosswalkEntries(Array.from(isoCodes));
+  const crosswalkLookup = new Map<string, CrosswalkEntry>();
+  for (const entry of crosswalkEntries) {
+    crosswalkLookup.set(`${entry.countryIso3}:${entry.adminCode}`, entry);
+  }
+  const aqueductProvince = buildAqueductProvince(crosswalkLookup);
+  const informSubnational = buildInformSubnational(crosswalkLookup);
+  const unep = buildUnepMetrics(crosswalkLookup);
 
   const services = [
     {
@@ -417,7 +518,7 @@ function main() {
     '  adminLevel: string;',
     '  iso31662: string | null;',
     '};',
-    emitArray('CLIMATE_ISO_CROSSWALK', 'IsoCrosswalkEntry', crosswalk.entries),
+    emitArray('CLIMATE_ISO_CROSSWALK', 'IsoCrosswalkEntry', crosswalkEntries),
     '',
     'export type ClimateMetricService = {',
     '  serviceName: string;',
@@ -441,4 +542,7 @@ function main() {
   writeFileSync(OUTPUT_FILE, `${content}\n`, 'utf8');
 }
 
-main();
+main().catch((error) => {
+  console.error('[generate-climate-metrics-dataset] failed', error);
+  process.exitCode = 1;
+});
