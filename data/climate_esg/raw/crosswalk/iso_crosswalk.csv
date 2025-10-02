@@ -1,0 +1,7 @@
+country_iso3,admin_code,admin_name,admin_level,iso_3166_2
+USA,CA01,California,ADM1,US-CA
+USA,TX01,Texas,ADM1,US-TX
+CAN,ON01,Ontario,ADM1,CA-ON
+CAN,BC01,British Columbia,ADM1,CA-BC
+PER,PE-LIM,Lima,ADM1,PE-LIM
+SWE,SE-AB,Stockholm County,ADM1,SE-AB

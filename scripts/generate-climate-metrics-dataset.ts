@@ -25,6 +25,31 @@ function numberOrNull(value: string | undefined): number | null {
   return Number.isFinite(numeric) ? numeric : null;
 }
 
+type CrosswalkEntry = {
+  countryIso3: string;
+  adminCode: string;
+  adminName: string;
+  adminLevel: string;
+  iso31662: string | null;
+};
+
+function buildCrosswalk(): { entries: CrosswalkEntry[]; lookup: Map<string, CrosswalkEntry> } {
+  const pathCrosswalk = path.join(RAW_BASE, 'crosswalk', 'iso_crosswalk.csv');
+  const rows = readCsv(pathCrosswalk);
+  const entries = rows.map((row) => ({
+    countryIso3: row.country_iso3,
+    adminCode: row.admin_code,
+    adminName: row.admin_name,
+    adminLevel: row.admin_level,
+    iso31662: row.iso_3166_2 ?? null
+  }));
+  const lookup = new Map<string, CrosswalkEntry>();
+  for (const entry of entries) {
+    lookup.set(`${entry.countryIso3}:${entry.adminCode}`, entry);
+  }
+  return { entries, lookup };
+}
+
 function buildNdGainRecords() {
   const indexRows = readCsv(path.join(RAW_BASE, 'nd_gain', 'nd_gain_index.csv'));
   const vulnerabilityRows = readCsv(path.join(RAW_BASE, 'nd_gain', 'nd_gain_vulnerability.csv'));
@@ -76,14 +101,15 @@ function buildAqueductCountry() {
   }));
 }
 
-function buildAqueductProvince() {
+function buildAqueductProvince(crosswalk: Map<string, CrosswalkEntry>) {
   const rows = readCsv(path.join(RAW_BASE, 'aqueduct', 'aqueduct_province_baseline.csv'));
   return rows.map((row) => ({
     countryIso3: row.country_iso3,
     provinceCode: row.province_code,
     provinceName: row.province_name,
     indicator: row.indicator,
-    value: numberOrNull(row.value)
+    value: numberOrNull(row.value),
+    isoCode: crosswalk.get(`${row.country_iso3}:${row.province_code}`)?.iso31662 ?? row.province_code ?? null
   }));
 }
 
@@ -101,6 +127,73 @@ function buildNriCounties() {
   }));
 }
 
+function buildInformGlobal() {
+  const rows = readCsv(path.join(RAW_BASE, 'inform', 'inform_global.csv'));
+  return rows.map((row) => ({
+    iso3: row.iso3,
+    year: numberOrNull(row.year),
+    riskScore: numberOrNull(row.risk_score),
+    hazardExposure: numberOrNull(row.hazard_exposure),
+    vulnerability: numberOrNull(row.vulnerability),
+    copingCapacity: numberOrNull(row.coping_capacity)
+  }));
+}
+
+function buildInformSubnational(crosswalk: Map<string, CrosswalkEntry>) {
+  const rows = readCsv(path.join(RAW_BASE, 'inform', 'inform_subnational.csv'));
+  return rows.map((row) => {
+    const key = `${row.country_iso3}:${row.admin_code}`;
+    const match = crosswalk.get(key);
+    return {
+      countryIso3: row.country_iso3,
+      adminCode: row.admin_code,
+      adminName: row.admin_name,
+      year: numberOrNull(row.year),
+      riskScore: numberOrNull(row.risk_score),
+      hazardExposure: numberOrNull(row.hazard_exposure),
+      vulnerability: numberOrNull(row.vulnerability),
+      copingCapacity: numberOrNull(row.coping_capacity),
+      isoCode: match?.iso31662 ?? null
+    };
+  });
+}
+
+function buildEpiScores() {
+  const rows = readCsv(path.join(RAW_BASE, 'epi', 'epi_scores.csv'));
+  return rows.map((row) => ({
+    iso3: row.iso3,
+    year: numberOrNull(row.year),
+    epiScore: numberOrNull(row.epi_score),
+    climatePolicyScore: numberOrNull(row.climate_policy_score),
+    biodiversityScore: numberOrNull(row.biodiversity_score)
+  }));
+}
+
+function buildUnepMetrics(crosswalk: Map<string, CrosswalkEntry>) {
+  const rows = readCsv(path.join(RAW_BASE, 'unep', 'unep_surface_water.csv'));
+  const country: any[] = [];
+  const subnational: any[] = [];
+  for (const row of rows) {
+    const record = {
+      countryIso3: row.country_iso3,
+      adminLevel: row.admin_level,
+      unitCode: row.unit_code,
+      unitName: row.unit_name,
+      metric: row.metric,
+      year: numberOrNull(row.year),
+      value: numberOrNull(row.value),
+      unit: row.unit ?? null,
+      isoCode: crosswalk.get(`${row.country_iso3}:${row.unit_code}`)?.iso31662 ?? null
+    };
+    if (row.admin_level === 'GAUL0') {
+      country.push(record);
+    } else {
+      subnational.push(record);
+    }
+  }
+  return { country, subnational };
+}
+
 function emitArray(name: string, typeName: string, value: unknown[]): string {
   const json = JSON.stringify(value, null, 2);
   return `export const ${name}: readonly ${typeName}[] = ${json} as const;`;
@@ -109,10 +202,15 @@ function emitArray(name: string, typeName: string, value: unknown[]): string {
 function main() {
   mkdirSync(OUTPUT_DIR, { recursive: true });
 
+  const crosswalk = buildCrosswalk();
   const ndGain = buildNdGainRecords();
   const aqueductCountry = buildAqueductCountry();
-  const aqueductProvince = buildAqueductProvince();
+  const aqueductProvince = buildAqueductProvince(crosswalk.lookup);
   const nriCounties = buildNriCounties();
+  const informGlobal = buildInformGlobal();
+  const informSubnational = buildInformSubnational(crosswalk.lookup);
+  const epiScores = buildEpiScores();
+  const unep = buildUnepMetrics(crosswalk.lookup);
 
   const services = [
     {
@@ -159,6 +257,66 @@ function main() {
       notes: 'FEMA NRI county-level table; includes EAL and vulnerability metrics.',
       sourceUrl: 'https://hazards.fema.gov/nri/data-resources',
       verificationDate: VERSION
+    },
+    {
+      serviceName: 'inform_global_risk',
+      endpoint: 'https://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Risk/Downloads',
+      httpMethods: ['GET'],
+      parameters: null,
+      authentication: 'hdx account (optional)',
+      rateLimit: 'manual download or authenticated fetch',
+      cadence: 'semi-annual',
+      changeDetection: 'version label (e.g. v0.7.0)',
+      statusPage: null,
+      readiness: 'partial',
+      notes: 'INFORM Risk Index global workbook; requires HDX or portal login for latest file.',
+      sourceUrl: 'https://drmkc.jrc.ec.europa.eu/inform-index',
+      verificationDate: VERSION
+    },
+    {
+      serviceName: 'inform_subnational_risk',
+      endpoint: 'https://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Subnational',
+      httpMethods: ['GET'],
+      parameters: null,
+      authentication: 'hdx account (optional)',
+      rateLimit: 'manual download',
+      cadence: 'annual',
+      changeDetection: 'edition label (e.g. 2024)',
+      statusPage: null,
+      readiness: 'partial',
+      notes: 'INFORM subnational models per region; schema varies by country.',
+      sourceUrl: 'https://data.humdata.org/organization/jrc',
+      verificationDate: VERSION
+    },
+    {
+      serviceName: 'yale_epi_scores',
+      endpoint: 'https://epi.yale.edu/downloads',
+      httpMethods: ['GET'],
+      parameters: null,
+      authentication: 'none (browser download)',
+      rateLimit: 'manual download',
+      cadence: 'biennial',
+      changeDetection: 'edition year',
+      statusPage: null,
+      readiness: 'partial',
+      notes: 'Yale Environmental Performance Index datasets.',
+      sourceUrl: 'https://epi.yale.edu',
+      verificationDate: VERSION
+    },
+    {
+      serviceName: 'unep_freshwater_surface',
+      endpoint: 'https://sdg661.app/downloads',
+      httpMethods: ['GET'],
+      parameters: null,
+      authentication: 'none (dynamic UI)',
+      rateLimit: 'manual download; large GeoPackages available',
+      cadence: 'multi-year',
+      changeDetection: 'file naming (year range)',
+      statusPage: null,
+      readiness: 'partial',
+      notes: 'UNEP Freshwater Ecosystems Explorer exports (SDG 6.6.1).',
+      sourceUrl: 'https://sdg661.app',
+      verificationDate: VERSION
     }
   ];
 
@@ -190,6 +348,7 @@ function main() {
     '  provinceName: string;',
     '  indicator: string;',
     '  value: number | null;',
+    '  isoCode: string | null;',
     '};',
     emitArray('AQUEDUCT_PROVINCE_METRICS', 'AqueductProvinceMetric', aqueductProvince),
     '',
@@ -204,6 +363,61 @@ function main() {
     '  communityResilience: number | null;',
     '};',
     emitArray('NRI_COUNTY_METRICS', 'NriCountyMetric', nriCounties),
+    '',
+    'export type InformGlobalMetric = {',
+    '  iso3: string;',
+    '  year: number | null;',
+    '  riskScore: number | null;',
+    '  hazardExposure: number | null;',
+    '  vulnerability: number | null;',
+    '  copingCapacity: number | null;',
+    '};',
+    emitArray('INFORM_GLOBAL_METRICS', 'InformGlobalMetric', informGlobal),
+    '',
+    'export type InformSubnationalMetric = {',
+    '  countryIso3: string;',
+    '  adminCode: string;',
+    '  adminName: string;',
+    '  year: number | null;',
+    '  riskScore: number | null;',
+    '  hazardExposure: number | null;',
+    '  vulnerability: number | null;',
+    '  copingCapacity: number | null;',
+    '  isoCode: string | null;',
+    '};',
+    emitArray('INFORM_SUBNATIONAL_METRICS', 'InformSubnationalMetric', informSubnational),
+    '',
+    'export type EpiMetric = {',
+    '  iso3: string;',
+    '  year: number | null;',
+    '  epiScore: number | null;',
+    '  climatePolicyScore: number | null;',
+    '  biodiversityScore: number | null;',
+    '};',
+    emitArray('EPI_METRICS', 'EpiMetric', epiScores),
+    '',
+    'export type UnepMetric = {',
+    '  countryIso3: string;',
+    '  adminLevel: string;',
+    '  unitCode: string;',
+    '  unitName: string;',
+    '  metric: string;',
+    '  year: number | null;',
+    '  value: number | null;',
+    '  unit: string | null;',
+    '  isoCode: string | null;',
+    '};',
+    emitArray('UNEP_COUNTRY_METRICS', 'UnepMetric', unep.country),
+    emitArray('UNEP_SUBNATIONAL_METRICS', 'UnepMetric', unep.subnational),
+    '',
+    'export type IsoCrosswalkEntry = {',
+    '  countryIso3: string;',
+    '  adminCode: string;',
+    '  adminName: string;',
+    '  adminLevel: string;',
+    '  iso31662: string | null;',
+    '};',
+    emitArray('CLIMATE_ISO_CROSSWALK', 'IsoCrosswalkEntry', crosswalk.entries),
     '',
     'export type ClimateMetricService = {',
     '  serviceName: string;',

@@ -1,0 +1,7 @@
+iso3,year,risk_score,hazard_exposure,vulnerability,coping_capacity
+USA,2024,3.1,3.4,2.9,2.5
+CAN,2024,2.2,2.1,1.8,1.9
+FRA,2024,2.5,2.6,2.1,1.8
+PER,2024,4.1,4.5,3.8,3.9
+SWE,2024,2.0,1.9,1.7,1.6
+LAO,2024,5.0,4.8,4.6,4.4

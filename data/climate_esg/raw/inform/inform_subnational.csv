@@ -1,0 +1,7 @@
+country_iso3,admin_code,admin_name,year,risk_score,hazard_exposure,vulnerability,coping_capacity
+USA,CA01,California,2024,3.3,3.6,3.0,2.6
+USA,TX01,Texas,2024,3.5,3.8,3.1,2.8
+CAN,ON01,Ontario,2024,2.1,2.0,1.7,1.8
+CAN,BC01,British Columbia,2024,2.4,2.3,2.0,1.9
+PER,PE-LIM,Lima,2024,4.6,4.9,4.2,4.1
+SWE,SE-AB,Stockholm County,2024,1.9,1.8,1.6,1.5

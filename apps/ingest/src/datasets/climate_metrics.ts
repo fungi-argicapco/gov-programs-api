@@ -75,6 +75,7 @@ export type AqueductProvinceMetric = {
   provinceName: string;
   indicator: string;
   value: number | null;
+  isoCode: string | null;
 };
 export const AQUEDUCT_PROVINCE_METRICS: readonly AqueductProvinceMetric[] = [
   {
@@ -82,21 +83,24 @@ export const AQUEDUCT_PROVINCE_METRICS: readonly AqueductProvinceMetric[] = [
     "provinceCode": "USA-CA",
     "provinceName": "California",
     "indicator": "baseline_water_stress",
-    "value": 3.8
+    "value": 3.8,
+    "isoCode": "USA-CA"
   },
   {
     "countryIso3": "USA",
     "provinceCode": "USA-TX",
     "provinceName": "Texas",
     "indicator": "baseline_water_stress",
-    "value": 4.1
+    "value": 4.1,
+    "isoCode": "USA-TX"
   },
   {
     "countryIso3": "CAN",
     "provinceCode": "CAN-ON",
     "provinceName": "Ontario",
     "indicator": "baseline_water_stress",
-    "value": 1.5
+    "value": 1.5,
+    "isoCode": "CAN-ON"
   }
 ] as const;
 
@@ -130,6 +134,353 @@ export const NRI_COUNTY_METRICS: readonly NriCountyMetric[] = [
     "ealTotal": 980.3,
     "socialVulnerability": 0.52,
     "communityResilience": 0.55
+  }
+] as const;
+
+export type InformGlobalMetric = {
+  iso3: string;
+  year: number | null;
+  riskScore: number | null;
+  hazardExposure: number | null;
+  vulnerability: number | null;
+  copingCapacity: number | null;
+};
+export const INFORM_GLOBAL_METRICS: readonly InformGlobalMetric[] = [
+  {
+    "iso3": "USA",
+    "year": 2024,
+    "riskScore": 3.1,
+    "hazardExposure": 3.4,
+    "vulnerability": 2.9,
+    "copingCapacity": 2.5
+  },
+  {
+    "iso3": "CAN",
+    "year": 2024,
+    "riskScore": 2.2,
+    "hazardExposure": 2.1,
+    "vulnerability": 1.8,
+    "copingCapacity": 1.9
+  },
+  {
+    "iso3": "FRA",
+    "year": 2024,
+    "riskScore": 2.5,
+    "hazardExposure": 2.6,
+    "vulnerability": 2.1,
+    "copingCapacity": 1.8
+  },
+  {
+    "iso3": "PER",
+    "year": 2024,
+    "riskScore": 4.1,
+    "hazardExposure": 4.5,
+    "vulnerability": 3.8,
+    "copingCapacity": 3.9
+  },
+  {
+    "iso3": "SWE",
+    "year": 2024,
+    "riskScore": 2,
+    "hazardExposure": 1.9,
+    "vulnerability": 1.7,
+    "copingCapacity": 1.6
+  },
+  {
+    "iso3": "LAO",
+    "year": 2024,
+    "riskScore": 5,
+    "hazardExposure": 4.8,
+    "vulnerability": 4.6,
+    "copingCapacity": 4.4
+  }
+] as const;
+
+export type InformSubnationalMetric = {
+  countryIso3: string;
+  adminCode: string;
+  adminName: string;
+  year: number | null;
+  riskScore: number | null;
+  hazardExposure: number | null;
+  vulnerability: number | null;
+  copingCapacity: number | null;
+  isoCode: string | null;
+};
+export const INFORM_SUBNATIONAL_METRICS: readonly InformSubnationalMetric[] = [
+  {
+    "countryIso3": "USA",
+    "adminCode": "CA01",
+    "adminName": "California",
+    "year": 2024,
+    "riskScore": 3.3,
+    "hazardExposure": 3.6,
+    "vulnerability": 3,
+    "copingCapacity": 2.6,
+    "isoCode": "US-CA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "TX01",
+    "adminName": "Texas",
+    "year": 2024,
+    "riskScore": 3.5,
+    "hazardExposure": 3.8,
+    "vulnerability": 3.1,
+    "copingCapacity": 2.8,
+    "isoCode": "US-TX"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "ON01",
+    "adminName": "Ontario",
+    "year": 2024,
+    "riskScore": 2.1,
+    "hazardExposure": 2,
+    "vulnerability": 1.7,
+    "copingCapacity": 1.8,
+    "isoCode": "CA-ON"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "BC01",
+    "adminName": "British Columbia",
+    "year": 2024,
+    "riskScore": 2.4,
+    "hazardExposure": 2.3,
+    "vulnerability": 2,
+    "copingCapacity": 1.9,
+    "isoCode": "CA-BC"
+  },
+  {
+    "countryIso3": "PER",
+    "adminCode": "PE-LIM",
+    "adminName": "Lima",
+    "year": 2024,
+    "riskScore": 4.6,
+    "hazardExposure": 4.9,
+    "vulnerability": 4.2,
+    "copingCapacity": 4.1,
+    "isoCode": "PE-LIM"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-AB",
+    "adminName": "Stockholm County",
+    "year": 2024,
+    "riskScore": 1.9,
+    "hazardExposure": 1.8,
+    "vulnerability": 1.6,
+    "copingCapacity": 1.5,
+    "isoCode": "SE-AB"
+  }
+] as const;
+
+export type EpiMetric = {
+  iso3: string;
+  year: number | null;
+  epiScore: number | null;
+  climatePolicyScore: number | null;
+  biodiversityScore: number | null;
+};
+export const EPI_METRICS: readonly EpiMetric[] = [
+  {
+    "iso3": "USA",
+    "year": 2024,
+    "epiScore": 52.3,
+    "climatePolicyScore": 49.1,
+    "biodiversityScore": 58.4
+  },
+  {
+    "iso3": "CAN",
+    "year": 2024,
+    "epiScore": 75.6,
+    "climatePolicyScore": 72,
+    "biodiversityScore": 80.5
+  },
+  {
+    "iso3": "FRA",
+    "year": 2024,
+    "epiScore": 74.2,
+    "climatePolicyScore": 78.3,
+    "biodiversityScore": 70.1
+  },
+  {
+    "iso3": "PER",
+    "year": 2024,
+    "epiScore": 48.5,
+    "climatePolicyScore": 45.7,
+    "biodiversityScore": 50.2
+  },
+  {
+    "iso3": "SWE",
+    "year": 2024,
+    "epiScore": 80.1,
+    "climatePolicyScore": 82.4,
+    "biodiversityScore": 77.6
+  },
+  {
+    "iso3": "LAO",
+    "year": 2024,
+    "epiScore": 42,
+    "climatePolicyScore": 39.2,
+    "biodiversityScore": 44.1
+  }
+] as const;
+
+export type UnepMetric = {
+  countryIso3: string;
+  adminLevel: string;
+  unitCode: string;
+  unitName: string;
+  metric: string;
+  year: number | null;
+  value: number | null;
+  unit: string | null;
+  isoCode: string | null;
+};
+export const UNEP_COUNTRY_METRICS: readonly UnepMetric[] = [
+  {
+    "countryIso3": "USA",
+    "adminLevel": "GAUL0",
+    "unitCode": "USA",
+    "unitName": "United States",
+    "metric": "permanent_surface_water_change",
+    "year": 2019,
+    "value": -2.5,
+    "unit": "percent",
+    "isoCode": null
+  },
+  {
+    "countryIso3": "CAN",
+    "adminLevel": "GAUL0",
+    "unitCode": "CAN",
+    "unitName": "Canada",
+    "metric": "permanent_surface_water_change",
+    "year": 2019,
+    "value": 1.8,
+    "unit": "percent",
+    "isoCode": null
+  },
+  {
+    "countryIso3": "PER",
+    "adminLevel": "GAUL0",
+    "unitCode": "PER",
+    "unitName": "Peru",
+    "metric": "permanent_surface_water_change",
+    "year": 2019,
+    "value": -1.2,
+    "unit": "percent",
+    "isoCode": null
+  },
+  {
+    "countryIso3": "SWE",
+    "adminLevel": "GAUL0",
+    "unitCode": "SWE",
+    "unitName": "Sweden",
+    "metric": "permanent_surface_water_change",
+    "year": 2019,
+    "value": 0.7,
+    "unit": "percent",
+    "isoCode": null
+  }
+] as const;
+export const UNEP_SUBNATIONAL_METRICS: readonly UnepMetric[] = [
+  {
+    "countryIso3": "USA",
+    "adminLevel": "GAUL1",
+    "unitCode": "CA01",
+    "unitName": "California",
+    "metric": "permanent_surface_water_change",
+    "year": 2019,
+    "value": -4.1,
+    "unit": "percent",
+    "isoCode": "US-CA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminLevel": "GAUL1",
+    "unitCode": "TX01",
+    "unitName": "Texas",
+    "metric": "permanent_surface_water_change",
+    "year": 2019,
+    "value": -3.4,
+    "unit": "percent",
+    "isoCode": "US-TX"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminLevel": "GAUL1",
+    "unitCode": "ON01",
+    "unitName": "Ontario",
+    "metric": "permanent_surface_water_change",
+    "year": 2019,
+    "value": 2.4,
+    "unit": "percent",
+    "isoCode": "CA-ON"
+  },
+  {
+    "countryIso3": "PER",
+    "adminLevel": "GAUL1",
+    "unitCode": "PE-LIM",
+    "unitName": "Lima",
+    "metric": "permanent_surface_water_change",
+    "year": 2019,
+    "value": -2.9,
+    "unit": "percent",
+    "isoCode": "PE-LIM"
+  }
+] as const;
+
+export type IsoCrosswalkEntry = {
+  countryIso3: string;
+  adminCode: string;
+  adminName: string;
+  adminLevel: string;
+  iso31662: string | null;
+};
+export const CLIMATE_ISO_CROSSWALK: readonly IsoCrosswalkEntry[] = [
+  {
+    "countryIso3": "USA",
+    "adminCode": "CA01",
+    "adminName": "California",
+    "adminLevel": "ADM1",
+    "iso31662": "US-CA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "TX01",
+    "adminName": "Texas",
+    "adminLevel": "ADM1",
+    "iso31662": "US-TX"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "ON01",
+    "adminName": "Ontario",
+    "adminLevel": "ADM1",
+    "iso31662": "CA-ON"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "BC01",
+    "adminName": "British Columbia",
+    "adminLevel": "ADM1",
+    "iso31662": "CA-BC"
+  },
+  {
+    "countryIso3": "PER",
+    "adminCode": "PE-LIM",
+    "adminName": "Lima",
+    "adminLevel": "ADM1",
+    "iso31662": "PE-LIM"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-AB",
+    "adminName": "Stockholm County",
+    "adminLevel": "ADM1",
+    "iso31662": "SE-AB"
   }
 ] as const;
 
@@ -198,6 +549,74 @@ export const CLIMATE_METRIC_SERVICES: readonly ClimateMetricService[] = [
     "readiness": "yes",
     "notes": "FEMA NRI county-level table; includes EAL and vulnerability metrics.",
     "sourceUrl": "https://hazards.fema.gov/nri/data-resources",
+    "verificationDate": "2025-10-02"
+  },
+  {
+    "serviceName": "inform_global_risk",
+    "endpoint": "https://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Risk/Downloads",
+    "httpMethods": [
+      "GET"
+    ],
+    "parameters": null,
+    "authentication": "hdx account (optional)",
+    "rateLimit": "manual download or authenticated fetch",
+    "cadence": "semi-annual",
+    "changeDetection": "version label (e.g. v0.7.0)",
+    "statusPage": null,
+    "readiness": "partial",
+    "notes": "INFORM Risk Index global workbook; requires HDX or portal login for latest file.",
+    "sourceUrl": "https://drmkc.jrc.ec.europa.eu/inform-index",
+    "verificationDate": "2025-10-02"
+  },
+  {
+    "serviceName": "inform_subnational_risk",
+    "endpoint": "https://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Subnational",
+    "httpMethods": [
+      "GET"
+    ],
+    "parameters": null,
+    "authentication": "hdx account (optional)",
+    "rateLimit": "manual download",
+    "cadence": "annual",
+    "changeDetection": "edition label (e.g. 2024)",
+    "statusPage": null,
+    "readiness": "partial",
+    "notes": "INFORM subnational models per region; schema varies by country.",
+    "sourceUrl": "https://data.humdata.org/organization/jrc",
+    "verificationDate": "2025-10-02"
+  },
+  {
+    "serviceName": "yale_epi_scores",
+    "endpoint": "https://epi.yale.edu/downloads",
+    "httpMethods": [
+      "GET"
+    ],
+    "parameters": null,
+    "authentication": "none (browser download)",
+    "rateLimit": "manual download",
+    "cadence": "biennial",
+    "changeDetection": "edition year",
+    "statusPage": null,
+    "readiness": "partial",
+    "notes": "Yale Environmental Performance Index datasets.",
+    "sourceUrl": "https://epi.yale.edu",
+    "verificationDate": "2025-10-02"
+  },
+  {
+    "serviceName": "unep_freshwater_surface",
+    "endpoint": "https://sdg661.app/downloads",
+    "httpMethods": [
+      "GET"
+    ],
+    "parameters": null,
+    "authentication": "none (dynamic UI)",
+    "rateLimit": "manual download; large GeoPackages available",
+    "cadence": "multi-year",
+    "changeDetection": "file naming (year range)",
+    "statusPage": null,
+    "readiness": "partial",
+    "notes": "UNEP Freshwater Ecosystems Explorer exports (SDG 6.6.1).",
+    "sourceUrl": "https://sdg661.app",
     "verificationDate": "2025-10-02"
   }
 ] as const;

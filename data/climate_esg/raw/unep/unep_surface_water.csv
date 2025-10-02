@@ -1,0 +1,9 @@
+country_iso3,admin_level,unit_code,unit_name,metric,year,value,unit
+USA,GAUL0,USA,United States,permanent_surface_water_change,2019,-2.5,percent
+USA,GAUL1,CA01,California,permanent_surface_water_change,2019,-4.1,percent
+USA,GAUL1,TX01,Texas,permanent_surface_water_change,2019,-3.4,percent
+CAN,GAUL0,CAN,Canada,permanent_surface_water_change,2019,1.8,percent
+CAN,GAUL1,ON01,Ontario,permanent_surface_water_change,2019,2.4,percent
+PER,GAUL0,PER,Peru,permanent_surface_water_change,2019,-1.2,percent
+PER,GAUL1,PE-LIM,Lima,permanent_surface_water_change,2019,-2.9,percent
+SWE,GAUL0,SWE,Sweden,permanent_surface_water_change,2019,0.7,percent

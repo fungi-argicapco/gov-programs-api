@@ -3,10 +3,16 @@ import type { D1Database } from '@cloudflare/workers-types';
 import {
   AQUEDUCT_COUNTRY_METRICS,
   AQUEDUCT_PROVINCE_METRICS,
+  CLIMATE_ISO_CROSSWALK,
   CLIMATE_METRIC_SERVICES,
   CLIMATE_METRICS_SEED_VERSION,
+  EPI_METRICS,
+  INFORM_GLOBAL_METRICS,
+  INFORM_SUBNATIONAL_METRICS,
   ND_GAIN_METRICS,
-  NRI_COUNTY_METRICS
+  NRI_COUNTY_METRICS,
+  UNEP_COUNTRY_METRICS,
+  UNEP_SUBNATIONAL_METRICS
 } from './climate_metrics';
 import { stableStringify } from '../util/json';
 import { recordDatasetSnapshot, upsertDatasetServices, type DatasetIngestSummary } from './utils';
@@ -38,6 +44,22 @@ type InsertClimateSubnational = {
   unit?: string | null;
   metadata?: Record<string, unknown> | null;
 };
+
+type CrosswalkEntry = {
+  countryIso3: string;
+  adminCode: string;
+  adminName: string;
+  adminLevel: string;
+  iso31662: string | null;
+};
+
+function buildCrosswalkMap(): Map<string, CrosswalkEntry> {
+  const map = new Map<string, CrosswalkEntry>();
+  for (const entry of CLIMATE_ISO_CROSSWALK) {
+    map.set(`${entry.countryIso3}:${entry.adminCode}`, entry);
+  }
+  return map;
+}
 
 async function deleteExistingCountry(env: { DB: D1Database }, source: string): Promise<void> {
   await env.DB.prepare(
@@ -158,7 +180,7 @@ function buildAqueductProvinceMetrics(): InsertClimateSubnational[] {
     countryIso3: entry.countryIso3,
     adminLevel: 'province',
     adminCode: entry.provinceCode,
-    isoCode: entry.provinceCode,
+    isoCode: entry.isoCode ?? entry.provinceCode,
     year: 2023,
     value: entry.value,
     metadata: { province_name: entry.provinceName }
@@ -182,22 +204,164 @@ function buildNriCountyMetrics(): InsertClimateSubnational[] {
   }));
 }
 
+function buildInformCountryMetrics(): InsertClimateCountry[] {
+  const rows: InsertClimateCountry[] = [];
+  for (const entry of INFORM_GLOBAL_METRICS) {
+    if (entry.riskScore !== null) {
+      rows.push({ indicator: 'inform_risk_score', countryIso3: entry.iso3, year: entry.year, value: entry.riskScore });
+    }
+    if (entry.hazardExposure !== null) {
+      rows.push({
+        indicator: 'inform_hazard_exposure',
+        countryIso3: entry.iso3,
+        year: entry.year,
+        value: entry.hazardExposure
+      });
+    }
+    if (entry.vulnerability !== null) {
+      rows.push({
+        indicator: 'inform_vulnerability',
+        countryIso3: entry.iso3,
+        year: entry.year,
+        value: entry.vulnerability
+      });
+    }
+    if (entry.copingCapacity !== null) {
+      rows.push({
+        indicator: 'inform_coping_capacity',
+        countryIso3: entry.iso3,
+        year: entry.year,
+        value: entry.copingCapacity
+      });
+    }
+  }
+  return rows;
+}
+
+function buildInformSubnationalMetrics(crosswalk: Map<string, CrosswalkEntry>): InsertClimateSubnational[] {
+  const rows: InsertClimateSubnational[] = [];
+  for (const entry of INFORM_SUBNATIONAL_METRICS) {
+    const key = `${entry.countryIso3}:${entry.adminCode}`;
+    const mapped = crosswalk.get(key);
+    const isoCode = entry.isoCode ?? mapped?.iso31662 ?? null;
+    const base = {
+      countryIso3: entry.countryIso3,
+      adminLevel: mapped?.adminLevel ?? 'admin1',
+      adminCode: entry.adminCode,
+      isoCode,
+      year: entry.year,
+      metadata: { admin_name: entry.adminName }
+    };
+    if (entry.riskScore !== null) {
+      rows.push({ ...base, indicator: 'inform_subnational_risk_score', value: entry.riskScore });
+    }
+    if (entry.hazardExposure !== null) {
+      rows.push({ ...base, indicator: 'inform_subnational_hazard_exposure', value: entry.hazardExposure });
+    }
+    if (entry.vulnerability !== null) {
+      rows.push({ ...base, indicator: 'inform_subnational_vulnerability', value: entry.vulnerability });
+    }
+    if (entry.copingCapacity !== null) {
+      rows.push({ ...base, indicator: 'inform_subnational_coping_capacity', value: entry.copingCapacity });
+    }
+  }
+  return rows;
+}
+
+function buildEpiCountryMetrics(): InsertClimateCountry[] {
+  const rows: InsertClimateCountry[] = [];
+  for (const entry of EPI_METRICS) {
+    if (entry.epiScore !== null) {
+      rows.push({ indicator: 'epi_score', countryIso3: entry.iso3, year: entry.year, value: entry.epiScore });
+    }
+    if (entry.climatePolicyScore !== null) {
+      rows.push({
+        indicator: 'epi_climate_policy_score',
+        countryIso3: entry.iso3,
+        year: entry.year,
+        value: entry.climatePolicyScore
+      });
+    }
+    if (entry.biodiversityScore !== null) {
+      rows.push({
+        indicator: 'epi_biodiversity_score',
+        countryIso3: entry.iso3,
+        year: entry.year,
+        value: entry.biodiversityScore
+      });
+    }
+  }
+  return rows;
+}
+
+function buildUnepCountryMetrics(): InsertClimateCountry[] {
+  return UNEP_COUNTRY_METRICS.map((entry) => ({
+    indicator: `${entry.metric}`,
+    countryIso3: entry.countryIso3,
+    year: entry.year,
+    value: entry.value,
+    unit: entry.unit ?? null,
+    metadata: {
+      admin_level: entry.adminLevel,
+      unit_code: entry.unitCode,
+      unit_name: entry.unitName
+    }
+  }));
+}
+
+function buildUnepSubnationalMetrics(crosswalk: Map<string, CrosswalkEntry>): InsertClimateSubnational[] {
+  return UNEP_SUBNATIONAL_METRICS.map((entry) => {
+    const key = `${entry.countryIso3}:${entry.unitCode}`;
+    const match = crosswalk.get(key);
+    return {
+      indicator: `${entry.metric}`,
+      countryIso3: entry.countryIso3,
+      adminLevel: match?.adminLevel ?? entry.adminLevel ?? 'admin1',
+      adminCode: entry.unitCode,
+      isoCode: entry.isoCode ?? match?.iso31662 ?? null,
+      year: entry.year,
+      value: entry.value,
+      unit: entry.unit ?? null,
+      metadata: {
+        unit_name: entry.unitName,
+        admin_level: entry.adminLevel
+      }
+    };
+  });
+}
+
 export async function ingestClimateMetrics(env: { DB: D1Database }): Promise<DatasetIngestSummary> {
   const ndGainCountry = buildNdGainCountryMetrics();
   const aqueductCountry = buildAqueductCountryMetrics();
   const aqueductProvince = buildAqueductProvinceMetrics();
   const nriCounties = buildNriCountyMetrics();
+  const crosswalk = buildCrosswalkMap();
+  const informCountry = buildInformCountryMetrics();
+  const informSubnational = buildInformSubnationalMetrics(crosswalk);
+  const epiCountry = buildEpiCountryMetrics();
+  const unepCountry = buildUnepCountryMetrics();
+  const unepSubnational = buildUnepSubnationalMetrics(crosswalk);
 
   await insertCountryMetrics(env, ndGainCountry, 'nd_gain');
   await insertCountryMetrics(env, aqueductCountry, 'wri_aqueduct');
   await insertSubnationalMetrics(env, aqueductProvince, 'wri_aqueduct_province');
   await insertSubnationalMetrics(env, nriCounties, 'fema_nri_county');
+  await insertCountryMetrics(env, informCountry, 'inform_global');
+  await insertSubnationalMetrics(env, informSubnational, 'inform_subnational');
+  await insertCountryMetrics(env, epiCountry, 'yale_epi');
+  await insertCountryMetrics(env, unepCountry, 'unep_surface_water');
+  await insertSubnationalMetrics(env, unepSubnational, 'unep_surface_water_subnational');
 
   await recordDatasetSnapshot(env, DATASET_ID, VERSION, {
     nd_gain_records: ndGainCountry.length,
     aqueduct_country_records: aqueductCountry.length,
     aqueduct_province_records: aqueductProvince.length,
-    nri_records: nriCounties.length
+    nri_records: nriCounties.length,
+    inform_country_records: informCountry.length,
+    inform_subnational_records: informSubnational.length,
+    epi_country_records: epiCountry.length,
+    unep_country_records: unepCountry.length,
+    unep_subnational_records: unepSubnational.length
   });
 
   await upsertDatasetServices(
@@ -227,14 +391,14 @@ export async function ingestClimateMetrics(env: { DB: D1Database }): Promise<Dat
     tables: [
       {
         table: 'climate_country_metrics',
-        inserted: ndGainCountry.length + aqueductCountry.length,
+        inserted: ndGainCountry.length + aqueductCountry.length + informCountry.length + epiCountry.length + unepCountry.length,
         updated: 0,
         skipped: 0,
         errors: []
       },
       {
         table: 'climate_subnational_metrics',
-        inserted: aqueductProvince.length + nriCounties.length,
+        inserted: aqueductProvince.length + nriCounties.length + informSubnational.length + unepSubnational.length,
         updated: 0,
         skipped: 0,
         errors: []

@@ -95,6 +95,31 @@ describe('ingestClimateMetrics', () => {
     ).first<{ metadata: string }>();
     expect(nri?.metadata ?? '').toContain('Los Angeles');
 
+    const informCountry = await DB.prepare(
+      `SELECT value FROM climate_country_metrics WHERE dataset_id = 'climate_esg_metrics' AND source = 'inform_global' AND indicator = 'inform_risk_score' AND country_iso3 = 'USA'`
+    ).first<{ value: number }>();
+    expect(informCountry?.value).toBe(3.1);
+
+    const informSub = await DB.prepare(
+      `SELECT iso_code FROM climate_subnational_metrics WHERE dataset_id = 'climate_esg_metrics' AND source = 'inform_subnational' AND indicator = 'inform_subnational_risk_score' AND admin_code = 'CA01'`
+    ).first<{ iso_code: string }>();
+    expect(informSub?.iso_code).toBe('US-CA');
+
+    const epi = await DB.prepare(
+      `SELECT value FROM climate_country_metrics WHERE dataset_id = 'climate_esg_metrics' AND source = 'yale_epi' AND indicator = 'epi_climate_policy_score' AND country_iso3 = 'CAN'`
+    ).first<{ value: number }>();
+    expect(epi?.value).toBe(72.0);
+
+    const unepCountry = await DB.prepare(
+      `SELECT value FROM climate_country_metrics WHERE dataset_id = 'climate_esg_metrics' AND source = 'unep_surface_water' AND indicator = 'permanent_surface_water_change' AND country_iso3 = 'USA'`
+    ).first<{ value: number }>();
+    expect(unepCountry?.value).toBe(-2.5);
+
+    const unepSub = await DB.prepare(
+      `SELECT iso_code FROM climate_subnational_metrics WHERE dataset_id = 'climate_esg_metrics' AND source = 'unep_surface_water_subnational' AND admin_code = 'CA01'`
+    ).first<{ iso_code: string }>();
+    expect(unepSub?.iso_code).toBe('US-CA');
+
     expect(result.tables[0].table).toBe('climate_country_metrics');
   });
 });
