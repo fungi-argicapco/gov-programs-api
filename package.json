@@ -17,7 +17,7 @@
     "setup:local": "bun run scripts/setup.ts --local",
     "setup:remote": "bun run scripts/setup.ts --remote",
     "deploy": "bun run scripts/deploy.ts",
-    "datasets:build": "bun run scripts/generate-techland-dataset.ts && bun run scripts/generate-cognitiveos-dataset.ts && bun run scripts/generate-macro-dataset.ts && bun run scripts/generate-government-programs-dataset.ts",
+    "datasets:build": "bun run scripts/generate-techland-dataset.ts && bun run scripts/generate-cognitiveos-dataset.ts && bun run scripts/generate-macro-dataset.ts && bun run scripts/generate-government-programs-dataset.ts && bun run scripts/generate-climate-esg-dataset.ts",
     "typecheck": "bunx tsc -p tsconfig.json",
     "lint": "bun run typecheck",
     "openapi": "bun run scripts/generate-openapi.ts",

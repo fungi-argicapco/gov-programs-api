@@ -7,6 +7,11 @@ import {
   GOVERNMENT_PROGRAMS_DATASET_ID,
   GOVERNMENT_PROGRAMS_DATASET_VERSION
 } from './government_programs_ingest';
+import {
+  ingestClimateEsgSources,
+  CLIMATE_ESG_DATASET_ID,
+  CLIMATE_ESG_DATASET_VERSION
+} from './climate_esg_ingest';
 
 export type DatasetDefinition = {
   id: string;
@@ -39,5 +44,11 @@ export const DATASET_REGISTRY: readonly DatasetDefinition[] = [
     label: 'Government & Partner Programs by ISO-3166-2',
     version: GOVERNMENT_PROGRAMS_DATASET_VERSION,
     ingest: ingestGovernmentProgramsDataset
+  },
+  {
+    id: CLIMATE_ESG_DATASET_ID,
+    label: 'Climate Risk & ESG Source Catalog',
+    version: CLIMATE_ESG_DATASET_VERSION,
+    ingest: ingestClimateEsgSources
   }
 ];
