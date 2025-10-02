@@ -399,6 +399,50 @@ export const raidLogs = sqliteTable(
   })
 );
 
+export const datasetSnapshots = sqliteTable(
+  'dataset_snapshots',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    datasetId: text('dataset_id').notNull(),
+    version: text('version').notNull(),
+    capturedAt: integer('captured_at').notNull(),
+    payload: text('payload').notNull(),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull()
+  },
+  (table) => ({
+    datasetIdx: index('idx_dataset_snapshots_dataset').on(table.datasetId, table.capturedAt)
+  })
+);
+
+export const datasetServices = sqliteTable(
+  'dataset_services',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    datasetId: text('dataset_id').notNull(),
+    serviceName: text('service_name').notNull(),
+    endpoint: text('endpoint').notNull(),
+    httpMethods: text('http_methods'),
+    parameters: text('parameters'),
+    authentication: text('authentication'),
+    rateLimit: text('rate_limit'),
+    cadence: text('cadence'),
+    changeDetection: text('change_detection'),
+    statusPage: text('status_page'),
+    readiness: text('readiness'),
+    notes: text('notes'),
+    sourceUrl: text('source_url'),
+    verificationDate: text('verification_date'),
+    automationMetadata: text('automation_metadata'),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    uniqueIdx: uniqueIndex('idx_dataset_services_unique').on(table.datasetId, table.serviceName)
+  })
+);
+
 export const sources = sqliteTable('sources', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),

@@ -9,7 +9,7 @@ import { checkDeadlinks } from './deadlinks';
 import { writeDailyCoverage } from './precompute.coverage';
 import { runEnrichmentBackfill } from './backfill.enrichment';
 import { ingestMacroMetrics } from './macro';
-import { ingestTechlandDataset } from './datasets/techland_ingest';
+import { DATASET_REGISTRY } from './datasets/registry';
 
 type IngestEnv = {
   DB: D1Database;
@@ -120,20 +120,24 @@ async function runDailyMetrics(env: IngestEnv, event: ScheduledEvent): Promise<v
     );
   }
 
-  const techlandSummaries = await ingestTechlandDataset(env);
-  for (const summary of techlandSummaries) {
-    const status = summary.errors.length > 0 ? 'error' : summary.inserted + summary.updated > 0 ? 'updated' : 'ok';
-    console.log(
-      JSON.stringify({
-        event: 'techland_ingest',
-        table: summary.table,
-        status,
-        inserted: summary.inserted,
-        updated: summary.updated,
-        skipped: summary.skipped,
-        errors: summary.errors
-      })
-    );
+  for (const dataset of DATASET_REGISTRY) {
+    const result = await dataset.ingest(env);
+    for (const table of result.tables) {
+      const status = table.errors.length > 0 ? 'error' : table.inserted + table.updated > 0 ? 'updated' : 'ok';
+      console.log(
+        JSON.stringify({
+          event: 'dataset_ingest',
+          datasetId: result.datasetId,
+          version: result.version,
+          table: table.table,
+          status,
+          inserted: table.inserted,
+          updated: table.updated,
+          skipped: table.skipped,
+          errors: table.errors
+        })
+      );
+    }
   }
 }
 

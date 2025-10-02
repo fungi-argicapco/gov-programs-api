@@ -16,6 +16,7 @@ import { getUtcDayStart, getUtcMonthStart } from './time';
 import { CACHE_CONTROL_VALUE, buildCacheKey, cacheGet, cachePut, computeEtag, etagMatches } from './cache';
 import { apiError } from './errors';
 import { adminUi } from './admin/ui';
+import { DATASET_REGISTRY } from '../../ingest/src/datasets/registry';
 import ingestWorker from '../../ingest/src/index';
 import type { ExportedHandler } from '@cloudflare/workers-types';
 import {
@@ -1442,6 +1443,77 @@ app.get('/v1/admin/sources/health', async (c) => {
       last_error: errorMap.get(metric.source_id) ?? null
     }))
   });
+});
+
+app.get('/v1/admin/datasets', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  const rows = await Promise.all(
+    DATASET_REGISTRY.map(async (def) => {
+      const snapshot = await c.env.DB.prepare(
+        `SELECT version, captured_at FROM dataset_snapshots WHERE dataset_id = ? ORDER BY captured_at DESC LIMIT 1`
+      )
+        .bind(def.id)
+        .first<{ version: string; captured_at: number }>()
+        .catch(() => null);
+
+      const services = await c.env.DB.prepare(
+        `SELECT service_name, endpoint, readiness, status_page, rate_limit, cadence FROM dataset_services WHERE dataset_id = ? ORDER BY service_name`
+      )
+        .bind(def.id)
+        .all<{
+          service_name: string;
+          endpoint: string;
+          readiness: string | null;
+          status_page: string | null;
+          rate_limit: string | null;
+          cadence: string | null;
+        }>();
+
+      return {
+        id: def.id,
+        label: def.label,
+        targetVersion: def.version,
+        latestSnapshot: snapshot
+          ? {
+              version: snapshot.version,
+              capturedAt: new Date(Number(snapshot.captured_at)).toISOString()
+            }
+          : null,
+        services: services.results.map((service) => ({
+          serviceName: service.service_name,
+          endpoint: service.endpoint,
+          readiness: service.readiness,
+          statusPage: service.status_page,
+          rateLimit: service.rate_limit,
+          cadence: service.cadence
+        }))
+      };
+    })
+  );
+
+  return c.json({ data: rows });
+});
+
+app.post('/v1/admin/datasets/:id/reload', async (c) => {
+  const auth = c.get('auth');
+  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
+  if (auth.role !== 'admin') {
+    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+  }
+
+  const datasetId = c.req.param('id');
+  const def = DATASET_REGISTRY.find((dataset) => dataset.id === datasetId);
+  if (!def) {
+    return apiError(c, 404, 'not_found', 'Requested dataset was not found.');
+  }
+
+  const result = await def.ingest({ DB: c.env.DB });
+  return c.json({ data: result });
 });
 
 app.post('/v1/admin/ingest/retry', async (c) => {

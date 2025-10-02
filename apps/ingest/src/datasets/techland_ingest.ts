@@ -13,12 +13,17 @@ import {
   type RaidLogEntry
 } from './techland';
 import { stableStringify } from '../util/json';
+import {
+  buildDatasetAutomation,
+  recordDatasetSnapshot,
+  type DatasetIngestSummary
+} from './utils';
 
-const DATASET_SOURCE = 'techland_dataset';
-const DATASET_VERSION = '2025-10-01';
+export const TECHLAND_DATASET_ID = 'techland_us_top_states';
+export const TECHLAND_DATASET_VERSION = '2025-10-01';
 
 const DEFAULT_AUTOMATION = (file: string) =>
-  stableStringify({ source: DATASET_SOURCE, file, version: DATASET_VERSION });
+  buildDatasetAutomation(TECHLAND_DATASET_ID, TECHLAND_DATASET_VERSION, file);
 
 const DEFAULT_METADATA = (entry: unknown) => stableStringify(entry);
 
@@ -581,12 +586,31 @@ async function ingestCollection<T>(
   return summary;
 }
 
-export async function ingestTechlandDataset(env: { DB: D1Database }): Promise<IngestSummary[]> {
-  const summaries: IngestSummary[] = [];
-  summaries.push(await ingestCollection(env, 'industry_clusters', INDUSTRY_CLUSTERS, upsertIndustryCluster));
-  summaries.push(await ingestCollection(env, 'workforce_ecosystem', WORKFORCE_ECOSYSTEM, upsertWorkforceProgram));
-  summaries.push(await ingestCollection(env, 'infrastructure_assets', INFRASTRUCTURE_ASSETS, upsertInfrastructureAsset));
-  summaries.push(await ingestCollection(env, 'regulatory_profiles', REGULATORY_PROFILES, upsertRegulatoryProfile));
-  summaries.push(await ingestCollection(env, 'raid_logs', RAID_LOG, upsertRaidLog));
-  return summaries;
+export async function ingestTechlandDataset(env: { DB: D1Database }): Promise<DatasetIngestSummary> {
+  const tables: IngestSummary[] = [];
+  tables.push(await ingestCollection(env, 'industry_clusters', INDUSTRY_CLUSTERS, upsertIndustryCluster));
+  tables.push(await ingestCollection(env, 'workforce_ecosystem', WORKFORCE_ECOSYSTEM, upsertWorkforceProgram));
+  tables.push(await ingestCollection(env, 'infrastructure_assets', INFRASTRUCTURE_ASSETS, upsertInfrastructureAsset));
+  tables.push(await ingestCollection(env, 'regulatory_profiles', REGULATORY_PROFILES, upsertRegulatoryProfile));
+  tables.push(await ingestCollection(env, 'raid_logs', RAID_LOG, upsertRaidLog));
+
+  await recordDatasetSnapshot(env, TECHLAND_DATASET_ID, TECHLAND_DATASET_VERSION, {
+    industry_clusters: INDUSTRY_CLUSTERS,
+    workforce_ecosystem: WORKFORCE_ECOSYSTEM,
+    infrastructure_assets: INFRASTRUCTURE_ASSETS,
+    regulatory_profiles: REGULATORY_PROFILES,
+    raid_logs: RAID_LOG
+  });
+
+  return {
+    datasetId: TECHLAND_DATASET_ID,
+    version: TECHLAND_DATASET_VERSION,
+    tables: tables.map((table) => ({
+      table: table.table,
+      inserted: table.inserted,
+      updated: table.updated,
+      skipped: table.skipped,
+      errors: table.errors
+    }))
+  };
 }

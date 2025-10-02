@@ -165,6 +165,12 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
       <div id="api-keys-list"></div>
     </section>
 
+    <section id="datasets-section">
+      <h2>Datasets & Feeds</h2>
+      <p>Managed research datasets, capital stacks, and roadmap feeds with snapshot history.</p>
+      <div id="datasets-list"></div>
+    </section>
+
     <script>
       (function () {
         const STORAGE_KEY = 'opsAdminKey';
@@ -175,6 +181,7 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
         const sloSummary = document.getElementById('slo-summary');
         const keysList = document.getElementById('api-keys-list');
         const createForm = document.getElementById('create-key-form');
+        const datasetsList = document.getElementById('datasets-list');
 
         function getStoredKey() {
           try {
@@ -335,6 +342,17 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
           return (value * 100).toFixed(2) + '%';
         }
 
+        function formatIso(timestamp) {
+          if (!timestamp) return '—';
+          try {
+            const date = new Date(timestamp);
+            if (Number.isNaN(date.valueOf())) return '—';
+            return date.toISOString();
+          } catch (err) {
+            return String(timestamp);
+          }
+        }
+
         async function loadSlo() {
           sloTableBody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
           try {
@@ -387,6 +405,92 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
               (routeText ? ' · ' + routeText : '');
           } catch (err) {
             sloTableBody.innerHTML = '<tr><td colspan="7">Failed to load SLO data.</td></tr>';
+            showStatus(err.message || String(err), true);
+          }
+        }
+
+        async function loadDatasets() {
+          datasetsList.innerHTML = '<p>Loading datasets…</p>';
+          try {
+            const response = await authedFetch('/v1/admin/datasets');
+            const payload = await response.json();
+            const datasets = payload.data || [];
+            if (!datasets.length) {
+              datasetsList.innerHTML = '<p>No datasets available.</p>';
+              return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            datasets.forEach((dataset) => {
+              const card = document.createElement('div');
+              card.className = 'metric-card';
+              card.style.marginBottom = '12px';
+
+              const heading = document.createElement('h3');
+              heading.textContent = dataset.label;
+              card.appendChild(heading);
+
+              const meta = document.createElement('p');
+              const targetVersion = dataset.targetVersion || 'unknown';
+              const latest = dataset.latestSnapshot;
+              const capturedAt = latest ? formatIso(latest.capturedAt) : 'never';
+              const versionStatus = latest && latest.version !== targetVersion ? '⚠️ version mismatch' : '';
+              meta.innerHTML =
+                '<strong>ID:</strong> ' +
+                dataset.id +
+                '<br/><strong>Target version:</strong> ' +
+                targetVersion +
+                '<br/><strong>Latest snapshot:</strong> ' +
+                (latest ? latest.version : 'none') +
+                ' · ' +
+                capturedAt +
+                (versionStatus ? ' <span style="color: rgba(248, 113, 113, 0.9);">' + versionStatus + '</span>' : '');
+              card.appendChild(meta);
+
+              const reload = document.createElement('button');
+              reload.type = 'button';
+              reload.textContent = 'Reload dataset';
+              reload.addEventListener('click', async () => {
+                try {
+                  showStatus('Reloading ' + dataset.id + '…', false);
+                  const response = await authedFetch('/v1/admin/datasets/' + dataset.id + '/reload', { method: 'POST' });
+                  const result = await response.json();
+                  showStatus('Reloaded ' + dataset.id + ' v' + result.data.version, false);
+                  await loadDatasets();
+                } catch (err) {
+                  showStatus(err.message || String(err), true);
+                }
+              });
+              card.appendChild(reload);
+
+              if (dataset.services && dataset.services.length) {
+                const list = document.createElement('ul');
+                list.style.marginTop = '12px';
+                dataset.services.forEach((service) => {
+                  const item = document.createElement('li');
+                  const readiness = service.readiness ? ' · ' + service.readiness : '';
+                  const statusPage = service.statusPage ? ' · <a href="' + service.statusPage + '" target="_blank" rel="noopener">status</a>' : '';
+                  item.innerHTML =
+                    '<strong>' +
+                    service.serviceName +
+                    '</strong>: ' +
+                    service.endpoint +
+                    readiness +
+                    (service.rateLimit ? ' · ' + service.rateLimit : '') +
+                    (service.cadence ? ' · ' + service.cadence : '') +
+                    statusPage;
+                  list.appendChild(item);
+                });
+                card.appendChild(list);
+              }
+
+              fragment.appendChild(card);
+            });
+
+            datasetsList.innerHTML = '';
+            datasetsList.appendChild(fragment);
+          } catch (err) {
+            datasetsList.innerHTML = '<p>Failed to load datasets.</p>';
             showStatus(err.message || String(err), true);
           }
         }
@@ -463,6 +567,7 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
           metricsGrid.innerHTML = '';
           sloTableBody.innerHTML = '';
           keysList.innerHTML = '';
+          datasetsList.innerHTML = '';
         });
 
         createForm.addEventListener('submit', async (event) => {
@@ -498,7 +603,7 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
           if (!getStoredKey()) {
             return;
           }
-          await Promise.all([loadMetrics(), loadSlo(), loadKeys()]);
+          await Promise.all([loadMetrics(), loadSlo(), loadKeys(), loadDatasets()]);
         }
 
         if (getStoredKey()) {

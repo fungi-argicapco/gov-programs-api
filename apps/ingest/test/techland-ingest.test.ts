@@ -110,6 +110,37 @@ function setupSchema(db: ReturnType<typeof createTestDB>) {
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
+    CREATE TABLE dataset_snapshots (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      dataset_id TEXT NOT NULL,
+      version TEXT NOT NULL,
+      captured_at INTEGER NOT NULL,
+      payload TEXT NOT NULL,
+      metadata TEXT,
+      created_at INTEGER NOT NULL
+    );
+    CREATE TABLE dataset_services (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      dataset_id TEXT NOT NULL,
+      service_name TEXT NOT NULL,
+      endpoint TEXT NOT NULL,
+      http_methods TEXT,
+      parameters TEXT,
+      authentication TEXT,
+      rate_limit TEXT,
+      cadence TEXT,
+      change_detection TEXT,
+      status_page TEXT,
+      readiness TEXT,
+      notes TEXT,
+      source_url TEXT,
+      verification_date TEXT,
+      automation_metadata TEXT,
+      metadata TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE UNIQUE INDEX idx_dataset_services_unique ON dataset_services (dataset_id, service_name);
   `);
 }
 
@@ -118,9 +149,9 @@ describe('ingestTechlandDataset', () => {
     const DB = createTestDB();
     setupSchema(DB);
 
-    const summaries = await ingestTechlandDataset({ DB });
+    const result = await ingestTechlandDataset({ DB });
 
-    const byTable = Object.fromEntries(summaries.map((s) => [s.table, s]));
+    const byTable = Object.fromEntries(result.tables.map((s) => [s.table, s]));
     expect(byTable.industry_clusters.inserted).toBeGreaterThan(0);
     expect(byTable.workforce_ecosystem.inserted).toBeGreaterThan(0);
     expect(byTable.infrastructure_assets.inserted).toBeGreaterThan(0);
@@ -134,8 +165,15 @@ describe('ingestTechlandDataset', () => {
       'SELECT policy_area, risk_level FROM regulatory_profiles WHERE admin_unit_code = ?'
     )
       .bind('US-CA')
-    .first<{ policy_area: string; risk_level: string }>();
+      .first<{ policy_area: string; risk_level: string }>();
     expect(regulatory?.policy_area).toBe('Statewide business environment');
     expect(regulatory?.risk_level).toBe('Medium');
+
+    const snapshotCount = (await DB.prepare(
+      'SELECT COUNT(*) AS count FROM dataset_snapshots WHERE dataset_id = ?'
+    )
+      .bind(result.datasetId)
+      .first<{ count: number }>())?.count;
+    expect(snapshotCount).toBe(1);
   });
 });
