@@ -443,6 +443,51 @@ export const datasetServices = sqliteTable(
   })
 );
 
+export const climateCountryMetrics = sqliteTable(
+  'climate_country_metrics',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    datasetId: text('dataset_id').notNull(),
+    indicator: text('indicator').notNull(),
+    countryIso3: text('country_iso3', { length: 3 }).notNull(),
+    year: integer('year'),
+    value: real('value'),
+    unit: text('unit'),
+    metadata: text('metadata'),
+    version: text('version').notNull(),
+    source: text('source'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    countryIdx: index('idx_climate_country_metrics_country').on(table.countryIso3, table.indicator, table.year)
+  })
+);
+
+export const climateSubnationalMetrics = sqliteTable(
+  'climate_subnational_metrics',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    datasetId: text('dataset_id').notNull(),
+    indicator: text('indicator').notNull(),
+    countryIso3: text('country_iso3', { length: 3 }).notNull(),
+    adminLevel: text('admin_level').notNull(),
+    adminCode: text('admin_code').notNull(),
+    isoCode: text('iso_code'),
+    year: integer('year'),
+    value: real('value'),
+    unit: text('unit'),
+    metadata: text('metadata'),
+    version: text('version').notNull(),
+    source: text('source'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    adminIdx: index('idx_climate_subnational_metrics_admin').on(table.adminCode, table.indicator, table.year)
+  })
+);
+
 export const sources = sqliteTable('sources', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),

@@ -1,0 +1,3 @@
+country_iso3,state_iso,county_fips,county_name,year,eal_total,social_vulnerability,community_resilience
+USA,US-CA,06037,Los Angeles County,2023,1200.5,0.45,0.60
+USA,US-TX,48201,Harris County,2023,980.3,0.52,0.55

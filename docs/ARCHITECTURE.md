@@ -70,3 +70,9 @@ graph TD
 - Align any new directories or micro-services with the table above and link them from the relevant README files.
 - Keep the source registry (`data/sources`) and migration history consistent with the components referenced here.
 - Register research datasets in `apps/ingest/src/datasets/registry.ts` so ingestion captures `dataset_snapshots` and `dataset_services`; monitor and trigger reloads from the admin console.
+
+## Dataset Automation
+
+- `dataset_snapshots` and `dataset_services` track every research bundle registered in `apps/ingest/src/datasets/registry.ts`.
+- `climate_country_metrics` and `climate_subnational_metrics` (migration `0017`) persist ND-GAIN, WRI Aqueduct, and FEMA NRI outputs seeded from the climate/ESG research backlog. Each run stores immutable snapshots plus source metadata for provenance.
+- Generator scripts under `scripts/` emit TypeScript bundles from raw research assets (`datasets:build` now also includes `generate-climate-metrics-dataset.ts`). Cloudflare cron executes the ingestion worker, keeping TechLand, CognitiveOS, macro metrics, government programs, and climate-risk feeds synchronized.

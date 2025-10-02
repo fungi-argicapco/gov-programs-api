@@ -12,6 +12,11 @@ import {
   CLIMATE_ESG_DATASET_ID,
   CLIMATE_ESG_DATASET_VERSION
 } from './climate_esg_ingest';
+import {
+  ingestClimateMetrics,
+  CLIMATE_METRICS_DATASET_ID,
+  CLIMATE_METRICS_VERSION
+} from './climate_metrics_ingest';
 
 export type DatasetDefinition = {
   id: string;
@@ -50,5 +55,11 @@ export const DATASET_REGISTRY: readonly DatasetDefinition[] = [
     label: 'Climate Risk & ESG Source Catalog',
     version: CLIMATE_ESG_DATASET_VERSION,
     ingest: ingestClimateEsgSources
+  },
+  {
+    id: CLIMATE_METRICS_DATASET_ID,
+    label: 'Climate Risk & ESG Metrics',
+    version: CLIMATE_METRICS_VERSION,
+    ingest: ingestClimateMetrics
   }
 ];

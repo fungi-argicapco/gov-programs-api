@@ -1,0 +1,4 @@
+country_iso3,province_code,province_name,indicator,value
+USA,USA-CA,California,baseline_water_stress,3.8
+USA,USA-TX,Texas,baseline_water_stress,4.1
+CAN,CAN-ON,Ontario,baseline_water_stress,1.5
