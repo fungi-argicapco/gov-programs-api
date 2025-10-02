@@ -44,6 +44,8 @@ async function runInstall() {
 }
 
 async function buildWebAssets() {
+  info('➡️ Refreshing dataset bundles…');
+  await $`bun run datasets:build`;
   info('➡️ Building frontend assets (apps/web)…');
   await $`bun run web:build`;
 }

@@ -82,6 +82,8 @@ async function ensureDnsRecord(): Promise<void> {
 async function deployWorker(): Promise<void> {
   requireEnv('CLOUDFLARE_ACCOUNT_ID', accountId);
   requireEnv('CLOUDFLARE_API_TOKEN', apiToken);
+  console.log('➡️ Refreshing dataset bundles…');
+  await $`bun run datasets:build`;
   console.log('➡️ Building frontend assets…');
   await $`bun run web:build`;
   await ensureDnsRecord();
