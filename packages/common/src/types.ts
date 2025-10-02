@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const CountryCode = z.enum(['US', 'CA', 'UK']);
+export const CountryCode = z.enum(['US', 'CA', 'GB', 'FR', 'PE', 'SE', 'LA', 'UK']);
 export type CountryCode = z.infer<typeof CountryCode>;
 
 export const AuthorityLevel = z.enum([
