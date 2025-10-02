@@ -5,6 +5,7 @@ Constraints
 - Runtime: Cloudflare Workers + D1 (Drizzle), API: Hono, Ingestion: scheduled cron, Search: FTS5.
 - Cloudflare ops via `bunx wrangler`; IDs live in .env → render into wrangler.toml conditionally (no empty KV/D1 IDs).
 - TypeScript strict; vitest; avoid Node-only APIs in runtime code.
+- Keep [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) current when adding services, storage, or automation. Update directory-level README/AGENTS files to mirror new components.
 
 Bootstrap (idempotent)
 1) `bash codex/env.setup.sh`  # installs Bun, writes scaffolding if missing, renders conditional toml.

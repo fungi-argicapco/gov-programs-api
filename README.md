@@ -1,5 +1,9 @@
 # gov-programs-api (US & Canada MVP)
 
+## Architecture
+
+The platform is composed of Cloudflare Workers (API, ingestion, canvas), a Svelte access portal, and a D1-backed data lake. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for a Mermaid diagram and component responsibilities.
+
 ## Quickstart
 > Bun is the only supported package/runtime manager. These commands have been verified on fresh macOS, Linux, and Codespaces environments.
 
