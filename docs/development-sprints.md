@@ -84,3 +84,4 @@ This roadmap sequences the Phase 2 scope into themed sprints that align ingestio
 - Keep Bun type checking, tests, and ingestion dry-runs green in CI.
 - Maintain documentation for Cloudflare credentials, DNS overrides, and Durable Object requirements.
 - Track success metrics: ≥5 live sources, ≥90% programs with NAICS/tags, ingestion diffs surfaced within 15 minutes.
+- Climate backlog: automate INFORM subnational manifests (HDX credential flow), ingest FEMA NRI tract-level + hazard metrics, and implement the unified `climate_hazard_metrics` table described in the INFORM/NRI deep-dive. Document legal clearances before expanding restricted datasets (per `docs/LICENSING.md`).
