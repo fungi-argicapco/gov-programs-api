@@ -83,6 +83,11 @@ Phase 1 ships with fixture-backed sources for U.S. federal, U.S. state, and Cana
 
 Normalization → upsertPrograms (idempotent), snapshots now persist raw payloads to R2 and catalog entries in the `snapshots` table.
 
+## Sprint Planning
+
+- [Sprint 0 environment readiness execution plan](docs/sprint-0-environment.md)
+- [Sprint 1 climate hazard & program expansion plan](docs/sprint-1-climate-program-expansion.md)
+
 ## OpenAPI
 
 ```bash

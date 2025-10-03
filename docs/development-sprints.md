@@ -5,6 +5,7 @@ This roadmap sequences the Phase 2 scope into themed sprints that align ingestio
 ## Next Sprint Focus
 
 ### Climate Hazard Normalization
+- [Sprint 1 plan with detailed workstreams](./sprint-1-climate-program-expansion.md)
 - Automate INFORM subnational downloads via HDX credentials.
 - Ingest FEMA NRI tract-level and hazard-specific metrics.
 - Stand up the long-format `climate_hazard_metrics` table.
