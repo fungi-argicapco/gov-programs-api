@@ -2,6 +2,24 @@
 
 This roadmap sequences the Phase 2 scope into themed sprints that align ingestion, enrichment, and platform capabilities for the US & Canada MVP. Each sprint lists its goals, primary deliverables, and representative backlog items.
 
+## Next Sprint Focus
+
+### Climate Hazard Normalization
+- Automate INFORM subnational downloads via HDX credentials.
+- Ingest FEMA NRI tract-level and hazard-specific metrics.
+- Stand up the long-format `climate_hazard_metrics` table.
+- Add WorldRiskIndex once HDX access is approved.
+
+### Program Dataset Expansion
+- Extend the ISO-3166-2 registry beyond the initial seven countries, covering state/district incentives and EU/APAC program feeds.
+- Build application calendars and monitoring jobs for funding windows.
+- Link programs to capital-stack entries and partner data to support blended-finance tooling.
+
+### Data Governance & Delivery
+- Establish automation playbooks and SOPs for restricted datasets (Germanwatch CRI, Yale EPI, UNEP Explorer) once licensing approvals arrive.
+- Define reporting endpoints or dashboard slices that surface the new ESG/climate metrics alongside program data for playbook consumers.
+- Once the climate hazard table or program expansions are in flight, split subsequent sprints into data ingestion versus legal/licensing follow-ups as needed.
+
 ## Sprint 0: Environment & Baseline Quality (1 week)
 **Goal:** Ensure every contributor can bootstrap, test, and deploy the worker confidently.
 
