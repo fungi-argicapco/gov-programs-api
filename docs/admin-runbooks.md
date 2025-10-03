@@ -1,21 +1,42 @@
 # Admin Runbooks: Account & Canvas Operations
 
-## Approving Account Requests
-Inbound requests flow through the Svelte access portal served at `/`, which writes to `account_requests` and emails the operator distribution list configured via `EMAIL_ADMIN`.
+## Signing In
+- Operators authenticate at `/account/login`. Successful logins drop an HttpOnly session cookie (`fungi_session`) that the Worker checks on every request.
+- Accounts with TOTP enabled will trigger a second step; enter the 6 digit code or use the emailed decision link to bootstrap MFA.
+- Sessions can be refreshed with the hidden `*_rt` cookie—users do not see the raw refresh token.
 
-1. Navigate to the Cloudflare Worker admin decision console at `/admin/account/decision`.
-2. Verify the requester context (email, justification, requested apps).
-3. Approve via the generated decision token link; this will automatically:
+## Approving Account Requests
+Inbound requests flow through the access portal served at `/`, which writes to `account_requests` and emails the operator distribution list configured via `EMAIL_ADMIN`.
+
+1. Visit `/admin` after signing in to view the pending queue. Each row exposes justification, requested apps, and timestamps.
+2. Approve or decline directly from the console; the Worker applies the decision using the embedded token and records the audit trail.
+3. On approval the backend will:
    - Update the `account_requests` row to `approved`.
-   - Provision the user profile and default “Lean Canvas Quickstart” canvas.
+   - Provision the user profile and default “Lean Canvas Quickstart” canvas (if the user is new).
    - Issue a one-time signup token (24 hour TTL) and dispatch both the approval and activation emails.
-4. Confirm the onboarding email landed by checking Cloudflare Email Routing logs or worker logs for `Email send requested` entries.
+4. Confirm the onboarding email landed by checking Postmark activity or worker logs for `Email send requested` entries. Declines dispatch a courteous rejection note automatically.
+
+### Handling Duplicate Requests
+- Submissions now reuse the existing record when a pending request already exists for the same email. The API returns `{ status: "pending", existing: true }` rather than creating a new row.
+- If the user already has an active account, the API responds with `409 account_exists`. Surface that response back to the UI so the applicant is prompted to sign in instead of reapplying.
 
 ## Revoking Sessions & Refresh Tokens
-1. Look up the session ID via the admin metrics console or database tooling.
-2. Call `POST /v1/auth/logout` (planned) or directly delete the session row in D1: `DELETE FROM sessions WHERE id = ?`.
+1. Look up the session ID via `/admin` (session listings coming soon) or D1 tooling.
+2. Call `POST /v1/auth/logout` while sending the current session cookie, or directly delete the session row in D1: `DELETE FROM sessions WHERE id = ?`.
 3. Our refresh rotation helper removes stale sessions automatically if an invalid refresh token is presented or the refresh TTL has elapsed. You can also proactively expire a session by setting `refresh_expires_at` to a past timestamp and forcing clients to reauthenticate.
 4. When investigating compromised accounts, clear all sessions for the user (`DELETE FROM sessions WHERE user_id = ?`) and issue a password reset token with `purpose = 'signup'`.
+
+## Configuring Postmark Webhooks
+- Bounce and spam suppressions are processed via the Canvas worker endpoint `POST /api/postmark/webhook`. Postmark’s current UI exposes Basic Auth instead of the legacy signature toggle.
+- Recommended flow:
+  1. Generate credentials (e.g. `hook-user` / `openssl rand -hex 16`).
+  2. In Postmark → *Servers → Webhooks → Add Outbound Webhook*, set the URL to `https://program.fungiagricap.com/api/postmark/webhook`, enter the username/password under **Basic auth credentials**, and enable only **Bounce** + **Spam Complaint** events.
+  3. Store the credentials in Cloudflare so the worker can validate them:
+     ```bash
+     echo "hook-user"          | bunx wrangler secret put POSTMARK_WEBHOOK_BASIC_USER
+     echo "<generated-pass>"   | bunx wrangler secret put POSTMARK_WEBHOOK_BASIC_PASS
+     ```
+- If Postmark reintroduces webhook signatures you can instead set `POSTMARK_WEBHOOK_SECRET`, but either approach will keep the endpoint locked down.
 
 ## Archiving Canvases
 1. Use the authenticated Canvas API (`PATCH /v1/canvases/:id`) with `{ "status": "archived" }` and the latest `revision` to avoid conflicts.

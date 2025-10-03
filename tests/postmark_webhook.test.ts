@@ -131,6 +131,26 @@ describe('handlePostmarkWebhook', () => {
     );
   });
 
+  it('accepts events when basic auth credentials match', async () => {
+    const basicEnv: CanvasEnv = {
+      POSTMARK_WEBHOOK_SECRET: undefined,
+      POSTMARK_WEBHOOK_BASIC_USER: 'hook-user',
+      POSTMARK_WEBHOOK_BASIC_PASS: 'hook-pass'
+    } as CanvasEnv;
+    const body = { RecordType: 'Bounce', Email: 'basic@example.com', MessageStream: 'sandbox' };
+    const request = new Request('https://example.com/api/postmark/webhook', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${Buffer.from('hook-user:hook-pass').toString('base64')}`
+      }
+    });
+    const response = await handlePostmarkWebhook(request, basicEnv);
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('ok');
+  });
+
   it('logs metrics when multiple events are processed', async () => {
     const events = [
       { RecordType: 'Bounce', Email: 'one@example.com', MessageStream: 'sandbox' },

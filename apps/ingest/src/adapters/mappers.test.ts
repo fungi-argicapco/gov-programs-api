@@ -48,6 +48,23 @@ describe('mapSamAssistance', () => {
       { kind: 'applicant_type', operator: 'eq', value: 'state' }
     ]);
   });
+
+  it('maps v2 opportunities payloads', () => {
+    const result = mapSamAssistance({
+      noticeId: 'abc123',
+      title: 'Synthetic Opportunity',
+      uiLink: 'https://sam.gov/opp/abc123/view',
+      description: 'Support for emerging industries.',
+      active: 'Yes',
+      naicsCodes: ['541330', '541511']
+    });
+
+    expect(result.title).toBe('Synthetic Opportunity');
+    expect(result.summary).toContain('emerging industries');
+    expect(result.url).toBe('https://sam.gov/opp/abc123/view');
+    expect(result.status).toBe('open');
+    expect(result.tags).toEqual(['541330', '541511']);
+  });
 });
 
 describe('mapCkanGC', () => {

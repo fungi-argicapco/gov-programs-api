@@ -19,86 +19,90 @@ describe('runCatalogOnce', () => {
   const responses = new Map<string, string>();
   let originalFetch: typeof fetch;
 
-  beforeEach(() => {
-    originalFetch = globalThis.fetch;
-    responses.clear();
-    responses.set(
-      'https://www.grants.gov/grantsws/rest/opportunities/search?filter=active&sortBy=closeDate',
-      JSON.stringify({
-        opportunities: [
+beforeEach(() => {
+  originalFetch = globalThis.fetch;
+  responses.clear();
+  process.env.SAM_API_KEY = 'test-key';
+  responses.set(
+    'https://www.grants.gov/grantsws/rest/opportunities/search?filter=active&sortBy=closeDate',
+    JSON.stringify({
+      opportunities: [
+        {
+          OpportunityTitle: 'Test Grants.gov Program',
+          Synopsis: 'Agriculture support for farms',
+          PostDate: '2025-01-01',
+          CloseDate: '2025-12-31',
+          OpportunityNumber: 'TEST-123',
+          Category: 'agriculture',
+          eligibilityCategory: ['county governments']
+        }
+      ]
+    })
+  );
+  responses.set(
+    'https://open.canada.ca/data/en/api/3/action/package_search?q=assistance%20program&rows=100',
+    JSON.stringify({
+      result: {
+        results: [
           {
-            OpportunityTitle: 'Test Grants.gov Program',
-            Synopsis: 'Agriculture support for farms',
-            PostDate: '2025-01-01',
-            CloseDate: '2025-12-31',
-            OpportunityNumber: 'TEST-123',
-            Category: 'agriculture',
-            eligibilityCategory: ['county governments']
+            title: 'Canada Assistance',
+            notes: 'Manufacturing support',
+            resources: [{ url: 'https://open.canada.ca/program', format: 'HTML' }],
+            tags: [{ name: 'manufacturing' }]
           }
         ]
-      })
-    );
-    responses.set(
-      'https://sam.gov/api/prod/sgs/v1/search?index=assistancelisting&q=*&sort=-modifiedDate',
-      JSON.stringify({
-        searchResult: {
-          searchResultItems: [
-            {
-              matchedObjectId: '12.345',
-              matchedObjectDescriptor: {
-                assistanceListingTitle: 'SAM Listing',
-                assistanceListingNumber: '12.345',
-                assistanceListingDescription: 'Energy upgrades',
-                applicantTypes: ['state'],
-                businessCategories: ['energy']
-              }
-            }
-          ]
-        }
-      })
-    );
-    responses.set(
-      'https://open.canada.ca/data/en/api/3/action/package_search?q=assistance%20program&rows=100',
-      JSON.stringify({
-        result: {
-          results: [
-            {
-              title: 'Canada Assistance',
-              notes: 'Manufacturing support',
-              resources: [{ url: 'https://open.canada.ca/program', format: 'HTML' }],
-              tags: [{ name: 'manufacturing' }]
-            }
-          ]
-        }
-      })
-    );
-    responses.set(
-      'https://data.ontario.ca/en/api/3/action/package_search?q=grant&rows=100',
-      JSON.stringify({
-        result: {
-          results: [
-            {
-              title: 'Ontario Innovation',
-              notes: 'Tech support',
-              resources: [{ url: 'https://data.ontario.ca/program', format: 'HTML' }],
-              tags: [{ name: 'tech' }]
-            }
-          ]
-        }
-      })
-    );
-    globalThis.fetch = vi.fn(async (url: RequestInfo) => {
-      const body = responses.get(String(url));
-      if (!body) {
-        return new Response('not found', { status: 404 });
       }
-      return new Response(body, { status: 200 });
-    });
+    })
+  );
+  responses.set(
+    'https://data.ontario.ca/en/api/3/action/package_search?q=grant&rows=100',
+    JSON.stringify({
+      result: {
+        results: [
+          {
+            title: 'Ontario Innovation',
+            notes: 'Tech support',
+            resources: [{ url: 'https://data.ontario.ca/program', format: 'HTML' }],
+            tags: [{ name: 'tech' }]
+          }
+        ]
+      }
+    })
+  );
+  globalThis.fetch = vi.fn(async (request: RequestInfo) => {
+    const requestUrl = typeof request === 'string' ? request : (request as Request).url;
+    if (requestUrl.startsWith('https://api.sam.gov/prod/opportunities/v2/search')) {
+      return new Response(
+        JSON.stringify({
+          totalRecords: 1,
+          limit: 200,
+          offset: 0,
+          opportunitiesData: [
+            {
+              noticeId: 'sam-notice-1',
+              title: 'SAM Opportunity Fixture',
+              description: 'Fixture opportunity for ingestion tests.',
+              active: 'Yes',
+              naicsCodes: ['541612'],
+              uiLink: 'https://sam.gov/opp/sam-notice-1/view'
+            }
+          ]
+        }),
+        { status: 200 }
+      );
+    }
+    const body = responses.get(requestUrl);
+    if (!body) {
+      return new Response('not found', { status: 404 });
+    }
+    return new Response(body, { status: 200 });
   });
+});
 
-  afterEach(() => {
-    globalThis.fetch = originalFetch;
-  });
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+  delete process.env.SAM_API_KEY;
+});
 
   it('ingests catalog sources and records run metrics', async () => {
     const env = createTestDB();

@@ -3,6 +3,8 @@ export type CanvasEnv = {
   POSTMARK_TOKEN?: string;
   EMAIL_SENDER?: string;
   POSTMARK_WEBHOOK_SECRET?: string;
+  POSTMARK_WEBHOOK_BASIC_USER?: string;
+  POSTMARK_WEBHOOK_BASIC_PASS?: string;
   POSTMARK_MESSAGE_STREAM?: string;
 };
 
@@ -34,4 +36,13 @@ export function resolveEmailEnv(env: CanvasEnv): ResolvedEmailEnv {
 export function getWebhookSecret(env: CanvasEnv): string | null {
   const secret = env.POSTMARK_WEBHOOK_SECRET?.trim();
   return secret && secret.length > 0 ? secret : null;
+}
+
+export function getWebhookBasicAuth(env: CanvasEnv): { user: string; pass: string } | null {
+  const user = env.POSTMARK_WEBHOOK_BASIC_USER?.trim();
+  const pass = env.POSTMARK_WEBHOOK_BASIC_PASS?.trim();
+  if (user && pass) {
+    return { user, pass };
+  }
+  return null;
 }

@@ -25,7 +25,12 @@
     "postdeploy:validate": "bun run scripts/postdeploy.validate.ts",
     "web:dev": "bunx vite --config apps/web/vite.config.ts",
     "web:build": "bunx vite build --config apps/web/vite.config.ts",
-    "web:preview": "bunx vite preview --config apps/web/vite.config.ts"
+    "web:preview": "bunx vite preview --config apps/web/vite.config.ts",
+    "maintenance:sam-synthetic": "bun run scripts/maintenance.sam-synthetic.ts",
+    "test:email": "bun test apps/api/src/email/provider.test.ts tests/postmark_*.test.ts",
+    "email:send-test": "bun run scripts/email.send-test.ts",
+    "verify:sam": "bun run scripts/verify-sam-endpoint.ts",
+    "postmark:webhook": "bun run scripts/postmark.webhook.ts"
   },
   "dependencies": {
     "@cloudflare/d1": "^1.4.1",
@@ -54,6 +59,6 @@
     "typescript": "^5.9.3",
     "vite": "^5.4.8",
     "vitest": "^3.2.4",
-    "wrangler": "^4.40.3"
+    "wrangler": "^4.42.0"
   }
 }

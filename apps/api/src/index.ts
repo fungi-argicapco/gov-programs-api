@@ -16,6 +16,8 @@ import { getUtcDayStart, getUtcMonthStart } from './time';
 import { CACHE_CONTROL_VALUE, buildCacheKey, cacheGet, cachePut, computeEtag, etagMatches } from './cache';
 import { apiError } from './errors';
 import { adminUi } from './admin/ui';
+import { adminDecisionUi } from './admin/decision';
+import { loginUi } from './admin/login';
 import { DATASET_REGISTRY } from '../../ingest/src/datasets/registry';
 import ingestWorker from '../../ingest/src/index';
 import type { ExportedHandler } from '@cloudflare/workers-types';
@@ -32,6 +34,10 @@ import {
   updateAccountRequestStatus,
   ensureUserWithDefaultCanvas,
   createSignupToken,
+  findLatestPendingAccountRequest,
+  findUserByEmail,
+  listAccountRequests,
+  getUserProfileById,
 } from './onboarding/storage';
 import {
   buildDecisionEmail,
@@ -39,8 +45,32 @@ import {
   buildSignupEmail,
   sendEmail
 } from './onboarding/email';
+import { handlePostmarkWebhook as canvasPostmarkWebhook } from '../../canvas/src/postmark_webhook';
+import type { CanvasEnv } from '../../canvas/src/env';
+import {
+  mwSession,
+  requireAdmin,
+  requireSession,
+  type SessionVariables
+} from './security/mw.session';
+import {
+  acceptInvite,
+  login as performLogin,
+  logout as performLogout,
+  refreshSession as performRefresh,
+  verifyMfaChallenge,
+  startTotpEnrollment,
+  confirmTotpEnrollment
+} from './security/auth';
+import {
+  setSessionCookie,
+  setRefreshCookie,
+  clearSessionCookie,
+  readSessionCookie,
+  readRefreshCookie
+} from './security/session';
 
-type ApiBindings = { Bindings: Env; Variables: AuthVariables };
+type ApiBindings = { Bindings: Env; Variables: AuthVariables & SessionVariables };
 
 const DOCS_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -129,6 +159,55 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_RANK_LIMIT = 200;
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
+
+function getRequestMetadata(c: Context<ApiBindings>) {
+  const ipHeader = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for');
+  const ip = ipHeader ? ipHeader.split(',')[0].trim() : undefined;
+  const userAgent = c.req.header('user-agent') ?? undefined;
+  return { ip, userAgent };
+}
+
+function respondWithAuthSuccess(
+  c: Context<ApiBindings>,
+  payload: Awaited<ReturnType<typeof performLogin>> | Awaited<ReturnType<typeof acceptInvite>>
+) {
+  if (payload.status !== 'ok') {
+    throw new Error('Expected auth success');
+  }
+  const { user, session, refresh_token, refresh_expires_at } = payload;
+  const res = c.json({ status: 'ok', user, session, refresh_token, refresh_expires_at });
+  setSessionCookie(c.env, res, session.id, session.expires_at);
+  setRefreshCookie(c.env, res, refresh_token, refresh_expires_at);
+  return res;
+}
+
+function handleAuthError(c: Context<ApiBindings>, error: unknown) {
+  const message = error instanceof Error ? error.message : 'unknown';
+  const mapping: Record<string, { status: number; code: string; description: string }> = {
+    weak_password: {
+      status: 400,
+      code: 'weak_password',
+      description: 'Password must be at least 12 characters and include upper, lower, number, and symbol.'
+    },
+    invalid_token: { status: 400, code: 'invalid_token', description: 'Invite token is not valid.' },
+    invalid_credentials: { status: 401, code: 'invalid_credentials', description: 'Invalid email or password.' },
+    user_not_found: { status: 401, code: 'invalid_credentials', description: 'Invalid email or password.' },
+    inactive_user: { status: 403, code: 'inactive_user', description: 'Account is not active.' },
+    invalid_mfa: { status: 401, code: 'invalid_mfa', description: 'The provided MFA code is not valid.' },
+    mfa_not_configured: { status: 400, code: 'mfa_not_configured', description: 'MFA is not configured for this account.' },
+    invalid_challenge: { status: 400, code: 'invalid_challenge', description: 'MFA challenge has expired or is invalid.' },
+    invalid_method: { status: 400, code: 'invalid_method', description: 'MFA method is not valid.' },
+    invalid_session: { status: 401, code: 'invalid_session', description: 'Session is not valid.' },
+    expired_refresh: { status: 401, code: 'expired_refresh', description: 'Refresh token has expired.' },
+    invalid_refresh: { status: 401, code: 'invalid_refresh', description: 'Refresh token is not valid.' }
+  };
+  const mapped = mapping[message];
+  if (mapped) {
+    return apiError(c, mapped.status, mapped.code, mapped.description);
+  }
+  console.error('Unhandled auth error', error);
+  return apiError(c, 500, 'auth_error', 'Unexpected authentication error.');
+}
 
 function parseTimeInput(raw: string | null): number | null {
   if (!raw) return null;
@@ -296,6 +375,8 @@ function computeTimingFeature(
 
 const app = new Hono<ApiBindings>();
 
+app.use('*', mwSession);
+
 const serveDocs = (c: Context<ApiBindings>) => {
   const res = c.html(DOCS_HTML);
   res.headers.set('Cache-Control', 'public, max-age=300');
@@ -339,6 +420,168 @@ app.get('/openapi.json', (c) => {
   const res = c.json(openapiDocument);
   res.headers.set('Cache-Control', 'public, max-age=300');
   return res;
+});
+
+app.get('/account/login', (c) => {
+  return new Response(loginUi(c), {
+    headers: { 'content-type': 'text/html; charset=utf-8' }
+  });
+});
+
+app.post('/v1/account/activate', async (c) => {
+  let body: any;
+  try {
+    body = await c.req.json();
+  } catch {
+    return apiError(c, 400, 'invalid_payload', 'Request body must be valid JSON.');
+  }
+  const token = typeof body?.token === 'string' ? body.token.trim() : '';
+  const password = typeof body?.password === 'string' ? body.password : '';
+  if (!token || !password) {
+    return apiError(c, 400, 'invalid_payload', 'Token and password are required.');
+  }
+  try {
+    const meta = getRequestMetadata(c);
+    const result = await acceptInvite(c.env, { token, password, ip: meta.ip, userAgent: meta.userAgent });
+    return respondWithAuthSuccess(c, result);
+  } catch (error) {
+    return handleAuthError(c, error);
+  }
+});
+
+app.post('/v1/auth/login', async (c) => {
+  let body: any;
+  try {
+    body = await c.req.json();
+  } catch {
+    return apiError(c, 400, 'invalid_payload', 'Request body must be valid JSON.');
+  }
+  const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+  const password = typeof body?.password === 'string' ? body.password : '';
+  const totpCode = typeof body?.totp_code === 'string' ? body.totp_code.trim() : undefined;
+  if (!email || !password) {
+    return apiError(c, 400, 'invalid_payload', 'Email and password are required.');
+  }
+  try {
+    const meta = getRequestMetadata(c);
+    const result = await performLogin(c.env, { email, password, totpCode, ip: meta.ip, userAgent: meta.userAgent });
+    if (result.status === 'mfa-required') {
+      return c.json(result, 401);
+    }
+    return respondWithAuthSuccess(c, result);
+  } catch (error) {
+    return handleAuthError(c, error);
+  }
+});
+
+app.post('/v1/auth/mfa/challenge', async (c) => {
+  let body: any;
+  try {
+    body = await c.req.json();
+  } catch {
+    return apiError(c, 400, 'invalid_payload', 'Request body must be valid JSON.');
+  }
+  const challengeId = typeof body?.challenge_id === 'string' ? body.challenge_id.trim() : '';
+  const code = typeof body?.code === 'string' ? body.code.trim() : '';
+  if (!challengeId || !code) {
+    return apiError(c, 400, 'invalid_payload', 'Challenge id and code are required.');
+  }
+  try {
+    const meta = getRequestMetadata(c);
+    const result = await verifyMfaChallenge(c.env, {
+      challengeId,
+      code,
+      ip: meta.ip,
+      userAgent: meta.userAgent
+    });
+    return respondWithAuthSuccess(c, result);
+  } catch (error) {
+    return handleAuthError(c, error);
+  }
+});
+
+app.post('/v1/auth/logout', requireSession, async (c) => {
+  const session = c.get('session');
+  if (!session) {
+    return apiError(c, 401, 'unauthorized', 'Session required.');
+  }
+  await performLogout(c.env, { sessionId: session.id });
+  const res = c.json({ status: 'ok' });
+  clearSessionCookie(c.env, res);
+  return res;
+});
+
+app.post('/v1/auth/refresh', async (c) => {
+  const sessionId = readSessionCookie(c.env, c.req.raw);
+  const refreshToken = readRefreshCookie(c.env, c.req.raw);
+  if (!sessionId || !refreshToken) {
+    return apiError(c, 401, 'invalid_session', 'Refresh token is not available.');
+  }
+  try {
+    const meta = getRequestMetadata(c);
+    const result = await performRefresh(c.env, {
+      sessionId,
+      refreshToken,
+      ip: meta.ip,
+      userAgent: meta.userAgent
+    });
+    return respondWithAuthSuccess(c, result);
+  } catch (error) {
+    return handleAuthError(c, error);
+  }
+});
+
+app.get('/v1/auth/me', requireSession, (c) => {
+  const session = c.get('session');
+  const user = c.get('user');
+  return c.json({ status: 'ok', user, session });
+});
+
+app.post('/v1/auth/mfa/totp/enroll', requireSession, async (c) => {
+  const user = c.get('user');
+  if (!user) {
+    return apiError(c, 401, 'unauthorized', 'Session required.');
+  }
+  try {
+    const enrollment = await startTotpEnrollment(c.env, user.id);
+    return c.json({ status: 'ok', ...enrollment });
+  } catch (error) {
+    return handleAuthError(c, error);
+  }
+});
+
+app.post('/v1/auth/mfa/totp/confirm', requireSession, async (c) => {
+  const user = c.get('user');
+  if (!user) {
+    return apiError(c, 401, 'unauthorized', 'Session required.');
+  }
+  let body: any;
+  try {
+    body = await c.req.json();
+  } catch {
+    return apiError(c, 400, 'invalid_payload', 'Request body must be valid JSON.');
+  }
+  const methodId = typeof body?.method_id === 'string' ? body.method_id.trim() : '';
+  const code = typeof body?.code === 'string' ? body.code.trim() : '';
+  if (!methodId || !code) {
+    return apiError(c, 400, 'invalid_payload', 'Method id and code are required.');
+  }
+  try {
+    const profile = await confirmTotpEnrollment(c.env, { userId: user.id, methodId, code });
+    return c.json({ status: 'ok', user: profile });
+  } catch (error) {
+    return handleAuthError(c, error);
+  }
+});
+
+app.get('/v1/operator/account-requests', requireAdmin, async (c) => {
+  const statusParam = c.req.query('status');
+  let status: 'pending' | 'approved' | 'declined' | undefined;
+  if (statusParam === 'pending' || statusParam === 'approved' || statusParam === 'declined') {
+    status = statusParam;
+  }
+  const requests = await listAccountRequests(c.env, { status });
+  return c.json({ status: 'ok', data: requests });
 });
 
 function parseIndustryCodes(raw: string | null | undefined): string[] {
@@ -557,8 +800,41 @@ app.post('/v1/account/request', async (c) => {
     });
   }
 
+  const normalizedEmail = parsed.data.email.trim().toLowerCase();
+
+  const existingUser = await findUserByEmail(c.env, normalizedEmail);
+  if (existingUser && existingUser.status === 'active') {
+    return apiError(c, 409, 'account_exists', 'An account already exists for this email.');
+  }
+
+  const pendingRequest = await findLatestPendingAccountRequest(c.env, normalizedEmail);
+  if (pendingRequest) {
+    let requestedApps: Record<string, boolean> = {};
+    try {
+      requestedApps = JSON.parse(String(pendingRequest.requested_apps ?? '{}')) as Record<string, boolean>;
+    } catch {
+      requestedApps = {};
+    }
+    return c.json(
+      {
+        status: 'pending',
+        existing: true,
+        request: {
+          id: pendingRequest.id,
+          email: pendingRequest.email,
+          display_name: pendingRequest.display_name,
+          requested_apps: requestedApps,
+          justification: pendingRequest.justification,
+          created_at: pendingRequest.created_at,
+          status: pendingRequest.status
+        }
+      },
+      202
+    );
+  }
+
   const { accountRequest, decisionToken, tokenExpiresAt } = await storeAccountRequest(c.env, {
-    email: parsed.data.email.toLowerCase(),
+    email: normalizedEmail,
     displayName: parsed.data.display_name,
     requestedApps: parsed.data.requested_apps,
     justification: parsed.data.justification
@@ -568,13 +844,25 @@ app.post('/v1/account/request', async (c) => {
   const adminEmail = c.env.EMAIL_ADMIN;
   if (adminEmail) {
     const decisionBase = new URL('/admin/account/decision', baseUrl).toString();
-    const email = buildDecisionEmail({ recipient: adminEmail, token: decisionToken, decisionBaseUrl: decisionBase });
+    const email = buildDecisionEmail({
+      recipient: adminEmail,
+      token: decisionToken,
+      decisionBaseUrl: decisionBase,
+      requesterEmail: accountRequest.email,
+      requesterName: accountRequest.display_name,
+      justification: accountRequest.justification ?? null,
+      requestedApps: accountRequest.requested_apps
+    });
     await sendEmail(c.env, email);
   } else {
     console.warn('EMAIL_ADMIN not configured; skipping admin notification');
   }
 
   return c.json({ status: 'pending', request: accountRequest, decision_token_expires_at: tokenExpiresAt }, 202);
+});
+
+app.post('/api/postmark/webhook', (c) => {
+  return canvasPostmarkWebhook(c.req.raw, c.env as unknown as CanvasEnv);
 });
 
 app.post('/v1/account/decision', async (c) => {
@@ -1404,15 +1692,13 @@ app.delete('/v1/admin/api-keys/:id', async (c) => {
   return c.json({ deleted: true });
 });
 
-app.get('/admin', mwRate, mwAuth, async (c) => {
-  const auth = c.get('auth');
-  if (!auth) {
-    return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  }
-  if (auth.role !== 'admin') {
-    return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
-  }
+app.get('/admin/account/decision', (c) => {
+  return new Response(adminDecisionUi(c), {
+    headers: { 'content-type': 'text/html; charset=utf-8' }
+  });
+});
 
+app.get('/admin', mwRate, requireAdmin, async (c) => {
   return new Response(adminUi(c), {
     headers: { 'content-type': 'text/html; charset=utf-8' },
   });

@@ -379,7 +379,11 @@ crons = ["0 */4 * * *"]
     ['__DO_BINDING__', envValues.CF_DO_BINDING ?? ''],
     ['__DO_CLASS__', envValues.CF_DO_CLASS ?? ''],
     ['__DO_METRICS_BINDING__', envValues.CF_DO_METRICS_BINDING ?? ''],
-    ['__DO_METRICS_CLASS__', envValues.CF_DO_METRICS_CLASS ?? '']
+    ['__DO_METRICS_CLASS__', envValues.CF_DO_METRICS_CLASS ?? ''],
+    ['__EMAIL_PROVIDER__', process.env.EMAIL_PROVIDER?.trim() ?? 'console'],
+    ['__EMAIL_SENDER__', process.env.EMAIL_SENDER?.trim() ?? ''],
+    ['__EMAIL_ADMIN__', process.env.EMAIL_ADMIN?.trim() ?? ''],
+    ['__PROGRAM_API_BASE__', process.env.PROGRAM_API_BASE?.trim() ?? '']
   ]);
   const templateContents = readFileSync(templatePath, 'utf8');
   let output = templateContents;

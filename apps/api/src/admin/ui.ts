@@ -7,679 +7,360 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Gov Programs Admin Console</title>
+    <title>Operations Console · Government Programs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       :root {
         color-scheme: light dark;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      }
-      body {
-        margin: 0;
-        padding: 24px;
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         background: #0f172a;
         color: #e2e8f0;
       }
-      h1, h2, h3 {
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, rgba(56, 189, 248, 0.08), transparent 55%), #0f172a;
+      }
+      header {
+        padding: 32px clamp(24px, 4vw, 56px) 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      header h1 {
+        margin: 0;
+        font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+        color: #f8fafc;
+      }
+      header p {
+        margin: 0;
+        color: rgba(226, 232, 240, 0.76);
+        max-width: 640px;
+      }
+      main {
+        padding: 0 clamp(24px, 4vw, 56px) 64px;
+        display: grid;
+        gap: 32px;
+      }
+      .card {
+        background: rgba(15, 23, 42, 0.88);
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        border-radius: 20px;
+        padding: clamp(18px, 3vw, 26px);
+        box-shadow: 0 18px 55px rgba(15, 23, 42, 0.45);
+      }
+      .card h2 {
         margin: 0 0 12px;
-      }
-      section {
-        background: rgba(15, 23, 42, 0.85);
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 20px;
-        box-shadow: 0 10px 35px rgba(15, 23, 42, 0.3);
-      }
-      label {
-        display: block;
-        margin-bottom: 8px;
-      }
-      input, select, button {
-        font: inherit;
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: 1px solid rgba(148, 163, 184, 0.3);
-        background: rgba(15, 23, 42, 0.6);
-        color: inherit;
-      }
-      button {
-        cursor: pointer;
-        background: rgba(56, 189, 248, 0.15);
-        border-color: rgba(56, 189, 248, 0.3);
+        font-size: 1.2rem;
+        color: #f8fafc;
       }
       table {
         width: 100%;
         border-collapse: collapse;
       }
       th, td {
-        padding: 8px 10px;
-        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-        text-align: left;
-        font-size: 14px;
-      }
-      #metrics-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-      }
-      .metric-card {
-        border: 1px solid rgba(148, 163, 184, 0.2);
-        border-radius: 10px;
         padding: 12px;
-        background: rgba(15, 23, 42, 0.8);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+        text-align: left;
+        vertical-align: top;
+        font-size: 0.95rem;
       }
-      .metric-card canvas {
-        width: 100%;
-        height: 60px;
-        display: block;
-        border-radius: 6px;
+      th {
+        font-weight: 600;
+        color: rgba(226, 232, 240, 0.92);
+      }
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+      .empty {
+        padding: 18px;
+        border-radius: 14px;
         background: rgba(15, 23, 42, 0.6);
+        border: 1px dashed rgba(148, 163, 184, 0.3);
+        text-align: center;
+        color: rgba(148, 163, 184, 0.85);
       }
-      #api-keys-list {
-        display: flex;
-        flex-direction: column;
+      .actions {
+        display: inline-flex;
         gap: 10px;
-        margin-top: 12px;
       }
-      .key-row {
-        display: flex;
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+      }
+      button.primary {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.92), rgba(59, 130, 246, 0.92));
+        color: #04111f;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.25);
+      }
+      button.secondary {
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        color: rgba(226, 232, 240, 0.95);
+      }
+      button:hover {
+        transform: translateY(-1px);
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+        transform: none;
+      }
+      .badge {
+        display: inline-flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid rgba(148, 163, 184, 0.2);
-        background: rgba(15, 23, 42, 0.6);
-        font-size: 14px;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        background: rgba(56, 189, 248, 0.16);
+        color: rgba(125, 211, 252, 0.95);
       }
-      .key-row button {
-        margin-left: 12px;
+      .status {
+        margin: 0;
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        background: rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        display: none;
       }
-      #status-banner {
-        margin-top: 8px;
-        min-height: 20px;
-        font-size: 13px;
-        color: rgba(56, 189, 248, 0.9);
+      .status.visible {
+        display: block;
       }
-      #slo-summary {
-        margin-top: 12px;
-        font-size: 14px;
-        color: rgba(248, 250, 252, 0.85);
+      .status.positive {
+        border-color: rgba(16, 185, 129, 0.35);
+        color: #bbf7d0;
       }
-      a {
-        color: rgba(125, 211, 252, 0.9);
+      .status.negative {
+        border-color: rgba(239, 68, 68, 0.35);
+        color: #fecaca;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        color: rgba(148, 163, 184, 0.85);
+        font-size: 0.88rem;
+      }
+      footer {
+        padding: 24px;
+        text-align: center;
+        font-size: 0.8rem;
+        color: rgba(148, 163, 184, 0.65);
+      }
+      @media (max-width: 820px) {
+        main {
+          gap: 24px;
+        }
+        th:nth-child(3), td:nth-child(3) {
+          display: none;
+        }
       }
     </style>
   </head>
   <body>
-    <h1>Operator Console</h1>
-    <section id="auth-section">
-      <h2>API Access</h2>
-      <label for="admin-key-input">Admin API Key</label>
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <input id="admin-key-input" type="password" placeholder="Paste admin key" style="flex:1; min-width:220px;" />
-        <button id="save-admin-key" type="button">Save</button>
-        <button id="clear-admin-key" type="button">Clear</button>
-      </div>
-      <div id="status-banner" aria-live="polite"></div>
-    </section>
-
-    <section id="metrics-section">
-      <h2>Hourly Metrics</h2>
-      <p>Latency and error rate per route from <code>/v1/ops/metrics?bucket=1h</code>.</p>
-      <div id="metrics-grid"></div>
-    </section>
-
-    <section id="slo-section">
-      <h2>SLO Windows</h2>
-      <table id="slo-table">
-        <thead>
-          <tr>
-            <th>Day (UTC)</th>
-            <th>Route</th>
-            <th>Requests</th>
-            <th>Error Rate</th>
-            <th>P99 (ms)</th>
-            <th>SLO OK</th>
-            <th>Budget Burn</th>
-          </tr>
-        </thead>
-        <tbody id="slo-table-body"></tbody>
-      </table>
-      <div id="slo-summary"></div>
-    </section>
-
-    <section id="keys-section">
-      <h2>API Keys</h2>
-      <form id="create-key-form">
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          <input id="key-name" name="name" type="text" placeholder="Name" />
-          <select id="key-role" name="role">
-            <option value="read">read</option>
-            <option value="partner">partner</option>
-            <option value="admin">admin</option>
-          </select>
-          <input id="key-quota-daily" name="quota_daily" type="number" min="0" placeholder="Daily quota" />
-          <input id="key-quota-monthly" name="quota_monthly" type="number" min="0" placeholder="Monthly quota" />
-          <button type="submit">Create Key</button>
-        </div>
-      </form>
-      <div id="api-keys-list"></div>
-    </section>
-
-    <section id="datasets-section">
-      <h2>Datasets & Feeds</h2>
-      <p>Managed research datasets, capital stacks, and roadmap feeds with snapshot history.</p>
-      <div id="datasets-list"></div>
-    </section>
-
-    <section id="climate-section">
-      <h2>Climate Risk Overview</h2>
-      <p>Latest ND-GAIN, INFORM, EPI, and UNEP indicators captured by the ingestion worker.</p>
-      <div id="climate-table"></div>
-    </section>
+    <header>
+      <h1>Operations console</h1>
+      <p id="welcome-text">Review and action incoming access requests. Decisions automatically notify applicants and create accounts.</p>
+      <ul class="meta" id="user-meta"></ul>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </header>
+    <main>
+      <section class="card">
+        <h2>Pending requests <span id="pending-count" class="badge" hidden></span></h2>
+        <div id="pending-container" class="empty">Loading pending requests…</div>
+      </section>
+      <section class="card">
+        <h2>Recent decisions</h2>
+        <div id="history-container" class="empty">Loading history…</div>
+      </section>
+    </main>
+    <footer>Government Programs API · fungiagricap</footer>
 
     <script>
       (function () {
-        const STORAGE_KEY = 'opsAdminKey';
-        const keyInput = document.getElementById('admin-key-input');
-        const status = document.getElementById('status-banner');
-        const metricsGrid = document.getElementById('metrics-grid');
-        const sloTableBody = document.getElementById('slo-table-body');
-        const sloSummary = document.getElementById('slo-summary');
-        const keysList = document.getElementById('api-keys-list');
-        const createForm = document.getElementById('create-key-form');
-        const datasetsList = document.getElementById('datasets-list');
-        const climateTable = document.getElementById('climate-table');
+        const statusEl = document.getElementById('status');
+        const welcomeText = document.getElementById('welcome-text');
+        const userMeta = document.getElementById('user-meta');
+        const pendingContainer = document.getElementById('pending-container');
+        const pendingCount = document.getElementById('pending-count');
+        const historyContainer = document.getElementById('history-container');
 
-        function getStoredKey() {
-          try {
-            return window.localStorage.getItem(STORAGE_KEY) || '';
-          } catch (err) {
-            console.warn('localStorage unavailable', err);
-            return '';
-          }
+        function showStatus(message, tone) {
+          statusEl.textContent = message;
+          statusEl.className = 'status visible ' + (tone === 'error' ? 'negative' : 'positive');
         }
 
-        function setStoredKey(value) {
-          try {
-            if (value) {
-              window.localStorage.setItem(STORAGE_KEY, value);
-            } else {
-              window.localStorage.removeItem(STORAGE_KEY);
-            }
-          } catch (err) {
-            console.warn('localStorage unavailable', err);
-          }
+        function clearStatus() {
+          statusEl.textContent = '';
+          statusEl.className = 'status';
         }
 
-        keyInput.value = getStoredKey();
-
-        function showStatus(message, isError) {
-          status.textContent = message || '';
-          status.style.color = isError ? 'rgba(248, 113, 113, 0.9)' : 'rgba(56, 189, 248, 0.9)';
-        }
-
-        async function authedFetch(url, options) {
-          const key = getStoredKey();
-          if (!key) {
-            throw new Error('Set an admin API key to load data.');
+        async function fetchJson(url, options) {
+          const response = await fetch(url, {
+            credentials: 'include',
+            ...options,
+          });
+          if (response.status === 401) {
+            window.location.href = '/account/login?next=' + encodeURIComponent(window.location.pathname);
+            return null;
           }
-          const init = options ? { ...options } : {};
-          const headers = new Headers(init.headers || {});
-          headers.set('x-api-key', key);
-          if (init.body && !headers.has('content-type')) {
-            headers.set('content-type', 'application/json');
-          }
-          init.headers = headers;
-          const response = await fetch(url, init);
+          const payload = await response.json().catch(() => ({}));
           if (!response.ok) {
-            const text = await response.text().catch(() => '');
-            throw new Error('Request failed: ' + response.status + ' ' + text);
+            throw new Error(payload?.error_description || payload?.error || response.statusText);
           }
-          return response;
+          return payload;
         }
 
-        function drawLine(canvas, values, color, maxValue) {
-          const ctx = canvas.getContext('2d');
-          const width = canvas.width;
-          const height = canvas.height;
-          ctx.clearRect(0, 0, width, height);
-          if (!values.length) {
-            ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
-            ctx.font = '12px system-ui';
-            ctx.fillText('no data', 6, height / 2);
+        function renderRequests(container, requests, opts = {}) {
+          if (!requests || requests.length === 0) {
+            container.className = 'empty';
+            container.textContent = opts.emptyText || 'No entries to display.';
             return;
           }
-          const usableHeight = height - 4;
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          values.forEach((value, idx) => {
-            const x = values.length > 1 ? (idx * (width - 2)) / (values.length - 1) + 1 : width / 2;
-            const ratio = maxValue > 0 ? value / maxValue : 0;
-            const y = height - ratio * usableHeight - 2;
-            if (idx === 0) {
-              ctx.moveTo(x, y);
-            } else {
-              ctx.lineTo(x, y);
-            }
-          });
-          ctx.stroke();
-        }
-
-        async function loadMetrics() {
-          metricsGrid.innerHTML = '<p>Loading metrics…</p>';
-          try {
-            const response = await authedFetch('/v1/ops/metrics?bucket=1h');
-            const payload = await response.json();
-            const data = payload.data || [];
-            const byRoute = new Map();
-            data.forEach((row) => {
-              const route = row.route;
-              if (!byRoute.has(route)) {
-                byRoute.set(route, new Map());
-              }
-              const bucket = row.bucket_ts;
-              const routeBuckets = byRoute.get(route);
-              if (!routeBuckets.has(bucket)) {
-                routeBuckets.set(bucket, { count: 0, p99: 0, error: 0, weight: 0 });
-              }
-              const bucketInfo = routeBuckets.get(bucket);
-              const count = Number(row.count || 0);
-              bucketInfo.count += count;
-              bucketInfo.weight += Number(row.p99_ms || 0) * count;
-              if (row.status_class === '4xx' || row.status_class === '5xx') {
-                bucketInfo.error += count;
-              }
-            });
-
-            const fragments = document.createDocumentFragment();
-            byRoute.forEach((buckets, route) => {
-              const sorted = Array.from(buckets.entries()).sort((a, b) => a[0] - b[0]);
-              const p99Values = sorted.map(([, info]) => (info.count > 0 ? info.weight / info.count : 0));
-              const errorValues = sorted.map(([, info]) => (info.count > 0 ? info.error / info.count : 0));
-
-              const card = document.createElement('div');
-              card.className = 'metric-card';
-              const title = document.createElement('h3');
-              title.textContent = route;
-              card.appendChild(title);
-
-              const latencyCanvas = document.createElement('canvas');
-              latencyCanvas.width = 220;
-              latencyCanvas.height = 60;
-              latencyCanvas.title = 'P99 latency';
-              drawLine(latencyCanvas, p99Values, 'rgba(96, 165, 250, 0.9)', Math.max(...p99Values, 1));
-
-              const errorCanvas = document.createElement('canvas');
-              errorCanvas.width = 220;
-              errorCanvas.height = 60;
-              errorCanvas.title = 'Error rate';
-              drawLine(errorCanvas, errorValues, 'rgba(248, 113, 113, 0.85)', 1);
-
-              const latencyLabel = document.createElement('div');
-              latencyLabel.textContent = 'P99 (ms)';
-              latencyLabel.style.fontSize = '12px';
-              latencyLabel.style.marginTop = '4px';
-
-              const errorLabel = document.createElement('div');
-              errorLabel.textContent = 'Error rate';
-              errorLabel.style.fontSize = '12px';
-              errorLabel.style.marginTop = '4px';
-
-              card.appendChild(latencyCanvas);
-              card.appendChild(latencyLabel);
-              card.appendChild(errorCanvas);
-              card.appendChild(errorLabel);
-
-              fragments.appendChild(card);
-            });
-
-            metricsGrid.innerHTML = '';
-            metricsGrid.appendChild(fragments);
-            if (!byRoute.size) {
-              metricsGrid.innerHTML = '<p>No metrics yet.</p>';
-            }
-          } catch (err) {
-            metricsGrid.innerHTML = '<p>Failed to load metrics.</p>';
-            showStatus(err.message || String(err), true);
-          }
-        }
-
-        function formatPercent(value) {
-          return (value * 100).toFixed(2) + '%';
-        }
-
-        function formatIso(timestamp) {
-          if (!timestamp) return '—';
-          try {
-            const date = new Date(timestamp);
-            if (Number.isNaN(date.valueOf())) return '—';
-            return date.toISOString();
-          } catch (err) {
-            return String(timestamp);
-          }
-        }
-
-        function formatIndicatorValue(indicator, decimals) {
-          if (!indicator || indicator.value == null || Number.isNaN(Number(indicator.value))) {
-            return '—';
-          }
-          const value = Number(indicator.value);
-          const places = typeof decimals === 'number' ? decimals : 2;
-          const formatted = value.toFixed(places);
-          const yearSuffix = indicator.year != null ? ' (' + indicator.year + ')' : '';
-          return formatted + yearSuffix;
-        }
-
-        async function loadSlo() {
-          sloTableBody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
-          try {
-            const response = await authedFetch('/v1/ops/slo');
-            const payload = await response.json();
-            const rows = payload.data || [];
-            const summary = payload.summary || {};
-
-            sloTableBody.innerHTML = '';
-            rows.forEach((row) => {
-              const tr = document.createElement('tr');
-              const cells = [
-                row.day_utc,
-                row.route,
-                String(row.requests ?? ''),
-                formatPercent(Number(row.err_rate || 0)),
-                Number(row.p99_ms || 0).toFixed(1),
-                row.slo_ok ? '✅' : '⚠️',
-                row.budget_burn == null ? '—' : formatPercent(Number(row.budget_burn))
-              ];
-              tr.innerHTML = cells.map((value) => '<td>' + value + '</td>').join('');
-              sloTableBody.appendChild(tr);
-            });
-            if (!rows.length) {
-              const empty = document.createElement('tr');
-              empty.innerHTML = '<td colspan="7">No SLO data available.</td>';
-              sloTableBody.appendChild(empty);
-            }
-
-            const routes = summary.routes || [];
-            const availability = Number(summary.overall_availability || 0);
-            const p99 = Number(summary.overall_p99 || 0);
-            const routeText = routes
-              .map(
-                (route) =>
-                  route.route +
-                  ': ' +
-                  formatPercent(route.availability) +
-                  ' / ' +
-                  Number(route.p99_ms || 0).toFixed(1) +
-                  'ms'
-              )
-              .join(' • ');
-            sloSummary.textContent =
-              'Overall availability ' +
-              formatPercent(availability) +
-              ' · Overall P99 ' +
-              p99.toFixed(1) +
-              'ms' +
-              (routeText ? ' · ' + routeText : '');
-          } catch (err) {
-            sloTableBody.innerHTML = '<tr><td colspan="7">Failed to load SLO data.</td></tr>';
-            showStatus(err.message || String(err), true);
-          }
-        }
-
-        async function loadDatasets() {
-          datasetsList.innerHTML = '<p>Loading datasets…</p>';
-          try {
-            const response = await authedFetch('/v1/admin/datasets');
-            const payload = await response.json();
-            const datasets = payload.data || [];
-            if (!datasets.length) {
-              datasetsList.innerHTML = '<p>No datasets available.</p>';
-              return;
-            }
-
-            const fragment = document.createDocumentFragment();
-            datasets.forEach((dataset) => {
-              const card = document.createElement('div');
-              card.className = 'metric-card';
-              card.style.marginBottom = '12px';
-
-              const heading = document.createElement('h3');
-              heading.textContent = dataset.label;
-              card.appendChild(heading);
-
-              const meta = document.createElement('p');
-              const targetVersion = dataset.targetVersion || 'unknown';
-              const latest = dataset.latestSnapshot;
-              const capturedAt = latest ? formatIso(latest.capturedAt) : 'never';
-              const versionStatus = latest && latest.version !== targetVersion ? '⚠️ version mismatch' : '';
-              meta.innerHTML =
-                '<strong>ID:</strong> ' +
-                dataset.id +
-                '<br/><strong>Target version:</strong> ' +
-                targetVersion +
-                '<br/><strong>Latest snapshot:</strong> ' +
-                (latest ? latest.version : 'none') +
-                ' · ' +
-                capturedAt +
-                (versionStatus ? ' <span style="color: rgba(248, 113, 113, 0.9);">' + versionStatus + '</span>' : '');
-              card.appendChild(meta);
-
-              const reload = document.createElement('button');
-              reload.type = 'button';
-              reload.textContent = 'Reload dataset';
-              reload.addEventListener('click', async () => {
-                try {
-                  showStatus('Reloading ' + dataset.id + '…', false);
-                  const response = await authedFetch('/v1/admin/datasets/' + dataset.id + '/reload', { method: 'POST' });
-                  const result = await response.json();
-                  showStatus('Reloaded ' + dataset.id + ' v' + result.data.version, false);
-                  await Promise.all([loadDatasets(), loadClimate()]);
-                } catch (err) {
-                  showStatus(err.message || String(err), true);
-                }
-              });
-              card.appendChild(reload);
-
-              if (dataset.services && dataset.services.length) {
-                const list = document.createElement('ul');
-                list.style.marginTop = '12px';
-                dataset.services.forEach((service) => {
-                  const item = document.createElement('li');
-                  const readiness = service.readiness ? ' · ' + service.readiness : '';
-                  const statusPage = service.statusPage ? ' · <a href="' + service.statusPage + '" target="_blank" rel="noopener">status</a>' : '';
-                  item.innerHTML =
-                    '<strong>' +
-                    service.serviceName +
-                    '</strong>: ' +
-                    service.endpoint +
-                    readiness +
-                    (service.rateLimit ? ' · ' + service.rateLimit : '') +
-                    (service.cadence ? ' · ' + service.cadence : '') +
-                    statusPage;
-                  list.appendChild(item);
-                });
-                card.appendChild(list);
-              }
-
-              fragment.appendChild(card);
-            });
-
-            datasetsList.innerHTML = '';
-            datasetsList.appendChild(fragment);
-          } catch (err) {
-            datasetsList.innerHTML = '<p>Failed to load datasets.</p>';
-            showStatus(err.message || String(err), true);
-          }
-        }
-
-        async function loadClimate() {
-          if (!climateTable) return;
-          climateTable.innerHTML = '<p>Loading climate metrics…</p>';
-          try {
-            const response = await authedFetch('/v1/admin/climate');
-            const payload = await response.json();
-            const summaries = Array.isArray(payload.data) ? payload.data : [];
-            if (!summaries.length) {
-              climateTable.innerHTML = '<p>No climate metrics available.</p>';
-              return;
-            }
-
-            const rowsHtml = summaries
-              .map((summary) => {
-                const ndGain = formatIndicatorValue(summary.indicators?.['nd_gain_index'], 2);
-                const inform = formatIndicatorValue(summary.indicators?.['inform_risk_score'], 2);
-                const epi = formatIndicatorValue(summary.indicators?.['epi_score'] || summary.indicators?.['epi_climate_policy_score'], 1);
-                const water = formatIndicatorValue(summary.indicators?.['permanent_surface_water_change'], 1);
-                return (
-                  '<tr>' +
-                  '<td>' + summary.iso3 + '</td>' +
-                  '<td>' + ndGain + '</td>' +
-                  '<td>' + inform + '</td>' +
-                  '<td>' + epi + '</td>' +
-                  '<td>' + water + '</td>' +
-                  '</tr>'
-                );
-              })
-              .join('');
-
-            climateTable.innerHTML = '';
-            const table = document.createElement('table');
-            table.style.width = '100%';
-            table.style.borderCollapse = 'collapse';
-            table.innerHTML =
-              '<thead><tr><th>Country</th><th>ND-GAIN Index</th><th>INFORM Risk</th><th>EPI Score</th><th>UNEP Water Change</th></tr></thead>' +
-              '<tbody>' +
-              rowsHtml +
-              '</tbody>';
-            Array.from(table.querySelectorAll('th, td')).forEach((cell) => {
-              cell.style.borderBottom = '1px solid rgba(148, 163, 184, 0.4)';
-              cell.style.padding = '6px 8px';
-              cell.style.fontSize = '14px';
-            });
-            climateTable.appendChild(table);
-          } catch (err) {
-            climateTable.innerHTML = '<p>Failed to load climate metrics.</p>';
-            showStatus(err.message || String(err), true);
-          }
-        }
-
-        async function loadKeys() {
-          keysList.innerHTML = '<p>Loading keys…</p>';
-          try {
-            const response = await authedFetch('/v1/admin/api-keys');
-            const payload = await response.json();
-            const keys = payload.data || [];
-            keysList.innerHTML = '';
-            keys.forEach((key) => {
-              const row = document.createElement('div');
-              row.className = 'key-row';
-              const info = document.createElement('div');
-              const nameLabel = key.name || '(unnamed)';
-              const dailyLimit = key.quota_daily == null ? '∞' : key.quota_daily;
-              const monthlyLimit = key.quota_monthly == null ? '∞' : key.quota_monthly;
-              info.innerHTML =
-                '<strong>' +
-                nameLabel +
-                '</strong><div>Role: ' +
-                key.role +
-                '</div><div>Daily: ' +
-                dailyLimit +
-                ' · Monthly: ' +
-                monthlyLimit +
-                '</div>';
+          const table = document.createElement('table');
+          const thead = document.createElement('thead');
+          thead.innerHTML = '<tr><th>Requester</th><th>Justification</th><th>Apps</th><th></th></tr>';
+          table.appendChild(thead);
+          const tbody = document.createElement('tbody');
+          requests.forEach((request) => {
+            const row = document.createElement('tr');
+            const apps = request.requested_apps || {};
+            const appLabels = Object.keys(apps)
+              .filter((key) => apps[key])
+              .map((key) => key.charAt(0).toUpperCase() + key.slice(1))
+              .join(', ');
+            const submittedAt = new Date(request.created_at).toLocaleString();
+            const cleanJustification = request.justification
+              ? request.justification.replace(/</g, '&lt;')
+              : '<em>No justification provided.</em>';
+            row.innerHTML =
+              '<td>' +
+              '<div style="font-weight:600;color:#f8fafc;">' + request.display_name + '</div>' +
+              '<div style="color:rgba(148,163,184,0.85);">' + request.email + '</div>' +
+              '<div style="color:rgba(148,163,184,0.65);font-size:0.82rem;">Submitted ' + submittedAt + '</div>' +
+              '</td>' +
+              '<td>' + cleanJustification + '</td>' +
+              '<td>' + (appLabels || '—') + '</td>' +
+              '<td></td>';
+            const actionCell = row.querySelector('td:last-child');
+            if (opts.showActions) {
               const actions = document.createElement('div');
-              const del = document.createElement('button');
-              del.type = 'button';
-              del.textContent = 'Delete';
-              del.addEventListener('click', async () => {
-                try {
-                  await authedFetch('/v1/admin/api-keys/' + key.id, { method: 'DELETE' });
-                  showStatus('Deleted key #' + key.id, false);
-                  await loadKeys();
-                } catch (err) {
-                  showStatus(err.message || String(err), true);
-                }
-              });
-              actions.appendChild(del);
-              row.appendChild(info);
-              row.appendChild(actions);
-              keysList.appendChild(row);
-            });
-            if (!keys.length) {
-              keysList.innerHTML = '<p>No keys yet.</p>';
+              actions.className = 'actions';
+              const approve = document.createElement('button');
+              approve.className = 'primary';
+              approve.type = 'button';
+              approve.textContent = 'Approve';
+              approve.disabled = !request.decision_token;
+              approve.addEventListener('click', () => handleDecision(request, 'approve'));
+              const decline = document.createElement('button');
+              decline.className = 'secondary';
+              decline.type = 'button';
+              decline.textContent = 'Decline';
+              decline.disabled = !request.decision_token;
+              decline.addEventListener('click', () => handleDecision(request, 'decline'));
+              actions.appendChild(approve);
+              actions.appendChild(decline);
+              actionCell.appendChild(actions);
+            } else {
+              actionCell.innerHTML = '<span class="badge">' + request.status.toUpperCase() + '</span>';
             }
-          } catch (err) {
-            keysList.innerHTML = '<p>Failed to load keys.</p>';
-            showStatus(err.message || String(err), true);
-          }
+            tbody.appendChild(row);
+          });
+          table.appendChild(tbody);
+          container.className = '';
+          container.innerHTML = '';
+          container.appendChild(table);
         }
 
-        document.getElementById('save-admin-key').addEventListener('click', () => {
-          const value = keyInput.value.trim();
-          setStoredKey(value);
-          if (value) {
-            showStatus('Admin key saved.', false);
-            refreshAll();
-          } else {
-            showStatus('Cleared admin key.', false);
-            metricsGrid.innerHTML = '';
-            sloTableBody.innerHTML = '';
-            keysList.innerHTML = '';
+        async function handleDecision(request, decision) {
+          clearStatus();
+          if (!request.decision_token) {
+            showStatus('Decision token is missing for this request.', 'error');
+            return;
           }
-        });
-
-        document.getElementById('clear-admin-key').addEventListener('click', () => {
-          keyInput.value = '';
-          setStoredKey('');
-          showStatus('Cleared admin key.', false);
-          metricsGrid.innerHTML = '';
-          sloTableBody.innerHTML = '';
-          keysList.innerHTML = '';
-          datasetsList.innerHTML = '';
-        });
-
-        createForm.addEventListener('submit', async (event) => {
-          event.preventDefault();
+          const comment = window.prompt('Add an optional note for the applicant and audit log:', '');
           const payload = {
-            name: (document.getElementById('key-name').value || '').trim() || null,
-            role: document.getElementById('key-role').value,
-            quota_daily: document.getElementById('key-quota-daily').value || null,
-            quota_monthly: document.getElementById('key-quota-monthly').value || null,
+            token: request.decision_token,
+            decision,
+            reviewer_comment: comment ? comment.trim() : undefined,
           };
-          ['quota_daily', 'quota_monthly'].forEach((field) => {
-            if (payload[field] !== null && payload[field] !== '') {
-              payload[field] = Number(payload[field]);
-            } else {
-              payload[field] = null;
-            }
-          });
           try {
-            const response = await authedFetch('/v1/admin/api-keys', {
+            await fetchJson('/v1/account/decision', {
               method: 'POST',
+              headers: { 'content-type': 'application/json' },
               body: JSON.stringify(payload),
             });
-            const result = await response.json();
-            showStatus('Created key #' + result.id + ' · secret: ' + result.raw_key, false);
-            createForm.reset();
-            await loadKeys();
-          } catch (err) {
-            showStatus(err.message || String(err), true);
+            showStatus('Decision recorded successfully.', 'success');
+            await Promise.all([loadPending(), loadHistory()]);
+          } catch (error) {
+            showStatus(error.message || String(error), 'error');
           }
-        });
-
-        async function refreshAll() {
-          if (!getStoredKey()) {
-            return;
-          }
-          await Promise.all([loadMetrics(), loadSlo(), loadKeys(), loadDatasets(), loadClimate()]);
         }
 
-        if (getStoredKey()) {
-          refreshAll();
-        } else {
-          showStatus('Enter an admin API key to begin.', false);
+        async function loadUser() {
+          try {
+            const payload = await fetchJson('/v1/auth/me');
+            if (!payload) return;
+            welcomeText.textContent = 'Welcome back, ' + payload.user.display_name + '.';
+            userMeta.innerHTML = '';
+            const emailItem = document.createElement('li');
+            emailItem.textContent = payload.user.email;
+            userMeta.appendChild(emailItem);
+            const rolesItem = document.createElement('li');
+            rolesItem.textContent = 'Roles: ' + (payload.user.roles.join(', ') || 'user');
+            userMeta.appendChild(rolesItem);
+          } catch (error) {
+            showStatus(error.message || String(error), 'error');
+          }
         }
+
+        async function loadPending() {
+          try {
+            const payload = await fetchJson('/v1/operator/account-requests?status=pending');
+            if (!payload) return;
+            const requests = payload.data || [];
+            renderRequests(pendingContainer, requests, { showActions: true, emptyText: 'No pending requests. Enjoy the calm.' });
+            if (requests.length > 0) {
+              pendingCount.hidden = false;
+              pendingCount.textContent = requests.length + (requests.length === 1 ? ' open' : ' open');
+            } else {
+              pendingCount.hidden = true;
+            }
+          } catch (error) {
+            pendingContainer.className = 'empty';
+            pendingContainer.textContent = error.message || String(error);
+          }
+        }
+
+        async function loadHistory() {
+          try {
+            const payload = await fetchJson('/v1/operator/account-requests?status=approved');
+            const declined = await fetchJson('/v1/operator/account-requests?status=declined');
+            const combined = [];
+            if (payload?.data) combined.push(...payload.data.map((entry) => ({ ...entry, status: 'approved' })));
+            if (declined?.data) combined.push(...declined.data.map((entry) => ({ ...entry, status: 'declined' })));
+            combined.sort((a, b) => new Date(b.decided_at || b.created_at).getTime() - new Date(a.decided_at || a.created_at).getTime());
+            renderRequests(historyContainer, combined.slice(0, 20), { emptyText: 'No recent decisions yet.' });
+          } catch (error) {
+            historyContainer.className = 'empty';
+            historyContainer.textContent = error.message || String(error);
+          }
+        }
+
+        loadUser();
+        loadPending();
+        loadHistory();
       })();
     </script>
   </body>

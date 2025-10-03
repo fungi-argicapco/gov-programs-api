@@ -5,6 +5,8 @@ import {
   canvasVersionSchema,
   exampleCanvasContent,
   schemaVersion,
+  userProfileSchema,
+  mfaMethodSchema
 } from '../schemas';
 import type { Env } from '../db';
 
@@ -34,6 +36,12 @@ type AccountRequestRecord = {
   reviewer_comment: string | null;
 };
 
+type AccountRequestWithToken = AccountRequestRecord & {
+  decision_token: string | null;
+  token_expires_at: string | null;
+  token_used_at: string | null;
+};
+
 export type EmailTokenRecord = {
   id: string;
   token: string;
@@ -56,6 +64,13 @@ type UserRecord = {
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type MfaMethodRow = {
+  id: string;
+  user_id: string;
+  type: string;
+  verified_at: string | null;
 };
 
 type CanvasRecord = {
@@ -104,6 +119,20 @@ function parseJson<T>(value: string | null | undefined, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+function parseApps(raw: string): { website: boolean; program: boolean; canvas: boolean } {
+  const parsed = parseJson(raw, {} as Record<string, unknown>);
+  return {
+    website: Boolean(parsed.website),
+    program: Boolean(parsed.program ?? true),
+    canvas: Boolean(parsed.canvas ?? true)
+  };
+}
+
+function parseRoles(raw: string): string[] {
+  const parsed = parseJson(raw, [] as string[]);
+  return Array.isArray(parsed) ? parsed.map((value) => String(value)) : [];
 }
 
 
@@ -183,6 +212,119 @@ export async function createAccountRequest(
     tokenId: tokenInfo.id,
     tokenExpiresAt: tokenInfo.expiresAt
   };
+}
+
+export async function findUserByEmail(env: Env, email: string) {
+  return env.DB.prepare(`SELECT id, email, display_name, status, apps, roles, mfa_enrolled, last_login_at, created_at, updated_at
+    FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1`)
+    .bind(email)
+    .first<UserRecord | null>();
+}
+
+export async function getUserProfileById(env: Env, userId: string) {
+  const row = await env.DB.prepare(
+    `SELECT id, email, display_name, status, apps, roles, mfa_enrolled, last_login_at, created_at, updated_at
+     FROM users WHERE id = ?1 LIMIT 1`
+  )
+    .bind(userId)
+    .first<UserRecord | null>();
+  if (!row) {
+    return null;
+  }
+
+  const methods = await env.DB.prepare(
+    `SELECT id, type, verified_at FROM mfa_methods WHERE user_id = ?1`
+  )
+    .bind(userId)
+    .all<MfaMethodRow>();
+
+  const parsedMethods = (methods.results ?? []).map((method) =>
+    mfaMethodSchema.parse({
+      id: method.id,
+      type: method.type === 'webauthn' ? 'webauthn' : 'totp',
+      verified_at: method.verified_at ?? null
+    })
+  );
+
+  return userProfileSchema.parse({
+    schema_version: schemaVersion.value,
+    id: row.id,
+    email: row.email,
+    display_name: row.display_name,
+    status: row.status,
+    apps: parseApps(row.apps),
+    roles: parseRoles(row.roles),
+    mfa_enrolled: Boolean(row.mfa_enrolled),
+    mfa_methods: parsedMethods,
+    last_login_at: row.last_login_at ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  });
+}
+
+export async function findLatestPendingAccountRequest(env: Env, email: string) {
+  return env.DB.prepare(
+    `SELECT id, email, display_name, requested_apps, justification, status, schema_version, created_at
+       FROM account_requests
+      WHERE LOWER(email) = LOWER(?) AND status = 'pending'
+      ORDER BY created_at DESC
+      LIMIT 1`
+  )
+    .bind(email)
+    .first<AccountRequestRecord | null>();
+}
+
+export async function listAccountRequests(
+  env: Env,
+  options: { status?: 'pending' | 'approved' | 'declined' } = {}
+) {
+  const where: string[] = [];
+  const params: any[] = [];
+  if (options.status) {
+    where.push('ar.status = ?');
+    params.push(options.status);
+  }
+  const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const sql = `
+    SELECT ar.id,
+           ar.email,
+           ar.display_name,
+           ar.requested_apps,
+           ar.justification,
+           ar.status,
+           ar.schema_version,
+           ar.created_at,
+           ar.decided_at,
+           ar.reviewer_id,
+           ar.reviewer_comment,
+           tok.token AS decision_token,
+           tok.expires_at AS token_expires_at,
+           tok.used_at AS token_used_at
+      FROM account_requests ar
+      LEFT JOIN email_tokens tok
+        ON tok.account_request_id = ar.id
+       AND tok.purpose = 'account-decision'
+       AND tok.used_at IS NULL
+       AND tok.expires_at > CURRENT_TIMESTAMP
+      ${whereClause}
+     ORDER BY ar.created_at DESC
+  `;
+  const result = await env.DB.prepare(sql).bind(...params).all<AccountRequestWithToken>();
+  return (result.results ?? []).map((row) => ({
+    schema_version: row.schema_version,
+    id: row.id,
+    email: row.email,
+    display_name: row.display_name,
+    justification: row.justification,
+    status: row.status,
+    created_at: row.created_at,
+    decided_at: row.decided_at,
+    reviewer_comment: row.reviewer_comment,
+    requested_apps: parseJson(row.requested_apps, {} as Record<string, boolean>),
+    decision_token: row.decision_token,
+    token_expires_at: row.token_expires_at,
+    token_used_at: row.token_used_at
+  }));
 }
 
 export async function getAccountRequestByToken(env: Env, token: string) {

@@ -1,3 +1,5 @@
+import { SAM_ASSISTANCE_SYNTHETIC_RESPONSE } from '../synthetic/us_sam_assistance_sample';
+
 type RequestValue = string | number | boolean | { env: string };
 
 export type SourceRequest = {
@@ -22,6 +24,7 @@ export type SourceDef = {
   license?: string;
   tosUrl?: string;
   request?: SourceRequest;
+  synthetic?: { data: unknown; reason: string };
 };
 
 export const SOURCES: SourceDef[] = [
@@ -70,9 +73,9 @@ export const SOURCES: SourceDef[] = [
     country: 'US',
     jurisdiction: 'US-FED',
     kind: 'json',
-    entrypoint: 'https://api.sam.gov/prod/sgs/v1/search',
+    entrypoint: 'https://api.sam.gov/prod/opportunities/v2/search',
     parser: 'json_api_generic',
-    path: 'searchResult.searchResultItems',
+    path: 'opportunitiesData',
     mapFn: 'mapSamAssistance',
     rate: { rps: 1, burst: 3 },
     schedule: 'daily',
@@ -82,12 +85,16 @@ export const SOURCES: SourceDef[] = [
       method: 'GET',
       query: {
         index: 'assistancelisting',
-        q: '*',
-        sort: '-modifiedDate',
-        page: 0,
-        size: 200,
-        'api_key': { env: 'SAM_API_KEY' }
+        postedFrom: '__DAYS_AGO_30__',
+        postedTo: '__TODAY__',
+        limit: 200,
+        offset: 0,
+        api_key: { env: 'SAM_API_KEY' }
       }
+    },
+    synthetic: {
+      reason: 'SAM_API_KEY not provisioned',
+      data: SAM_ASSISTANCE_SYNTHETIC_RESPONSE
     }
   },
   {

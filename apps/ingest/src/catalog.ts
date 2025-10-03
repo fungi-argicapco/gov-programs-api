@@ -77,6 +77,12 @@ function resolveRequestValue(value: unknown, env: IngestEnv): unknown {
     }
     return resolved;
   }
+  if (typeof value === 'string') {
+    const dynamic = resolveDynamicPlaceholder(value);
+    if (dynamic !== null) {
+      return dynamic;
+    }
+  }
   return value;
 }
 
@@ -92,6 +98,36 @@ function resolveRequestBody(body: unknown, env: IngestEnv): unknown {
     return Object.fromEntries(entries);
   }
   return resolveRequestValue(body, env);
+}
+
+function formatDateMmDdYyyy(date: Date): string {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  const year = date.getFullYear();
+  return `${month}/${day}/${year}`;
+}
+
+function resolveDynamicPlaceholder(value: string): string | null {
+  if (!value.startsWith('__') || !value.endsWith('__')) {
+    return null;
+  }
+  if (value === '__TODAY__') {
+    return formatDateMmDdYyyy(new Date());
+  }
+  const daysAgoMatch = /^__DAYS_AGO_(\d+)__$/.exec(value);
+  if (daysAgoMatch) {
+    const days = Number(daysAgoMatch[1]);
+    if (Number.isFinite(days)) {
+      const date = new Date();
+      date.setDate(date.getDate() - days);
+      return formatDateMmDdYyyy(date);
+    }
+  }
+  return null;
+}
+
+function isMissingEnvError(error: unknown): error is Error {
+  return error instanceof Error && typeof error.message === 'string' && error.message.startsWith('missing_env:');
 }
 
 function buildRequest(source: SourceDef, env: IngestEnv): { url: string; init: RequestInit } {
@@ -376,65 +412,102 @@ export async function runCatalogOnce(
     let outcomes: UpsertOutcome[] = [];
 
     try {
-      const { url, init } = buildRequest(source, env);
-      await consumeRate(env, new URL(url).host, source.rate);
-      const response = await fetch(url, init);
-      if (!response.ok) {
-        throw new Error(`http_${response.status}`);
-      }
-      const body = await response.text();
-      await writeSnapshot(env, source, new Date(startedAt), body);
+      let request: { url: string; init: RequestInit } | null = null;
+      let syntheticData: unknown | null = null;
+      let syntheticReason: string | null = null;
 
-      switch (source.parser) {
-        case 'json_api_generic': {
-          const parsed = body.length ? JSON.parse(body) : {};
-          const result = await ingestJsonApiGeneric(env, {
-            url,
-            data: parsed,
-            path: source.path,
-            country: source.country,
-            authority: source.authority,
-            jurisdiction: source.jurisdiction,
-            sourceId: sourceRowId,
-            mapFn: source.mapFn,
-            runId: runId ?? undefined
-          });
-          fetched = result.attempted;
-          outcomes = result.outcomes;
-          break;
+      try {
+        request = buildRequest(source, env);
+      } catch (error) {
+        if (source.synthetic && isMissingEnvError(error)) {
+          syntheticData = source.synthetic.data;
+          syntheticReason = source.synthetic.reason;
+        } else {
+          throw error;
         }
-        case 'rss_generic': {
-          const result = await ingestRssGeneric(env, {
-            url,
-            feed: body,
-            country: source.country,
-            authority: source.authority,
-            jurisdiction: source.jurisdiction,
-            sourceId: sourceRowId,
-            runId: runId ?? undefined
-          });
-          fetched = result.attempted;
-          outcomes = result.outcomes;
-          break;
+      }
+
+      if (syntheticData !== null) {
+        const body = JSON.stringify(syntheticData);
+        await writeSnapshot(env, source, new Date(startedAt), body);
+        if (source.parser !== 'json_api_generic') {
+          throw new Error('synthetic_data_unsupported_parser');
         }
-        case 'html_table_generic': {
-          const result = await ingestHtmlTableGeneric(env, {
-            url,
-            html: body,
-            tableSelector: 'table',
-            columns: { title: 'td:first-child' },
-            country: source.country,
-            authority: source.authority,
-            jurisdiction: source.jurisdiction,
-            sourceId: sourceRowId,
-            runId: runId ?? undefined
-          });
-          fetched = result.attempted;
-          outcomes = result.outcomes;
-          break;
+        const result = await ingestJsonApiGeneric(env, {
+          url: source.entrypoint,
+          data: syntheticData,
+          path: source.path,
+          country: source.country,
+          authority: source.authority,
+          jurisdiction: source.jurisdiction,
+          sourceId: sourceRowId,
+          mapFn: source.mapFn,
+          runId: runId ?? undefined
+        });
+        fetched = result.attempted;
+        outcomes = result.outcomes;
+        notes.push(`synthetic_data:${syntheticReason}`);
+      } else if (request) {
+        const { url, init } = request;
+        await consumeRate(env, new URL(url).host, source.rate);
+        const response = await fetch(url, init);
+        if (!response.ok) {
+          throw new Error(`http_${response.status}`);
         }
-        default:
-          throw new Error(`unsupported_parser:${source.parser}`);
+        const body = await response.text();
+        await writeSnapshot(env, source, new Date(startedAt), body);
+
+        switch (source.parser) {
+          case 'json_api_generic': {
+            const parsed = body.length ? JSON.parse(body) : {};
+            const result = await ingestJsonApiGeneric(env, {
+              url,
+              data: parsed,
+              path: source.path,
+              country: source.country,
+              authority: source.authority,
+              jurisdiction: source.jurisdiction,
+              sourceId: sourceRowId,
+              mapFn: source.mapFn,
+              runId: runId ?? undefined
+            });
+            fetched = result.attempted;
+            outcomes = result.outcomes;
+            break;
+          }
+          case 'rss_generic': {
+            const result = await ingestRssGeneric(env, {
+              url,
+              feed: body,
+              country: source.country,
+              authority: source.authority,
+              jurisdiction: source.jurisdiction,
+              sourceId: sourceRowId,
+              runId: runId ?? undefined
+            });
+            fetched = result.attempted;
+            outcomes = result.outcomes;
+            break;
+          }
+          case 'html_table_generic': {
+            const result = await ingestHtmlTableGeneric(env, {
+              url,
+              html: body,
+              tableSelector: 'table',
+              columns: { title: 'td:first-child' },
+              country: source.country,
+              authority: source.authority,
+              jurisdiction: source.jurisdiction,
+              sourceId: sourceRowId,
+              runId: runId ?? undefined
+            });
+            fetched = result.attempted;
+            outcomes = result.outcomes;
+            break;
+          }
+          default:
+            throw new Error(`unsupported_parser:${source.parser}`);
+        }
       }
 
       ({ inserted, updated, unchanged } = aggregate(outcomes));

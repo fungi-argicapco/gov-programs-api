@@ -90,4 +90,22 @@ describe('Email provider factory', () => {
     const service = createMailService(env);
     await expect(service.send(sampleMessage)).rejects.toThrow(/Postmark request failed/);
   });
+
+  it('uses custom Postmark API base when provided', async () => {
+    const env = {
+      EMAIL_PROVIDER: 'postmark',
+      POSTMARK_TOKEN: 'token-456',
+      POSTMARK_API_BASE: 'https://api.test-postmark.com/email',
+    } as Env;
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true } as Response);
+    // @ts-expect-error – injected mock for tests
+    globalThis.fetch = fetchMock;
+
+    const service = createMailService(env);
+    await service.send(sampleMessage);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://api.test-postmark.com/email');
+  });
 });

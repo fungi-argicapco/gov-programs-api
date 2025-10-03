@@ -10,7 +10,10 @@ binding = "ASSETS"
 NODE_ENV = "production"
 # Email provider defaults to console logging. Set to "postmark" in production and
 # supply POSTMARK_TOKEN (via wrangler secret) to send real email.
-EMAIL_PROVIDER = "console"
+EMAIL_PROVIDER = "__EMAIL_PROVIDER__"
+EMAIL_SENDER = "__EMAIL_SENDER__"
+EMAIL_ADMIN = "__EMAIL_ADMIN__"
+PROGRAM_API_BASE = "__PROGRAM_API_BASE__"
 
 [[d1_databases]]
 binding = "DB"

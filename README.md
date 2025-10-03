@@ -22,6 +22,12 @@ bun run web:build
 bun run typecheck
 bun test
 
+# Verify SAM.gov access before enabling cron (requires `SAM_API_KEY`)
+SAM_API_KEY=... bun run verify:sam
+
+# Optional: configure Postmark bounce webhook (requires POSTMARK_SERVER_TOKEN)
+POSTMARK_SERVER_TOKEN=... POSTMARK_WEBHOOK_SECRET=shared bun run postmark:webhook --dry-run
+
 # Optional: start a local dev server once `.env.dev.local` contains PROGRAM_API_BASE and EMAIL_* values
 bunx wrangler dev --local
 
@@ -41,6 +47,11 @@ curl http://127.0.0.1:8787/v1/health
 - Run `bun run web:dev` for a hot-reload dev server (defaults to http://127.0.0.1:5173). Requests to `/v1`, `/admin`, `/docs`, and `/openapi.json` proxy to `http://127.0.0.1:8787` by default; override with `VITE_API_PROXY`.
 - `bun run web:build` must be executed before `wrangler dev` or `bun run deploy` so the Worker can serve the latest compiled assets from `apps/web/dist`.
 - Static builds are emitted to `apps/web/dist` and automatically uploaded during `bun run setup:*` and `bun run deploy`.
+
+### Operations console
+- Operators authenticate at `/account/login`. Successful logins drop the `fungi_session` cookie which is required to access `/admin`.
+- `/admin` surfaces pending access requests, allowing approvals or declines directly from the browser; tokens are handled automatically and applicants are notified in Postmark.
+- Legacy admin APIs that manage metrics, dataset health, and API keys remain available under `/v1/admin/*` using `x-api-key` headers while those panels are migrated.
 
 ### Cloudflare prerequisites
 - Copy `.env.example` to `.env` for staging/production environments. Provide `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ZONE_ID` before running any remote setup.

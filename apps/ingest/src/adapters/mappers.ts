@@ -86,6 +86,31 @@ export function mapGrantsGov(row: any): MapperResult {
 }
 
 export function mapSamAssistance(row: any): MapperResult {
+  if (row && typeof row === 'object' && !('matchedObjectDescriptor' in row)) {
+    const title = String(row?.title ?? row?.opportunityTitle ?? row?.solicitationNumber ?? 'SAM Opportunity');
+    const description = typeof row?.description === 'string' && !row.description.startsWith('http')
+      ? row.description
+      : undefined;
+    const uiLink = typeof row?.uiLink === 'string' ? row.uiLink : undefined;
+    const resourceLink = Array.isArray(row?.links) ? row.links.find((link: any) => typeof link?.href === 'string')?.href : undefined;
+    const url = uiLink ?? resourceLink ?? (typeof row?.noticeId === 'string' ? `https://sam.gov/opp/${row.noticeId}/view` : undefined);
+    const naics = Array.isArray(row?.naicsCodes)
+      ? row.naicsCodes.map(String)
+      : row?.naicsCode
+        ? [String(row.naicsCode)]
+        : [];
+    const tags = normalizeStringList(naics);
+    const status = row?.active === 'Yes' ? 'open' : 'closed';
+    return {
+      title,
+      summary: description,
+      url,
+      status,
+      benefit_type: 'grant',
+      tags
+    };
+  }
+
   const descriptor = row?.matchedObjectDescriptor ?? row;
   const title =
     descriptor?.title ?? descriptor?.assistanceListingTitle ?? row?.title ?? 'SAM Assistance Listing';

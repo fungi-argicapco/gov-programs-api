@@ -37,6 +37,10 @@ export function buildDecisionEmail(options: {
   recipient: string;
   token: string;
   decisionBaseUrl: string;
+  requesterEmail: string;
+  requesterName: string;
+  justification?: string | null;
+  requestedApps?: Record<string, boolean>;
 }) {
   const approveUrl = new URL(options.decisionBaseUrl);
   approveUrl.searchParams.set('token', options.token);
@@ -46,8 +50,20 @@ export function buildDecisionEmail(options: {
   declineUrl.searchParams.set('token', options.token);
   declineUrl.searchParams.set('decision', 'decline');
 
+  const appList = options.requestedApps
+    ? Object.entries(options.requestedApps)
+        .filter(([, enabled]) => !!enabled)
+        .map(([key]) => key)
+        .join(', ') || 'None'
+    : 'Unknown';
+
   const html = `
     <p>A new canvas access request is pending approval.</p>
+    <blockquote>
+      <p><strong>Requester:</strong> ${options.requesterName} &lt;${options.requesterEmail}&gt;</p>
+      <p><strong>Requested apps:</strong> ${appList}</p>
+      ${options.justification ? `<p><strong>Justification:</strong><br/>${options.justification}</p>` : ''}
+    </blockquote>
     <p>
       <a href="${approveUrl.toString()}">Approve</a>
       &nbsp;|&nbsp;

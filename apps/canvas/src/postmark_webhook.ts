@@ -1,4 +1,4 @@
-import { getWebhookSecret, type CanvasEnv } from './env';
+import { getWebhookSecret, getWebhookBasicAuth, type CanvasEnv } from './env';
 import { PostmarkMetricsCollector } from './postmark_metrics';
 import {
   recordSuppressionEvent,
@@ -40,6 +40,8 @@ export async function handlePostmarkWebhook(req: Request, env: CanvasEnv): Promi
 
   const bodyText = await req.text();
   const secret = getWebhookSecret(env);
+  const basicAuth = getWebhookBasicAuth(env);
+
   if (secret) {
     const signature = req.headers.get('X-Postmark-Signature');
     if (!signature) {
@@ -49,6 +51,16 @@ export async function handlePostmarkWebhook(req: Request, env: CanvasEnv): Promi
       await verifySignature(bodyText, signature, secret);
     } catch (error) {
       console.error('Postmark webhook signature validation failed:', error);
+      return new Response('forbidden', { status: 403 });
+    }
+  } else if (basicAuth) {
+    const header = req.headers.get('Authorization');
+    if (!header || !header.startsWith('Basic ')) {
+      return new Response('forbidden', { status: 403 });
+    }
+    const decoded = atob(header.slice('Basic '.length));
+    const [user, pass] = decoded.split(':');
+    if (user !== basicAuth.user || pass !== basicAuth.pass) {
       return new Response('forbidden', { status: 403 });
     }
   }

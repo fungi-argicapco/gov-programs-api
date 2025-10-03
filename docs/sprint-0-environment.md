@@ -71,6 +71,7 @@ _All status timestamps below reference the initial execution on **2025-10-03 UTC
 | `EMAIL_ADMIN` / `EMAIL_SENDER` | Email routing | Ops | Use routing aliases or Postmark sender signatures. |
 | `SAM_API_KEY` | Ingestion | Data ops | Required before enabling U.S. SAM ingestion in production. |
 | `POSTMARK_TOKEN` | Email provider | Ops | Optional unless switching from console provider. |
+| `POSTMARK_WEBHOOK_BASIC_USER` / `POSTMARK_WEBHOOK_BASIC_PASS` | Email provider | Ops | Basic Auth credentials for Postmark bounce/spam webhook. |
 | `OPENAI_API_KEY` | Enrichment | Research | Only required if enrichment experiments are enabled. |
 
 ## Acceptance Criteria

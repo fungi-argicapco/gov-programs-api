@@ -42,6 +42,19 @@ The CLI applies all SQL migrations, executes the ingestion loop, and prints huma
 
 Notes appear when HTTP or adapter errors occur. The CLI disables structured metrics output to avoid duplicate console entries.
 
+### SAM.gov endpoint guardrails
+
+- Validate credentials and endpoint health before scheduled runs with:
+  ```bash
+  SAM_API_KEY=... bun run verify:sam
+  ```
+- The command hits both the legacy SGS URL (expected 404) and the production opportunities v2 API. It fails fast if the latter stops returning 200s, giving operators a quick way to distinguish between credential issues and API changes.
+- `scripts/maintenance.sam-synthetic.ts --purge` removes historical synthetic rows once live data is flowing.
+
+### Synthetic fallback for SAM Assistance
+
+Until the team secures a `SAM_API_KEY`, the catalog falls back to a synthetic payload for `us-fed-sam-assistance`. Runs that rely on this placeholder emit a `synthetic_data:SAM_API_KEY not provisioned` note and persist the generated JSON snapshot to R2. The synthetic data matches the normalized program schema so coverage metrics and downstream tests stay exercised, but it should be removed once real credentials are available. When the key arrives, set it in `.env.dev.local`/Wrangler secrets and rerun `bun run ingest:once --source us-fed-sam-assistance` to replace the placeholder rows.
+
 ## Alerting & dashboards
 
 The ingestion worker logs JSON payloads such as:
