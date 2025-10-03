@@ -5,6 +5,7 @@ This roadmap sequences the Phase 2 scope into themed sprints that align ingestio
 ## Next Sprint Focus
 
 ### Climate Hazard Normalization
+- [Sprint 1 plan with detailed workstreams](./sprint-1-climate-program-expansion.md)
 - Automate INFORM subnational downloads via HDX credentials.
 - Ingest FEMA NRI tract-level and hazard-specific metrics.
 - Stand up the long-format `climate_hazard_metrics` table.
@@ -22,6 +23,8 @@ This roadmap sequences the Phase 2 scope into themed sprints that align ingestio
 
 ## Sprint 0: Environment & Baseline Quality (1 week)
 **Goal:** Ensure every contributor can bootstrap, test, and deploy the worker confidently.
+
+[Execution plan & checklist](./sprint-0-environment.md)
 
 **Deliverables**
 - Verified local setup scripts and documentation updates covering Bun-only workflows and Cloudflare prerequisites.
