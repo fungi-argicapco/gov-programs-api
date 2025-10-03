@@ -488,6 +488,39 @@ export const climateSubnationalMetrics = sqliteTable(
   })
 );
 
+export const esgIndicatorMetadata = sqliteTable('esg_indicator_metadata', {
+  indicatorCode: text('indicator_code').primaryKey(),
+  indicatorName: text('indicator_name').notNull(),
+  description: text('description'),
+  unit: text('unit'),
+  source: text('source'),
+  methodology: text('methodology'),
+  coverage: text('coverage'),
+  notes: text('notes'),
+  lastUpdated: text('last_updated')
+});
+
+export const esgCountryMetrics = sqliteTable(
+  'esg_country_metrics',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    datasetId: text('dataset_id').notNull(),
+    indicatorCode: text('indicator_code').notNull(),
+    countryIso3: text('country_iso3', { length: 3 }).notNull(),
+    year: integer('year').notNull(),
+    value: real('value'),
+    unit: text('unit'),
+    source: text('source').notNull(),
+    version: text('version').notNull(),
+    metadata: text('metadata'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
+  },
+  (table) => ({
+    indicatorIdx: index('idx_esg_country_metrics_indicator').on(table.indicatorCode, table.countryIso3, table.year)
+  })
+);
+
 export const sources = sqliteTable('sources', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),

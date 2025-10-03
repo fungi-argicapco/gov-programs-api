@@ -216,8 +216,8 @@ async function run() {
     value: row.value != null ? Number(row.value) : null,
     unit: row.unit ?? null
   }));
-  const unepCountry = unepMetrics.filter((row) => row.adminLevel === 'GAUL0');
-  const unepSubnational = unepMetrics.filter((row) => row.adminLevel !== 'GAUL0');
+  const unepCountry = unepMetrics.filter((row: any) => row.adminLevel === 'GAUL0');
+  const unepSubnational = unepMetrics.filter((row: any) => row.adminLevel !== 'GAUL0');
   writeFileSync(path.join(OUTPUT_DIR, 'unep_country.json'), JSON.stringify({ metrics: unepCountry }, null, 2));
   writeFileSync(path.join(OUTPUT_DIR, 'unep_subnational.json'), JSON.stringify({ metrics: unepSubnational }, null, 2));
 
