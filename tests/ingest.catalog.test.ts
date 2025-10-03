@@ -4,7 +4,13 @@ import { createTestDB } from './helpers/d1';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const migrations = ['0001_init.sql', '0002_fts.sql', '0003_ingest_obs.sql', '0013_ingest_diff_metrics.sql'];
+const migrations = [
+  '0001_init.sql',
+  '0002_fts.sql',
+  '0003_ingest_obs.sql',
+  '0012_coverage_enrichment.sql',
+  '0013_ingest_diff_metrics.sql'
+];
 
 const readMigration = (name: string) =>
   fs.readFileSync(path.join(process.cwd(), 'migrations', name), 'utf-8');

@@ -51,6 +51,8 @@ Each seed captures a ready-to-run Codex session, aligning scope, guardrails, and
 ## Sprint 0: Environment & Baseline Quality (1 week)
 **Goal:** Ensure every contributor can bootstrap, test, and deploy the worker confidently.
 
+[Execution plan & checklist](./sprint-0-environment.md)
+
 **Deliverables**
 - Verified local setup scripts and documentation updates covering Bun-only workflows and Cloudflare prerequisites.
 - Passing baseline automation: `bun run typecheck`, `bun test`, and `bunx wrangler dev` smoke validation.

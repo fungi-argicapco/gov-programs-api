@@ -20,6 +20,8 @@ This checklist synthesizes the repo's design docs into an ordered plan to take t
 - After updating `.env`, run `bun run setup:remote` to render `wrangler.toml`. The command is idempotent—it discovers existing D1, KV, R2, and Durable Object resources and only creates what is missing while preserving identifiers in the environment file.
 - Ensure Durable Object support is enabled for the target Workers account; Metrics and rate-limiter classes are declared automatically by the setup script.
 - Manage sensitive keys (e.g. `OPENAI_API_KEY`, `POSTMARK_TOKEN`, `GITHUB_TOKEN`) with `bunx wrangler secret put`; plain-text configuration such as `PROGRAM_API_BASE` can stay under `[vars]` in `wrangler.toml` or be supplied at deploy time via `bunx wrangler deploy --var KEY=VALUE`.
+- When running `wrangler dev` locally, set temporary values for `PROGRAM_API_BASE`, `EMAIL_ADMIN`, and `EMAIL_SENDER` (e.g., export them inline) to silence runtime warnings and unlock the `/v1/health` smoke test described in [docs/sprint-0-environment.md](./sprint-0-environment.md).
+- Reference the [Secrets inventory](./sprint-0-environment.md#secrets-inventory) for ownership and sourcing; link each item to the appropriate vault entry before launch.
 
 ## 3. Database migrations & schema readiness
 - Follow the [D1 migration runbook](./d1-migration-runbook.md) to apply SQL files sequentially through `0010_canvas_onboarding.sql` in staging and production environments.
@@ -45,7 +47,7 @@ This checklist synthesizes the repo's design docs into an ordered plan to take t
 ## 7. Deployment & DNS
 - Ensure all required secrets are configured in the deployment environment.
 - Run `bun run setup:remote` to render `wrangler.toml` with production bindings.
-- Run `bun run deploy` to publish the Worker, apply Durable Object migrations, and enforce the DNS record (`program.fungiagricap.com` by default). The script logs any existing record and only creates a new proxied entry when missing.
+- Run `bun run deploy` to publish the Worker, apply Durable Object migrations, and enforce the DNS record (`program.fungiagricap.com` by default). The script logs any existing record and only creates a new proxied entry when missing; save this output in the release record.
 - Override DNS environment variables only if a different hostname is required.
 - After deployment, verify the Worker responds on the target domain and that DNS propagation completed successfully.
 

@@ -24,6 +24,20 @@ This guide documents the steps to apply database migrations through `migrations/
    ```
    All three tables must be returned to proceed.
 
+_2025-10-03 validation transcript:_
+
+```
+$ bunx wrangler d1 migrations apply gov-programs-api-db --local
+Applying 10 migrations locally...
+🆗 0010_canvas_onboarding.sql
+Applied 10 migrations.
+
+$ bunx wrangler d1 execute gov-programs-api-db --local --command "SELECT name FROM sqlite_master WHERE name IN ('ingestion_runs','program_diffs','canvas_invites');"
+{"name":"ingestion_runs"}
+{"name":"program_diffs"}
+{"name":"canvas_invites"}
+```
+
 ## Remote application (staging / production)
 1. Populate `.env` with Cloudflare credentials and rerender bindings:
    ```bash
@@ -50,4 +64,4 @@ This guide documents the steps to apply database migrations through `migrations/
 - **Permission errors**: Ensure the API token grants `Workers Scripts`, `Workers KV`, `Workers R2 Storage`, `Workers Durable Objects`, and `D1` write permissions. DNS `Edit` is required for deployment but not for migration execution.
 - **Rollback requirements**: D1 currently does not support automatic down migrations. Create a new SQL file that reverses the schema changes (e.g., dropping columns/tables) and apply it forward if rollback is necessary.
 
-Document the migration timestamp and database UUID (see `bunx wrangler d1 list --json`) in incident notes or change logs for traceability.
+Document the migration timestamp and database UUID (see `bunx wrangler d1 list --json`) in incident notes or change logs for traceability. When rerunning `bun run setup:remote`, confirm the script reports reused identifiers to avoid accidental database recreation.
