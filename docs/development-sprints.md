@@ -4,8 +4,7 @@ This roadmap sequences the Phase 2 scope into themed sprints that align ingestio
 
 ## Next Sprint Focus
 
-### Climate Hazard Normalization
-- [Sprint 1 plan with detailed workstreams](./sprint-1-climate-program-expansion.md)
+### Climate Hazard Normalisation
 - Automate INFORM subnational downloads via HDX credentials.
 - Ingest FEMA NRI tract-level and hazard-specific metrics.
 - Stand up the long-format `climate_hazard_metrics` table.
@@ -20,6 +19,34 @@ This roadmap sequences the Phase 2 scope into themed sprints that align ingestio
 - Establish automation playbooks and SOPs for restricted datasets (Germanwatch CRI, Yale EPI, UNEP Explorer) once licensing approvals arrive.
 - Define reporting endpoints or dashboard slices that surface the new ESG/climate metrics alongside program data for playbook consumers.
 - Once the climate hazard table or program expansions are in flight, split subsequent sprints into data ingestion versus legal/licensing follow-ups as needed.
+
+#### Codex Task Queue
+| Priority | Task | Scope Notes | Completion Signal |
+| --- | --- | --- | --- |
+| P0 | Automate INFORM subnational harvests | Extend `apps/ingest` scheduled jobs to authenticate against HDX, persist source manifests to `data/inform/`, and document credential handling in `docs/LICENSING.md`. | Nightly cron captures the latest INFORM CSVs and updates the raw dataset snapshot in Git. |
+| P0 | Model FEMA NRI tract metrics | Introduce a D1 migration for the long-format `climate_hazard_metrics` table, wire ingestion mappers for FEMA exports, and validate type coverage with Vitest fixtures. | Migration succeeds locally (`bun run migrate:local`) and ingestion populates metrics for at least one FEMA hazard. |
+| P1 | Expand ISO-3166-2 registry | Update `data/iso_crosswalk.csv` with EU/APAC regions plus U.S. state/district incentives and regenerate any derived lookups consumed by the API. | `bun run typecheck` stays green and region filters expose the new jurisdictions. |
+| P1 | Build funding window monitors | Add cron-friendly calendar builders in `apps/ingest` that emit application window events to KV or D1, paired with dashboard notes in `docs/ingestion-observability.md`. | Scheduled job run logs upcoming deadlines and dashboards reference the generated feed. |
+| P2 | Link programs to capital stack data | Join program records with partner capital-stack entries in persistence models and surface linkage fields via `/v1/programs` responses. | API responses include partner linkage metadata with accompanying schema documentation updates. |
+| P2 | Draft restricted dataset SOPs | Create playbooks in `docs/admin-runbooks.md` detailing access workflows and compliance steps for CRI, EPI, and UNEP Explorer datasets once licensing clears. | Runbooks merged with sign-off from data governance reviewers. |
+
+#### Final Codex Session Seeds
+Each seed captures a ready-to-run Codex session, aligning scope, guardrails, and validation so we can close the sprint without additional grooming.
+
+1. **Seed 1 – Climate Hazard Backbone**
+   - **Objective:** Ship the `climate_hazard_metrics` schema, FEMA NRI ingestion path, and fixture validation called out in the P0 queue items.
+   - **Entry Criteria:** `apps/ingest` worker scaffolding confirmed via `bun run typecheck`; FEMA sample CSV available in `data/fema/fixtures/`.
+   - **Exit Criteria:** New D1 migration merged, ingestion harness writes to the long-format table, and Vitest snapshots capture at least wind and flood hazards. Update `docs/ARCHITECTURE.md` with the metric flow diagram.
+
+2. **Seed 2 – INFORM + WorldRiskIndex Automation**
+   - **Objective:** Build the HDX-authenticated fetcher, persist manifests, and draft the WorldRiskIndex ingestion toggle so HDX data can land alongside FEMA metrics.
+   - **Entry Criteria:** HDX credentials stored in the secret manager with wrangler bindings documented; `docs/LICENSING.md` section stubbed for INFORM restrictions.
+   - **Exit Criteria:** Scheduled job downloads nightly INFORM data, a feature flag controls WorldRiskIndex ingestion, and documentation covers credential rotation plus failure recovery.
+
+3. **Seed 3 – Program Expansion & Governance Finish Line**
+   - **Objective:** Complete ISO-3166-2 expansion, application calendar monitors, and restricted dataset SOPs needed for blended-finance workflows.
+   - **Entry Criteria:** Latest jurisdiction mapping spreadsheet imported to `data/iso_crosswalk.csv`; dashboard skeleton ready to accept new calendar panels.
+   - **Exit Criteria:** API exposes expanded jurisdictions, monitoring jobs emit upcoming deadlines, and `docs/admin-runbooks.md`/`docs/ingestion-observability.md` reflect the new governance processes.
 
 ## Sprint 0: Environment & Baseline Quality (1 week)
 **Goal:** Ensure every contributor can bootstrap, test, and deploy the worker confidently.
