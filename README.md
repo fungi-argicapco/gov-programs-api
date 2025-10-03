@@ -24,10 +24,14 @@ bun test
 
 # Optional: start a local dev server once `.env.dev.local` contains PROGRAM_API_BASE and EMAIL_* values
 bunx wrangler dev --local
+
+# Smoke test the local worker (after wrangler dev starts)
+curl http://127.0.0.1:8787/v1/health
 ```
 
 ### Local configuration details
 - `bun run setup:local` writes `.env.dev.local` with placeholder Cloudflare bindings and Durable Object class names. Populate `PROGRAM_API_BASE`, `EMAIL_ADMIN`, and `EMAIL_SENDER` there to silence `wrangler dev` warnings. Optional keys (`SESSION_COOKIE_NAME`, `MFA_ISSUER`, `ALERTS_MAX_DELIVERY_ATTEMPTS`) are scaffolded for convenience.
+- If you need to test quickly without editing `.env.dev.local`, export the required variables inline: `PROGRAM_API_BASE=http://localhost:8788 EMAIL_ADMIN=ops@example.com EMAIL_SENDER=no-reply@example.com bunx wrangler dev --local`.
 - Email delivery defaults to a console logger. To send real emails set `EMAIL_PROVIDER=postmark` and provide `POSTMARK_TOKEN` (and optionally `POSTMARK_API_BASE`).
 - The setup script regenerates `wrangler.toml` from `wrangler.template.toml`, substituting local placeholders for the D1 database, KV namespaces, R2 bucket, and Durable Objects so that `bunx wrangler dev --local` works without remote credentials.
 - Secrets (`OPENAI_API_KEY`, `POSTMARK_TOKEN`, etc.) stay out of the repo. Pipe them into Wrangler with `bunx wrangler secret put SECRET_NAME` whenever a local integration test requires them.

@@ -23,6 +23,8 @@ This roadmap sequences the Phase 2 scope into themed sprints that align ingestio
 ## Sprint 0: Environment & Baseline Quality (1 week)
 **Goal:** Ensure every contributor can bootstrap, test, and deploy the worker confidently.
 
+[Execution plan & checklist](./sprint-0-environment.md)
+
 **Deliverables**
 - Verified local setup scripts and documentation updates covering Bun-only workflows and Cloudflare prerequisites.
 - Passing baseline automation: `bun run typecheck`, `bun test`, and `bunx wrangler dev` smoke validation.
