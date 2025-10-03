@@ -9,6 +9,7 @@ const VERSION = '2025-10-02';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const RAW_BASE = path.join(ROOT, 'data', 'climate_esg', 'raw');
+const CROSSWALK_PATH = path.join(ROOT, 'data', 'iso_crosswalk.csv');
 const OVERRIDES_PATH = path.join(ROOT, 'data', 'climate_esg', 'crosswalk_overrides.json');
 const OUTPUT_DIR = path.join(ROOT, 'apps', 'ingest', 'src', 'datasets');
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'climate_metrics.ts');
@@ -26,19 +27,6 @@ function numberOrNull(value: string | undefined): number | null {
   return Number.isFinite(numeric) ? numeric : null;
 }
 
-async function fetchJson(url: string): Promise<any> {
-  const response = await fetch(url, {
-    headers: {
-      'accept': 'application/sparql-results+json',
-      'user-agent': 'gov-programs-api/1.0 (+https://github.com/fungi-argicapco/gov-programs-api)'
-    }
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
-  }
-  return response.json();
-}
-
 type CrosswalkEntry = {
   countryIso3: string;
   adminCode: string;
@@ -47,38 +35,58 @@ type CrosswalkEntry = {
   iso31662: string | null;
 };
 
-async function fetchCrosswalkFromWikidata(iso3List: readonly string[]): Promise<CrosswalkEntry[]> {
-  if (iso3List.length === 0) return [];
-  const values = iso3List.map((code) => `"${code}"`).join(' ');
-  const query = `
-    SELECT ?iso3 ?subdivision ?subdivisionLabel ?isoCode ?nutsCode ?gaulCode WHERE {
-      VALUES ?iso3 { ${values} }
-      ?country wdt:P298 ?iso3 .
-      ?subdivision wdt:P31/wdt:P279* wd:Q10864048 ;
-                   wdt:P17 ?country ;
-                   wdt:P300 ?isoCode .
-      OPTIONAL { ?subdivision wdt:P605 ?nutsCode . }
-      OPTIONAL { ?subdivision wdt:P2892 ?gaulCode . }
-      SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+const ISO2_TO_ISO3: Record<string, string> = {
+  US: 'USA',
+  CA: 'CAN',
+  GB: 'GBR',
+  FR: 'FRA',
+  PE: 'PER',
+  SE: 'SWE',
+  LA: 'LAO'
+};
+
+function loadCrosswalkCsv(): CrosswalkEntry[] {
+  try {
+    const rows = readCsv(CROSSWALK_PATH);
+    const map = new Map<string, CrosswalkEntry>();
+    for (const row of rows) {
+      const isoCodeRaw = row.iso_3166_2 || row.isoCode || row.iso || '';
+      const isoCode = typeof isoCodeRaw === 'string' ? isoCodeRaw.trim() : '';
+      if (!isoCode) continue;
+      const prefix = isoCode.split('-')[0]?.toUpperCase();
+      const countryIso2 = (row.country_iso2 || prefix || '').toUpperCase();
+      const countryIso3 = ISO2_TO_ISO3[countryIso2];
+      if (!countryIso3) continue;
+      const adminName = row.admin_name ?? isoCode;
+      const adminLevel = row.source_system ?? 'ADM1';
+
+      const addEntry = (code: string | null | undefined) => {
+        const adminCode = typeof code === 'string' ? code.trim() : '';
+        if (!adminCode) return;
+        if (!map.has(adminCode)) {
+          map.set(adminCode, {
+            countryIso3,
+            adminCode,
+            adminName,
+            adminLevel,
+            iso31662: isoCode
+          });
+        }
+      };
+
+      addEntry(isoCode);
+      addEntry(row.source_id);
     }
-  `;
-  const url = `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`;
-  const data = await fetchJson(url);
-  const entries: CrosswalkEntry[] = [];
-  for (const row of data.results.bindings ?? []) {
-    const iso3 = row.iso3?.value;
-    const code = row.isoCode?.value;
-    const label = row.subdivisionLabel?.value;
-    if (!iso3 || !code || !label) continue;
-    entries.push({
-      countryIso3: iso3,
-      adminCode: code,
-      adminName: label,
-      adminLevel: row.gaulCode?.value ? 'GAUL' : row.nutsCode?.value ? 'NUTS' : 'ADM1',
-      iso31662: code
-    } satisfies CrosswalkEntry);
+    for (const override of loadCrosswalkOverrides()) {
+      if (!map.has(override.adminCode)) {
+        map.set(override.adminCode, override);
+      }
+    }
+    return Array.from(map.values());
+  } catch (error) {
+    console.warn(`[climate-crosswalk] Failed to load crosswalk from ${CROSSWALK_PATH}`, error);
+    return [];
   }
-  return entries;
 }
 
 function loadCrosswalkOverrides(): CrosswalkEntry[] {
@@ -89,48 +97,22 @@ function loadCrosswalkOverrides(): CrosswalkEntry[] {
       return parsed.map((entry) => ({
         countryIso3: entry.countryIso3,
         adminCode: entry.adminCode,
-        adminName: entry.adminName,
+        adminName: entry.adminName ?? entry.adminCode,
         adminLevel: entry.adminLevel ?? 'override',
         iso31662: entry.iso31662 ?? null
       }));
     }
   } catch (error) {
-    console.warn(`[climate-crosswalk] Failed to read overrides at ${OVERRIDES_PATH}`, error);
+    console.warn(`[climate-crosswalk] Failed to load overrides from ${OVERRIDES_PATH}`, error);
   }
   return [];
 }
 
-function loadCrosswalkFallback(): CrosswalkEntry[] {
-  const fallbackPath = path.join(RAW_BASE, 'crosswalk', 'iso_crosswalk.csv');
-  try {
-    const rows = readCsv(fallbackPath);
-    return rows.map((row) => ({
-      countryIso3: row.country_iso3,
-      adminCode: row.admin_code,
-      adminName: row.admin_name,
-      adminLevel: row.admin_level,
-      iso31662: row.iso_3166_2 ?? null
-    }));
-  } catch (error) {
-    console.warn(`[climate-crosswalk] Failed to load fallback crosswalk from ${fallbackPath}`, error);
-    return [];
-  }
-}
-
 async function buildCrosswalkEntries(iso3List: readonly string[]): Promise<CrosswalkEntry[]> {
-  const overrides = loadCrosswalkOverrides();
-  try {
-    const remote = await fetchCrosswalkFromWikidata(iso3List);
-    const merged = [...remote];
-    for (const override of overrides) {
-      merged.push(override);
-    }
-    return merged;
-  } catch (error) {
-    console.warn('[climate-crosswalk] Falling back to local crosswalk', error);
-    const fallback = loadCrosswalkFallback();
-    return [...fallback, ...overrides];
-  }
+  const entries = loadCrosswalkCsv();
+  if (iso3List.length === 0) return entries;
+  const allowed = new Set(iso3List);
+  return entries.filter((entry) => allowed.has(entry.countryIso3));
 }
 
 function buildNdGainRecords() {

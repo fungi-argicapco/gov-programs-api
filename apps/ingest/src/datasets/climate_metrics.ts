@@ -441,144 +441,536 @@ export type IsoCrosswalkEntry = {
 };
 export const CLIMATE_ISO_CROSSWALK: readonly IsoCrosswalkEntry[] = [
   {
+    "countryIso3": "CAN",
+    "adminCode": "CA-AB",
+    "adminName": "Alberta",
+    "adminLevel": "GADM",
+    "iso31662": "CA-AB"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CAN.1_1",
+    "adminName": "Alberta",
+    "adminLevel": "GADM",
+    "iso31662": "CA-AB"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-BC",
+    "adminName": "British Columbia",
+    "adminLevel": "GADM",
+    "iso31662": "CA-BC"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CAN.2_1",
+    "adminName": "British Columbia",
+    "adminLevel": "GADM",
+    "iso31662": "CA-BC"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-MB",
+    "adminName": "Manitoba",
+    "adminLevel": "",
+    "iso31662": "CA-MB"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-NB",
+    "adminName": "New Brunswick",
+    "adminLevel": "GADM",
+    "iso31662": "CA-NB"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CAN.4_1",
+    "adminName": "New Brunswick",
+    "adminLevel": "GADM",
+    "iso31662": "CA-NB"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-NL",
+    "adminName": "Newfoundland and Labrador",
+    "adminLevel": "",
+    "iso31662": "CA-NL"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-NS",
+    "adminName": "Nova Scotia",
+    "adminLevel": "GADM",
+    "iso31662": "CA-NS"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CAN.7_1",
+    "adminName": "Nova Scotia",
+    "adminLevel": "GADM",
+    "iso31662": "CA-NS"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-NT",
+    "adminName": "Northwest Territories",
+    "adminLevel": "",
+    "iso31662": "CA-NT"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-NU",
+    "adminName": "Nunavut",
+    "adminLevel": "",
+    "iso31662": "CA-NU"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-ON",
+    "adminName": "Ontario",
+    "adminLevel": "",
+    "iso31662": "CA-ON"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-PE",
+    "adminName": "Prince Edward Island",
+    "adminLevel": "GADM",
+    "iso31662": "CA-PE"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CAN.10_1",
+    "adminName": "Prince Edward Island",
+    "adminLevel": "GADM",
+    "iso31662": "CA-PE"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-QC",
+    "adminName": "Quebec",
+    "adminLevel": "GADM",
+    "iso31662": "CA-QC"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CAN.11_1",
+    "adminName": "Quebec",
+    "adminLevel": "GADM",
+    "iso31662": "CA-QC"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-SK",
+    "adminName": "Saskatchewan",
+    "adminLevel": "",
+    "iso31662": "CA-SK"
+  },
+  {
+    "countryIso3": "CAN",
+    "adminCode": "CA-YT",
+    "adminName": "Yukon",
+    "adminLevel": "",
+    "iso31662": "CA-YT"
+  },
+  {
     "countryIso3": "FRA",
-    "adminCode": "FR-V",
-    "adminName": "Rhône-Alpes",
+    "adminCode": "FR-01",
+    "adminName": "Ain",
     "adminLevel": "NUTS",
-    "iso31662": "FR-V"
+    "iso31662": "FR-01"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-V",
-    "adminName": "Rhône-Alpes",
+    "adminCode": "FR711",
+    "adminName": "Ain",
     "adminLevel": "NUTS",
-    "iso31662": "FR-V"
+    "iso31662": "FR-01"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-C",
-    "adminName": "Auvergne",
+    "adminCode": "FRA.1.1_1",
+    "adminName": "Ain",
+    "adminLevel": "GADM",
+    "iso31662": "FR-01"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-02",
+    "adminName": "Aisne",
     "adminLevel": "NUTS",
-    "iso31662": "FR-C"
+    "iso31662": "FR-02"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-D",
-    "adminName": "Burgundy",
+    "adminCode": "FR221",
+    "adminName": "Aisne",
     "adminLevel": "NUTS",
-    "iso31662": "FR-D"
+    "iso31662": "FR-02"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-B",
-    "adminName": "Aquitaine",
+    "adminCode": "FRA.7.1_1",
+    "adminName": "Aisne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-02"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-03",
+    "adminName": "Allier",
     "adminLevel": "NUTS",
-    "iso31662": "FR-B"
+    "iso31662": "FR-03"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-B",
-    "adminName": "Aquitaine",
+    "adminCode": "FR721",
+    "adminName": "Allier",
     "adminLevel": "NUTS",
-    "iso31662": "FR-B"
+    "iso31662": "FR-03"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-L",
-    "adminName": "Limousin",
+    "adminCode": "FRA.1.2_1",
+    "adminName": "Allier",
+    "adminLevel": "GADM",
+    "iso31662": "FR-03"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-04",
+    "adminName": "Alpes-de-Haute-Provence",
     "adminLevel": "NUTS",
-    "iso31662": "FR-L"
+    "iso31662": "FR-04"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-973",
-    "adminName": "French Guiana",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-973"
-  },
-  {
-    "countryIso3": "FRA",
-    "adminCode": "FR-973",
-    "adminName": "French Guiana",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-973"
-  },
-  {
-    "countryIso3": "FRA",
-    "adminCode": "FR-973",
-    "adminName": "French Guiana",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-973"
-  },
-  {
-    "countryIso3": "FRA",
-    "adminCode": "FR-973",
-    "adminName": "French Guiana",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-973"
-  },
-  {
-    "countryIso3": "FRA",
-    "adminCode": "FR-973",
-    "adminName": "French Guiana",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-973"
-  },
-  {
-    "countryIso3": "FRA",
-    "adminCode": "FR-BRE",
-    "adminName": "Brittany",
+    "adminCode": "FR821",
+    "adminName": "Alpes-de-Haute-Provence",
     "adminLevel": "NUTS",
-    "iso31662": "FR-BRE"
+    "iso31662": "FR-04"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-IDF",
-    "adminName": "Île-de-France",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-IDF"
+    "adminCode": "FRA.13.1_1",
+    "adminName": "Alpes-de-Haute-Provence",
+    "adminLevel": "GADM",
+    "iso31662": "FR-04"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-IDF",
-    "adminName": "Île-de-France",
+    "adminCode": "FR-05",
+    "adminName": "Hautes-Alpes",
     "adminLevel": "NUTS",
-    "iso31662": "FR-IDF"
+    "iso31662": "FR-05"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-CVL",
-    "adminName": "Centre-Val de Loire",
+    "adminCode": "FR822",
+    "adminName": "Hautes-Alpes",
     "adminLevel": "NUTS",
-    "iso31662": "FR-CVL"
+    "iso31662": "FR-05"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-S",
-    "adminName": "Picardy",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-S"
+    "adminCode": "FRA.13.4_1",
+    "adminName": "Hautes-Alpes",
+    "adminLevel": "GADM",
+    "iso31662": "FR-05"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-S",
-    "adminName": "Picardy",
+    "adminCode": "FR-06",
+    "adminName": "Alpes-Maritimes",
     "adminLevel": "NUTS",
-    "iso31662": "FR-S"
+    "iso31662": "FR-06"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-G",
-    "adminName": "Champagne-Ardenne",
+    "adminCode": "FR823",
+    "adminName": "Alpes-Maritimes",
     "adminLevel": "NUTS",
-    "iso31662": "FR-G"
+    "iso31662": "FR-06"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-G",
-    "adminName": "Champagne-Ardenne",
+    "adminCode": "FRA.13.2_1",
+    "adminName": "Alpes-Maritimes",
+    "adminLevel": "GADM",
+    "iso31662": "FR-06"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-07",
+    "adminName": "Ardèche",
     "adminLevel": "NUTS",
-    "iso31662": "FR-G"
+    "iso31662": "FR-07"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR712",
+    "adminName": "Ardèche",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-07"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.1.3_1",
+    "adminName": "Ardèche",
+    "adminLevel": "GADM",
+    "iso31662": "FR-07"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-08",
+    "adminName": "Ardennes",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-08"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR211",
+    "adminName": "Ardennes",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-08"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.6.1_1",
+    "adminName": "Ardennes",
+    "adminLevel": "GADM",
+    "iso31662": "FR-08"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-09",
+    "adminName": "Ariège",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-09"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR621",
+    "adminName": "Ariège",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-09"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.1_1",
+    "adminName": "Ariège",
+    "adminLevel": "GADM",
+    "iso31662": "FR-09"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-10",
+    "adminName": "Aube",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-10"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR212",
+    "adminName": "Aube",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-10"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.6.2_1",
+    "adminName": "Aube",
+    "adminLevel": "GADM",
+    "iso31662": "FR-10"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-11",
+    "adminName": "Aude",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-11"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR811",
+    "adminName": "Aude",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-11"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.2_1",
+    "adminName": "Aude",
+    "adminLevel": "GADM",
+    "iso31662": "FR-11"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-12",
+    "adminName": "Aveyron",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-12"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR622",
+    "adminName": "Aveyron",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-12"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.3_1",
+    "adminName": "Aveyron",
+    "adminLevel": "GADM",
+    "iso31662": "FR-12"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-13",
+    "adminName": "Bouches-du-Rhône",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-13"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR824",
+    "adminName": "Bouches-du-Rhône",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-13"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.13.3_1",
+    "adminName": "Bouches-du-Rhône",
+    "adminLevel": "GADM",
+    "iso31662": "FR-13"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-14",
+    "adminName": "Calvados",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-14"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR251",
+    "adminName": "Calvados",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-14"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.9.1_1",
+    "adminName": "Calvados",
+    "adminLevel": "GADM",
+    "iso31662": "FR-14"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-15",
+    "adminName": "Cantal",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-15"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR722",
+    "adminName": "Cantal",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-15"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.1.4_1",
+    "adminName": "Cantal",
+    "adminLevel": "GADM",
+    "iso31662": "FR-15"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-16",
+    "adminName": "Charente",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-16"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR531",
+    "adminName": "Charente",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-16"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.10.2_1",
+    "adminName": "Charente",
+    "adminLevel": "GADM",
+    "iso31662": "FR-16"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-17",
+    "adminName": "Charente-Maritime",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-17"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR532",
+    "adminName": "Charente-Maritime",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-17"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.10.1_1",
+    "adminName": "Charente-Maritime",
+    "adminLevel": "GADM",
+    "iso31662": "FR-17"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-18",
+    "adminName": "Cher",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-18"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR241",
+    "adminName": "Cher",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-18"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.4.1_1",
+    "adminName": "Cher",
+    "adminLevel": "GADM",
+    "iso31662": "FR-18"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-19",
+    "adminName": "Corrèze",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-19"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR631",
+    "adminName": "Corrèze",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-19"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.10.3_1",
+    "adminName": "Corrèze",
+    "adminLevel": "GADM",
+    "iso31662": "FR-19"
   },
   {
     "countryIso3": "FRA",
@@ -589,115 +981,1648 @@ export const CLIMATE_ISO_CROSSWALK: readonly IsoCrosswalkEntry[] = [
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-20R",
+    "adminCode": "FRM",
     "adminName": "Corsica",
     "adminLevel": "NUTS",
     "iso31662": "FR-20R"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-20R",
+    "adminCode": "FR83",
     "adminName": "Corsica",
     "adminLevel": "NUTS",
     "iso31662": "FR-20R"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-PAC",
-    "adminName": "Provence-Alpes-Côte d'Azur",
+    "adminCode": "FRM0",
+    "adminName": "Corsica",
     "adminLevel": "NUTS",
-    "iso31662": "FR-PAC"
+    "iso31662": "FR-20R"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-N",
-    "adminName": "Midi-Pyrénées",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-N"
+    "adminCode": "FRA.5_1",
+    "adminName": "Corsica",
+    "adminLevel": "GADM",
+    "iso31662": "FR-20R"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-N",
-    "adminName": "Midi-Pyrénées",
+    "adminCode": "FR-21",
+    "adminName": "Côte-d’Or",
     "adminLevel": "NUTS",
-    "iso31662": "FR-N"
+    "iso31662": "FR-21"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-P",
-    "adminName": "Lower Normandy",
+    "adminCode": "FR261",
+    "adminName": "Côte-d’Or",
     "adminLevel": "NUTS",
-    "iso31662": "FR-P"
+    "iso31662": "FR-21"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-P",
-    "adminName": "Lower Normandy",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-P"
+    "adminCode": "FRA.2.1_1",
+    "adminName": "Côte-d’Or",
+    "adminLevel": "GADM",
+    "iso31662": "FR-21"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-Q",
-    "adminName": "Upper Normandy",
+    "adminCode": "FR-22",
+    "adminName": "Côtes-d'Armor",
     "adminLevel": "NUTS",
-    "iso31662": "FR-Q"
+    "iso31662": "FR-22"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-O",
-    "adminName": "Nord-Pas-de-Calais",
+    "adminCode": "FR521",
+    "adminName": "Côtes-d'Armor",
     "adminLevel": "NUTS",
-    "iso31662": "FR-O"
+    "iso31662": "FR-22"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-O",
-    "adminName": "Nord-Pas-de-Calais",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-O"
+    "adminCode": "FRA.3.1_1",
+    "adminName": "Côtes-d'Armor",
+    "adminLevel": "GADM",
+    "iso31662": "FR-22"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-O",
-    "adminName": "Nord-Pas-de-Calais",
+    "adminCode": "FR-23",
+    "adminName": "Creuse",
     "adminLevel": "NUTS",
-    "iso31662": "FR-O"
+    "iso31662": "FR-23"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-PDL",
-    "adminName": "Pays de la Loire",
+    "adminCode": "FR632",
+    "adminName": "Creuse",
     "adminLevel": "NUTS",
-    "iso31662": "FR-PDL"
+    "iso31662": "FR-23"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-K",
-    "adminName": "Languedoc-Roussillon",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-K"
+    "adminCode": "FRA.10.4_1",
+    "adminName": "Creuse",
+    "adminLevel": "GADM",
+    "iso31662": "FR-23"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-K",
-    "adminName": "Languedoc-Roussillon",
+    "adminCode": "FR-24",
+    "adminName": "Dordogne",
     "adminLevel": "NUTS",
-    "iso31662": "FR-K"
+    "iso31662": "FR-24"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-T",
-    "adminName": "Poitou-Charentes",
+    "adminCode": "FR611",
+    "adminName": "Dordogne",
     "adminLevel": "NUTS",
-    "iso31662": "FR-T"
+    "iso31662": "FR-24"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-T",
-    "adminName": "Poitou-Charentes",
+    "adminCode": "FRA.10.6_1",
+    "adminName": "Dordogne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-24"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-25",
+    "adminName": "Doubs",
     "adminLevel": "NUTS",
-    "iso31662": "FR-T"
+    "iso31662": "FR-25"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR431",
+    "adminName": "Doubs",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-25"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.2.2_1",
+    "adminName": "Doubs",
+    "adminLevel": "GADM",
+    "iso31662": "FR-25"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-26",
+    "adminName": "Drôme",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-26"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR713",
+    "adminName": "Drôme",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-26"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.1.5_1",
+    "adminName": "Drôme",
+    "adminLevel": "GADM",
+    "iso31662": "FR-26"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-27",
+    "adminName": "Eure",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-27"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR231",
+    "adminName": "Eure",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-27"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.9.2_1",
+    "adminName": "Eure",
+    "adminLevel": "GADM",
+    "iso31662": "FR-27"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-28",
+    "adminName": "Eure-et-Loir",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-28"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR242",
+    "adminName": "Eure-et-Loir",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-28"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.4.2_1",
+    "adminName": "Eure-et-Loir",
+    "adminLevel": "GADM",
+    "iso31662": "FR-28"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-29",
+    "adminName": "Finistère",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-29"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR522",
+    "adminName": "Finistère",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-29"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.3.2_1",
+    "adminName": "Finistère",
+    "adminLevel": "GADM",
+    "iso31662": "FR-29"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-2A",
+    "adminName": "Corse-du-Sud",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-2A"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR831",
+    "adminName": "Corse-du-Sud",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-2A"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.5.1_1",
+    "adminName": "Corse-du-Sud",
+    "adminLevel": "GADM",
+    "iso31662": "FR-2A"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-2B",
+    "adminName": "Haute-Corse",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-2B"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR832",
+    "adminName": "Haute-Corse",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-2B"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.5.2_1",
+    "adminName": "Haute-Corse",
+    "adminLevel": "GADM",
+    "iso31662": "FR-2B"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-30",
+    "adminName": "Gard",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-30"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR812",
+    "adminName": "Gard",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-30"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.4_1",
+    "adminName": "Gard",
+    "adminLevel": "GADM",
+    "iso31662": "FR-30"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-31",
+    "adminName": "Haute-Garonne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-31"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR623",
+    "adminName": "Haute-Garonne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-31"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.6_1",
+    "adminName": "Haute-Garonne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-31"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-32",
+    "adminName": "Gers",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-32"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR624",
+    "adminName": "Gers",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-32"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.5_1",
+    "adminName": "Gers",
+    "adminLevel": "GADM",
+    "iso31662": "FR-32"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-33",
+    "adminName": "Gironde",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-33"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR612",
+    "adminName": "Gironde",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-33"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.10.7_1",
+    "adminName": "Gironde",
+    "adminLevel": "GADM",
+    "iso31662": "FR-33"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-34",
+    "adminName": "Hérault",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-34"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR813",
+    "adminName": "Hérault",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-34"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.8_1",
+    "adminName": "Hérault",
+    "adminLevel": "GADM",
+    "iso31662": "FR-34"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-35",
+    "adminName": "Ille-et-Vilaine",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-35"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR523",
+    "adminName": "Ille-et-Vilaine",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-35"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.3.3_1",
+    "adminName": "Ille-et-Vilaine",
+    "adminLevel": "GADM",
+    "iso31662": "FR-35"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-36",
+    "adminName": "Indre",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-36"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR243",
+    "adminName": "Indre",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-36"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.4.4_1",
+    "adminName": "Indre",
+    "adminLevel": "GADM",
+    "iso31662": "FR-36"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-37",
+    "adminName": "Indre-et-Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-37"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR244",
+    "adminName": "Indre-et-Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-37"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.4.3_1",
+    "adminName": "Indre-et-Loire",
+    "adminLevel": "GADM",
+    "iso31662": "FR-37"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-38",
+    "adminName": "Isère",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-38"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR714",
+    "adminName": "Isère",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-38"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.1.8_1",
+    "adminName": "Isère",
+    "adminLevel": "GADM",
+    "iso31662": "FR-38"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-39",
+    "adminName": "Jura",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-39"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR432",
+    "adminName": "Jura",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-39"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.2.4_1",
+    "adminName": "Jura",
+    "adminLevel": "GADM",
+    "iso31662": "FR-39"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-40",
+    "adminName": "Landes",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-40"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR613",
+    "adminName": "Landes",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-40"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.10.9_1",
+    "adminName": "Landes",
+    "adminLevel": "GADM",
+    "iso31662": "FR-40"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-41",
+    "adminName": "Loir-et-Cher",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-41"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR245",
+    "adminName": "Loir-et-Cher",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-41"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.4.5_1",
+    "adminName": "Loir-et-Cher",
+    "adminLevel": "GADM",
+    "iso31662": "FR-41"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-42",
+    "adminName": "Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-42"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR715",
+    "adminName": "Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-42"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.1.9_1",
+    "adminName": "Loire",
+    "adminLevel": "GADM",
+    "iso31662": "FR-42"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-43",
+    "adminName": "Haute-Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-43"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR723",
+    "adminName": "Haute-Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-43"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.1.6_1",
+    "adminName": "Haute-Loire",
+    "adminLevel": "GADM",
+    "iso31662": "FR-43"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-44",
+    "adminName": "Loire-Atlantique",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-44"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR511",
+    "adminName": "Loire-Atlantique",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-44"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.12.1_1",
+    "adminName": "Loire-Atlantique",
+    "adminLevel": "GADM",
+    "iso31662": "FR-44"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-45",
+    "adminName": "Loiret",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-45"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR246",
+    "adminName": "Loiret",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-45"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.4.6_1",
+    "adminName": "Loiret",
+    "adminLevel": "GADM",
+    "iso31662": "FR-45"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-46",
+    "adminName": "Lot",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-46"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR625",
+    "adminName": "Lot",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-46"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.9_1",
+    "adminName": "Lot",
+    "adminLevel": "GADM",
+    "iso31662": "FR-46"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-47",
+    "adminName": "Lot-et-Garonne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-47"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRI14",
+    "adminName": "Lot-et-Garonne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-47"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.10.10_1",
+    "adminName": "Lot-et-Garonne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-47"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-48",
+    "adminName": "Lozère",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-48"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR814",
+    "adminName": "Lozère",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-48"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.10_1",
+    "adminName": "Lozère",
+    "adminLevel": "GADM",
+    "iso31662": "FR-48"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-49",
+    "adminName": "Maine-et-Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-49"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR512",
+    "adminName": "Maine-et-Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-49"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.12.2_1",
+    "adminName": "Maine-et-Loire",
+    "adminLevel": "GADM",
+    "iso31662": "FR-49"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-50",
+    "adminName": "Manche",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-50"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR252",
+    "adminName": "Manche",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-50"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.9.3_1",
+    "adminName": "Manche",
+    "adminLevel": "GADM",
+    "iso31662": "FR-50"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-51",
+    "adminName": "Marne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-51"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR213",
+    "adminName": "Marne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-51"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.6.6_1",
+    "adminName": "Marne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-51"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-52",
+    "adminName": "Haute-Marne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-52"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR214",
+    "adminName": "Haute-Marne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-52"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.6.5_1",
+    "adminName": "Haute-Marne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-52"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-53",
+    "adminName": "Mayenne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-53"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR513",
+    "adminName": "Mayenne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-53"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.12.3_1",
+    "adminName": "Mayenne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-53"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-54",
+    "adminName": "Meurthe-et-Moselle",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-54"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR411",
+    "adminName": "Meurthe-et-Moselle",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-54"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.6.7_1",
+    "adminName": "Meurthe-et-Moselle",
+    "adminLevel": "GADM",
+    "iso31662": "FR-54"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-55",
+    "adminName": "Meuse",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-55"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR412",
+    "adminName": "Meuse",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-55"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.6.8_1",
+    "adminName": "Meuse",
+    "adminLevel": "GADM",
+    "iso31662": "FR-55"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-56",
+    "adminName": "Morbihan",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-56"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR524",
+    "adminName": "Morbihan",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-56"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.3.4_1",
+    "adminName": "Morbihan",
+    "adminLevel": "GADM",
+    "iso31662": "FR-56"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-57",
+    "adminName": "Moselle",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-57"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR413",
+    "adminName": "Moselle",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-57"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.6.9_1",
+    "adminName": "Moselle",
+    "adminLevel": "GADM",
+    "iso31662": "FR-57"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-58",
+    "adminName": "Nièvre",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-58"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR262",
+    "adminName": "Nièvre",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-58"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.2.5_1",
+    "adminName": "Nièvre",
+    "adminLevel": "GADM",
+    "iso31662": "FR-58"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-59",
+    "adminName": "Nord",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-59"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR301",
+    "adminName": "Nord",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-59"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.7.2_1",
+    "adminName": "Nord",
+    "adminLevel": "GADM",
+    "iso31662": "FR-59"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-60",
+    "adminName": "Oise",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-60"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR222",
+    "adminName": "Oise",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-60"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.7.3_1",
+    "adminName": "Oise",
+    "adminLevel": "GADM",
+    "iso31662": "FR-60"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-61",
+    "adminName": "Orne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-61"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRD13",
+    "adminName": "Orne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-61"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.9.4_1",
+    "adminName": "Orne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-61"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-62",
+    "adminName": "Pas-de-Calais",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-62"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR302",
+    "adminName": "Pas-de-Calais",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-62"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.7.4_1",
+    "adminName": "Pas-de-Calais",
+    "adminLevel": "GADM",
+    "iso31662": "FR-62"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-63",
+    "adminName": "Puy-de-Dôme",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-63"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR724",
+    "adminName": "Puy-de-Dôme",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-63"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.1.10_1",
+    "adminName": "Puy-de-Dôme",
+    "adminLevel": "GADM",
+    "iso31662": "FR-63"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-64",
+    "adminName": "Pyrénées-Atlantiques",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-64"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR615",
+    "adminName": "Pyrénées-Atlantiques",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-64"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.10.11_1",
+    "adminName": "Pyrénées-Atlantiques",
+    "adminLevel": "GADM",
+    "iso31662": "FR-64"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-65",
+    "adminName": "Hautes-Pyrénées",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-65"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR626",
+    "adminName": "Hautes-Pyrénées",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-65"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.7_1",
+    "adminName": "Hautes-Pyrénées",
+    "adminLevel": "GADM",
+    "iso31662": "FR-65"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-66",
+    "adminName": "Pyrénées-Orientales",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-66"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR815",
+    "adminName": "Pyrénées-Orientales",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-66"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.11_1",
+    "adminName": "Pyrénées-Orientales",
+    "adminLevel": "GADM",
+    "iso31662": "FR-66"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-67",
+    "adminName": "Bas-Rhin",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-67"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR421",
+    "adminName": "Bas-Rhin",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-67"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.6.3_1",
+    "adminName": "Bas-Rhin",
+    "adminLevel": "GADM",
+    "iso31662": "FR-67"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-68",
+    "adminName": "Haut-Rhin",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-68"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR422",
+    "adminName": "Haut-Rhin",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-68"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.6.4_1",
+    "adminName": "Haut-Rhin",
+    "adminLevel": "GADM",
+    "iso31662": "FR-68"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-69",
+    "adminName": "Rhône",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-69"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR716",
+    "adminName": "Rhône",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-69"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-6AE",
+    "adminName": "Alsace",
+    "adminLevel": "",
+    "iso31662": "FR-6AE"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-70",
+    "adminName": "Haute-Saône",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-70"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR433",
+    "adminName": "Haute-Saône",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-70"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.2.3_1",
+    "adminName": "Haute-Saône",
+    "adminLevel": "GADM",
+    "iso31662": "FR-70"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-71",
+    "adminName": "Saône-et-Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-71"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR263",
+    "adminName": "Saône-et-Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-71"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.2.6_1",
+    "adminName": "Saône-et-Loire",
+    "adminLevel": "GADM",
+    "iso31662": "FR-71"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-72",
+    "adminName": "Sarthe",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-72"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR514",
+    "adminName": "Sarthe",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-72"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.12.4_1",
+    "adminName": "Sarthe",
+    "adminLevel": "GADM",
+    "iso31662": "FR-72"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-73",
+    "adminName": "Savoie",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-73"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR717",
+    "adminName": "Savoie",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-73"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.1.12_1",
+    "adminName": "Savoie",
+    "adminLevel": "GADM",
+    "iso31662": "FR-73"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-74",
+    "adminName": "Haute-Savoie",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-74"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR718",
+    "adminName": "Haute-Savoie",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-74"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.1.7_1",
+    "adminName": "Haute-Savoie",
+    "adminLevel": "GADM",
+    "iso31662": "FR-74"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-75C",
+    "adminName": "Paris",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-75C"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR101",
+    "adminName": "Paris",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-75C"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.8.3_1",
+    "adminName": "Paris",
+    "adminLevel": "GADM",
+    "iso31662": "FR-75C"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-76",
+    "adminName": "Seine-Maritime",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-76"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR232",
+    "adminName": "Seine-Maritime",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-76"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.9.5_1",
+    "adminName": "Seine-Maritime",
+    "adminLevel": "GADM",
+    "iso31662": "FR-76"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-77",
+    "adminName": "Seine-et-Marne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-77"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR102",
+    "adminName": "Seine-et-Marne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-77"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.8.4_1",
+    "adminName": "Seine-et-Marne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-77"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-78",
+    "adminName": "Yvelines",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-78"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR103",
+    "adminName": "Yvelines",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-78"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.8.8_1",
+    "adminName": "Yvelines",
+    "adminLevel": "GADM",
+    "iso31662": "FR-78"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-79",
+    "adminName": "Deux-Sèvres",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-79"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR533",
+    "adminName": "Deux-Sèvres",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-79"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.10.5_1",
+    "adminName": "Deux-Sèvres",
+    "adminLevel": "GADM",
+    "iso31662": "FR-79"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-80",
+    "adminName": "Somme",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-80"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR223",
+    "adminName": "Somme",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-80"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.7.5_1",
+    "adminName": "Somme",
+    "adminLevel": "GADM",
+    "iso31662": "FR-80"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-81",
+    "adminName": "Tarn",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-81"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR627",
+    "adminName": "Tarn",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-81"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.13_1",
+    "adminName": "Tarn",
+    "adminLevel": "GADM",
+    "iso31662": "FR-81"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-82",
+    "adminName": "Tarn-et-Garonne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-82"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR628",
+    "adminName": "Tarn-et-Garonne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-82"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11.12_1",
+    "adminName": "Tarn-et-Garonne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-82"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-83",
+    "adminName": "Var",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-83"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR825",
+    "adminName": "Var",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-83"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.13.5_1",
+    "adminName": "Var",
+    "adminLevel": "GADM",
+    "iso31662": "FR-83"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-84",
+    "adminName": "Vaucluse",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-84"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR826",
+    "adminName": "Vaucluse",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-84"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.13.6_1",
+    "adminName": "Vaucluse",
+    "adminLevel": "GADM",
+    "iso31662": "FR-84"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-85",
+    "adminName": "Vendée",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-85"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR515",
+    "adminName": "Vendée",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-85"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.12.5_1",
+    "adminName": "Vendée",
+    "adminLevel": "GADM",
+    "iso31662": "FR-85"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-86",
+    "adminName": "Vienne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-86"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR534",
+    "adminName": "Vienne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-86"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.10.12_1",
+    "adminName": "Vienne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-86"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-87",
+    "adminName": "Haute-Vienne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-87"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR633",
+    "adminName": "Haute-Vienne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-87"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.10.8_1",
+    "adminName": "Haute-Vienne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-87"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-88",
+    "adminName": "Vosges",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-88"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR414",
+    "adminName": "Vosges",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-88"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.6.10_1",
+    "adminName": "Vosges",
+    "adminLevel": "GADM",
+    "iso31662": "FR-88"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-89",
+    "adminName": "Yonne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-89"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR264",
+    "adminName": "Yonne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-89"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.2.8_1",
+    "adminName": "Yonne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-89"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-90",
+    "adminName": "Territoire de Belfort",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-90"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR434",
+    "adminName": "Territoire de Belfort",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-90"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.2.7_1",
+    "adminName": "Territoire de Belfort",
+    "adminLevel": "GADM",
+    "iso31662": "FR-90"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-91",
+    "adminName": "Essonne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-91"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR104",
+    "adminName": "Essonne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-91"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.8.1_1",
+    "adminName": "Essonne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-91"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-92",
+    "adminName": "Hauts-de-Seine",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-92"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR105",
+    "adminName": "Hauts-de-Seine",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-92"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.8.2_1",
+    "adminName": "Hauts-de-Seine",
+    "adminLevel": "GADM",
+    "iso31662": "FR-92"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-93",
+    "adminName": "Seine-Saint-Denis",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-93"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR106",
+    "adminName": "Seine-Saint-Denis",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-93"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.8.5_1",
+    "adminName": "Seine-Saint-Denis",
+    "adminLevel": "GADM",
+    "iso31662": "FR-93"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-94",
+    "adminName": "Val-de-Marne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-94"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR107",
+    "adminName": "Val-de-Marne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-94"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.8.7_1",
+    "adminName": "Val-de-Marne",
+    "adminLevel": "GADM",
+    "iso31662": "FR-94"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-95",
+    "adminName": "Val-d'Oise",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-95"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR108",
+    "adminName": "Val-d'Oise",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-95"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.8.6_1",
+    "adminName": "Val-d'Oise",
+    "adminLevel": "GADM",
+    "iso31662": "FR-95"
   },
   {
     "countryIso3": "FRA",
@@ -708,45 +2633,171 @@ export const CLIMATE_ISO_CROSSWALK: readonly IsoCrosswalkEntry[] = [
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-971",
+    "adminCode": "FRA1",
     "adminName": "Guadeloupe",
     "adminLevel": "NUTS",
     "iso31662": "FR-971"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-972",
-    "adminName": "Martinique",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-972"
+    "adminCode": "FRA10",
+    "adminName": "Guadeloupe",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-971"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "GLP",
+    "adminName": "Guadeloupe",
+    "adminLevel": "GADM",
+    "iso31662": "FR-971"
   },
   {
     "countryIso3": "FRA",
     "adminCode": "FR-972",
     "adminName": "Martinique",
-    "adminLevel": "GAUL",
+    "adminLevel": "NUTS",
     "iso31662": "FR-972"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-972",
+    "adminCode": "FR92",
     "adminName": "Martinique",
-    "adminLevel": "GAUL",
+    "adminLevel": "NUTS",
     "iso31662": "FR-972"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-972",
+    "adminCode": "FRY2",
     "adminName": "Martinique",
-    "adminLevel": "GAUL",
+    "adminLevel": "NUTS",
     "iso31662": "FR-972"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-972",
+    "adminCode": "FRA2",
     "adminName": "Martinique",
-    "adminLevel": "GAUL",
+    "adminLevel": "NUTS",
     "iso31662": "FR-972"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR920",
+    "adminName": "Martinique",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-972"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA20",
+    "adminName": "Martinique",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-972"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "MTQ",
+    "adminName": "Martinique",
+    "adminLevel": "GADM",
+    "iso31662": "FR-972"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-973",
+    "adminName": "French Guiana",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-973"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA30",
+    "adminName": "French Guiana",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-973"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRY3",
+    "adminName": "French Guiana",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-973"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA3",
+    "adminName": "French Guiana",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-973"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR930",
+    "adminName": "French Guiana",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-973"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR93",
+    "adminName": "French Guiana",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-973"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "GUF",
+    "adminName": "French Guiana",
+    "adminLevel": "GADM",
+    "iso31662": "FR-973"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-974",
+    "adminName": "Réunion",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-974"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR94",
+    "adminName": "Réunion",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-974"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA4",
+    "adminName": "Réunion",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-974"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR940",
+    "adminName": "Réunion",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-974"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA40",
+    "adminName": "Réunion",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-974"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRY4",
+    "adminName": "Réunion",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-974"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "REU",
+    "adminName": "Réunion",
+    "adminLevel": "GADM",
+    "iso31662": "FR-974"
   },
   {
     "countryIso3": "FRA",
@@ -757,52 +2808,31 @@ export const CLIMATE_ISO_CROSSWALK: readonly IsoCrosswalkEntry[] = [
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-976",
+    "adminCode": "FRA5",
     "adminName": "Mayotte",
     "adminLevel": "NUTS",
     "iso31662": "FR-976"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-976",
+    "adminCode": "FRA50",
     "adminName": "Mayotte",
     "adminLevel": "NUTS",
     "iso31662": "FR-976"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-974",
-    "adminName": "Réunion",
+    "adminCode": "FRY5",
+    "adminName": "Mayotte",
     "adminLevel": "NUTS",
-    "iso31662": "FR-974"
+    "iso31662": "FR-976"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-974",
-    "adminName": "Réunion",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-974"
-  },
-  {
-    "countryIso3": "FRA",
-    "adminCode": "FR-974",
-    "adminName": "Réunion",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-974"
-  },
-  {
-    "countryIso3": "FRA",
-    "adminCode": "FR-974",
-    "adminName": "Réunion",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-974"
-  },
-  {
-    "countryIso3": "FRA",
-    "adminCode": "FR-974",
-    "adminName": "Réunion",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-974"
+    "adminCode": "MYT",
+    "adminName": "Mayotte",
+    "adminLevel": "GADM",
+    "iso31662": "FR-976"
   },
   {
     "countryIso3": "FRA",
@@ -813,6 +2843,41 @@ export const CLIMATE_ISO_CROSSWALK: readonly IsoCrosswalkEntry[] = [
   },
   {
     "countryIso3": "FRA",
+    "adminCode": "FRK",
+    "adminName": "Auvergne-Rhône-Alpes",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-ARA"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.1_1",
+    "adminName": "Auvergne-Rhône-Alpes",
+    "adminLevel": "GADM",
+    "iso31662": "FR-ARA"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-B",
+    "adminName": "Aquitaine",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-B"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR61",
+    "adminName": "Aquitaine",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-B"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRI1",
+    "adminName": "Aquitaine",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-B"
+  },
+  {
+    "countryIso3": "FRA",
     "adminCode": "FR-BFC",
     "adminName": "Bourgogne-Franche-Comté",
     "adminLevel": "NUTS",
@@ -820,682 +2885,129 @@ export const CLIMATE_ISO_CROSSWALK: readonly IsoCrosswalkEntry[] = [
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-HDF",
-    "adminName": "Hauts-de-France",
+    "adminCode": "FRC",
+    "adminName": "Bourgogne-Franche-Comté",
     "adminLevel": "NUTS",
-    "iso31662": "FR-HDF"
+    "iso31662": "FR-BFC"
   },
   {
-    "countryIso3": "USA",
-    "adminCode": "US-CA",
-    "adminName": "California",
-    "adminLevel": "GAUL",
-    "iso31662": "US-CA"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-AL",
-    "adminName": "Alabama",
-    "adminLevel": "ADM1",
-    "iso31662": "US-AL"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-ME",
-    "adminName": "Maine",
-    "adminLevel": "GAUL",
-    "iso31662": "US-ME"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-NH",
-    "adminName": "New Hampshire",
-    "adminLevel": "ADM1",
-    "iso31662": "US-NH"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-MA",
-    "adminName": "Massachusetts",
-    "adminLevel": "GAUL",
-    "iso31662": "US-MA"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-CT",
-    "adminName": "Connecticut",
-    "adminLevel": "GAUL",
-    "iso31662": "US-CT"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-HI",
-    "adminName": "Hawaii",
-    "adminLevel": "GAUL",
-    "iso31662": "US-HI"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-AK",
-    "adminName": "Alaska",
-    "adminLevel": "GAUL",
-    "iso31662": "US-AK"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-FL",
-    "adminName": "Florida",
-    "adminLevel": "GAUL",
-    "iso31662": "US-FL"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-AZ",
-    "adminName": "Arizona",
-    "adminLevel": "ADM1",
-    "iso31662": "US-AZ"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-OR",
-    "adminName": "Oregon",
-    "adminLevel": "GAUL",
-    "iso31662": "US-OR"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-UT",
-    "adminName": "Utah",
-    "adminLevel": "ADM1",
-    "iso31662": "US-UT"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-MI",
-    "adminName": "Michigan",
-    "adminLevel": "ADM1",
-    "iso31662": "US-MI"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-PR",
-    "adminName": "Puerto Rico",
-    "adminLevel": "GAUL",
-    "iso31662": "US-PR"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-IL",
-    "adminName": "Illinois",
-    "adminLevel": "GAUL",
-    "iso31662": "US-IL"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-ND",
-    "adminName": "North Dakota",
-    "adminLevel": "GAUL",
-    "iso31662": "US-ND"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-SD",
-    "adminName": "South Dakota",
-    "adminLevel": "ADM1",
-    "iso31662": "US-SD"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-MT",
-    "adminName": "Montana",
-    "adminLevel": "GAUL",
-    "iso31662": "US-MT"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-WY",
-    "adminName": "Wyoming",
-    "adminLevel": "GAUL",
-    "iso31662": "US-WY"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-ID",
-    "adminName": "Idaho",
-    "adminLevel": "GAUL",
-    "iso31662": "US-ID"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-WA",
-    "adminName": "Washington",
-    "adminLevel": "GAUL",
-    "iso31662": "US-WA"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-NV",
-    "adminName": "Nevada",
-    "adminLevel": "GAUL",
-    "iso31662": "US-NV"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-CO",
-    "adminName": "Colorado",
-    "adminLevel": "ADM1",
-    "iso31662": "US-CO"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-VA",
-    "adminName": "Virginia",
-    "adminLevel": "GAUL",
-    "iso31662": "US-VA"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-WV",
-    "adminName": "West Virginia",
-    "adminLevel": "GAUL",
-    "iso31662": "US-WV"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-NY",
-    "adminName": "New York",
-    "adminLevel": "GAUL",
-    "iso31662": "US-NY"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-RI",
-    "adminName": "Rhode Island",
-    "adminLevel": "ADM1",
-    "iso31662": "US-RI"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-MD",
-    "adminName": "Maryland",
-    "adminLevel": "GAUL",
-    "iso31662": "US-MD"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-DE",
-    "adminName": "Delaware",
-    "adminLevel": "ADM1",
-    "iso31662": "US-DE"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-OH",
-    "adminName": "Ohio",
-    "adminLevel": "GAUL",
-    "iso31662": "US-OH"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-PA",
-    "adminName": "Pennsylvania",
-    "adminLevel": "ADM1",
-    "iso31662": "US-PA"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-NJ",
-    "adminName": "New Jersey",
-    "adminLevel": "GAUL",
-    "iso31662": "US-NJ"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-IN",
-    "adminName": "Indiana",
-    "adminLevel": "ADM1",
-    "iso31662": "US-IN"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-GA",
-    "adminName": "Georgia",
-    "adminLevel": "GAUL",
-    "iso31662": "US-GA"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-TX",
-    "adminName": "Texas",
-    "adminLevel": "ADM1",
-    "iso31662": "US-TX"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-NC",
-    "adminName": "North Carolina",
-    "adminLevel": "ADM1",
-    "iso31662": "US-NC"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-SC",
-    "adminName": "South Carolina",
-    "adminLevel": "ADM1",
-    "iso31662": "US-SC"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-MS",
-    "adminName": "Mississippi",
-    "adminLevel": "GAUL",
-    "iso31662": "US-MS"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-TN",
-    "adminName": "Tennessee",
-    "adminLevel": "ADM1",
-    "iso31662": "US-TN"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-NM",
-    "adminName": "New Mexico",
-    "adminLevel": "GAUL",
-    "iso31662": "US-NM"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-MN",
-    "adminName": "Minnesota",
-    "adminLevel": "ADM1",
-    "iso31662": "US-MN"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-WI",
-    "adminName": "Wisconsin",
-    "adminLevel": "ADM1",
-    "iso31662": "US-WI"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-IA",
-    "adminName": "Iowa",
-    "adminLevel": "ADM1",
-    "iso31662": "US-IA"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-NE",
-    "adminName": "Nebraska",
-    "adminLevel": "GAUL",
-    "iso31662": "US-NE"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-KS",
-    "adminName": "Kansas",
-    "adminLevel": "GAUL",
-    "iso31662": "US-KS"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-MO",
-    "adminName": "Missouri",
-    "adminLevel": "ADM1",
-    "iso31662": "US-MO"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-LA",
-    "adminName": "Louisiana",
-    "adminLevel": "GAUL",
-    "iso31662": "US-LA"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-KY",
-    "adminName": "Kentucky",
-    "adminLevel": "GAUL",
-    "iso31662": "US-KY"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-AR",
-    "adminName": "Arkansas",
-    "adminLevel": "ADM1",
-    "iso31662": "US-AR"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-OK",
-    "adminName": "Oklahoma",
-    "adminLevel": "GAUL",
-    "iso31662": "US-OK"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "VI",
-    "adminName": "United States Virgin Islands",
-    "adminLevel": "GAUL",
-    "iso31662": "VI"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-VT",
-    "adminName": "Vermont",
-    "adminLevel": "ADM1",
-    "iso31662": "US-VT"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-GU",
-    "adminName": "Guam",
-    "adminLevel": "ADM1",
-    "iso31662": "US-GU"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-AS",
-    "adminName": "American Samoa",
-    "adminLevel": "GAUL",
-    "iso31662": "US-AS"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-MP",
-    "adminName": "Northern Mariana Islands",
-    "adminLevel": "ADM1",
-    "iso31662": "US-MP"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-UM",
-    "adminName": "United States Minor Outlying Islands",
-    "adminLevel": "ADM1",
-    "iso31662": "US-UM"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "UM-76",
-    "adminName": "Navassa Island",
-    "adminLevel": "ADM1",
-    "iso31662": "UM-76"
+    "countryIso3": "FRA",
+    "adminCode": "FRA.2_1",
+    "adminName": "Bourgogne-Franche-Comté",
+    "adminLevel": "GADM",
+    "iso31662": "FR-BFC"
   },
   {
     "countryIso3": "FRA",
     "adminCode": "FR-BL",
     "adminName": "Saint Barthélemy",
-    "adminLevel": "ADM1",
+    "adminLevel": "GADM",
     "iso31662": "FR-BL"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-PF",
-    "adminName": "French Polynesia",
-    "adminLevel": "ADM1",
-    "iso31662": "FR-PF"
+    "adminCode": "BLM",
+    "adminName": "Saint Barthélemy",
+    "adminLevel": "GADM",
+    "iso31662": "FR-BL"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-NC",
-    "adminName": "New Caledonia",
-    "adminLevel": "ADM1",
-    "iso31662": "FR-NC"
+    "adminCode": "FR-BRE",
+    "adminName": "Brittany",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-BRE"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-PM",
-    "adminName": "Saint Pierre and Miquelon",
-    "adminLevel": "ADM1",
-    "iso31662": "FR-PM"
+    "adminCode": "FRH",
+    "adminName": "Brittany",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-BRE"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-WF",
-    "adminName": "Wallis and Futuna",
-    "adminLevel": "ADM1",
-    "iso31662": "FR-WF"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "UM-79",
-    "adminName": "Wake Island",
-    "adminLevel": "ADM1",
-    "iso31662": "UM-79"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "UM-81",
-    "adminName": "Baker Island",
-    "adminLevel": "ADM1",
-    "iso31662": "UM-81"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "UM-71",
-    "adminName": "Midway Atoll",
-    "adminLevel": "ADM1",
-    "iso31662": "UM-71"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "UM-86",
-    "adminName": "Jarvis Island",
-    "adminLevel": "ADM1",
-    "iso31662": "UM-86"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-K",
-    "adminName": "Blekinge County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-K"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-O",
-    "adminName": "Västra Götaland County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-O"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-M",
-    "adminName": "Skåne County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-M"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-F",
-    "adminName": "Jönköping County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-F"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-Z",
-    "adminName": "Jämtland County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-Z"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-BD",
-    "adminName": "Norrbotten County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-BD"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-N",
-    "adminName": "Halland County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-N"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-X",
-    "adminName": "Gävleborg County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-X"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-H",
-    "adminName": "Kalmar County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-H"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-W",
-    "adminName": "Dalarna County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-W"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-I",
-    "adminName": "Gotland County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-I"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-AB",
-    "adminName": "Stockholm County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-AB"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-T",
-    "adminName": "Örebro County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-T"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-G",
-    "adminName": "Kronoberg County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-G"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-AC",
-    "adminName": "Västerbotten County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-AC"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-Y",
-    "adminName": "Västernorrland County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-Y"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-C",
-    "adminName": "Uppsala County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-C"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-E",
-    "adminName": "Östergötland County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-E"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-U",
-    "adminName": "Västmanland County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-U"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-S",
-    "adminName": "Värmland County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-S"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-D",
-    "adminName": "Södermanland County",
-    "adminLevel": "NUTS",
-    "iso31662": "SE-D"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "UM-95",
-    "adminName": "Palmyra Atoll",
-    "adminLevel": "ADM1",
-    "iso31662": "UM-95"
+    "adminCode": "FRA.3_1",
+    "adminName": "Brittany",
+    "adminLevel": "GADM",
+    "iso31662": "FR-BRE"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-MF",
-    "adminName": "Saint-Martin",
-    "adminLevel": "ADM1",
-    "iso31662": "FR-MF"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "UM-89",
-    "adminName": "Kingman Reef",
-    "adminLevel": "ADM1",
-    "iso31662": "UM-89"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "UM-67",
-    "adminName": "Johnston Atoll",
-    "adminLevel": "ADM1",
-    "iso31662": "UM-67"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "UM-84",
-    "adminName": "Howland Island",
-    "adminLevel": "ADM1",
-    "iso31662": "UM-84"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "FI-OL",
-    "adminName": "Oulu Province",
-    "adminLevel": "ADM1",
-    "iso31662": "FI-OL"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-LMA",
-    "adminName": "Lima Province",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-LMA"
-  },
-  {
-    "countryIso3": "USA",
-    "adminCode": "US-DC",
-    "adminName": "District of Columbia",
-    "adminLevel": "GAUL",
-    "iso31662": "US-DC"
+    "adminCode": "FR-C",
+    "adminName": "Auvergne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-C"
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-NOR",
-    "adminName": "Normandy",
+    "adminCode": "FRK1",
+    "adminName": "Auvergne",
     "adminLevel": "NUTS",
-    "iso31662": "FR-NOR"
+    "iso31662": "FR-C"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-CP",
+    "adminName": "Clipperton Island",
+    "adminLevel": "",
+    "iso31662": "FR-CP"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-CVL",
+    "adminName": "Centre-Val de Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-CVL"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRB",
+    "adminName": "Centre-Val de Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-CVL"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.4_1",
+    "adminName": "Centre-Val de Loire",
+    "adminLevel": "GADM",
+    "iso31662": "FR-CVL"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-D",
+    "adminName": "Burgundy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-D"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRC1",
+    "adminName": "Burgundy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-D"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-G",
+    "adminName": "Champagne-Ardenne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-G"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR21",
+    "adminName": "Champagne-Ardenne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-G"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRF2",
+    "adminName": "Champagne-Ardenne",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-G"
   },
   {
     "countryIso3": "FRA",
@@ -1506,10 +3018,241 @@ export const CLIMATE_ISO_CROSSWALK: readonly IsoCrosswalkEntry[] = [
   },
   {
     "countryIso3": "FRA",
+    "adminCode": "FRF",
+    "adminName": "Grand Est",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-GES"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.6_1",
+    "adminName": "Grand Est",
+    "adminLevel": "GADM",
+    "iso31662": "FR-GES"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-HDF",
+    "adminName": "Hauts-de-France",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-HDF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRE",
+    "adminName": "Hauts-de-France",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-HDF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.7_1",
+    "adminName": "Hauts-de-France",
+    "adminLevel": "GADM",
+    "iso31662": "FR-HDF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-I",
+    "adminName": "Franche-Comté",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-I"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRC2",
+    "adminName": "Franche-Comté",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-I"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-IDF",
+    "adminName": "Île-de-France",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-IDF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR10",
+    "adminName": "Île-de-France",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-IDF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR1",
+    "adminName": "Île-de-France",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-IDF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.8_1",
+    "adminName": "Île-de-France",
+    "adminLevel": "GADM",
+    "iso31662": "FR-IDF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-K",
+    "adminName": "Languedoc-Roussillon",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-K"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR81",
+    "adminName": "Languedoc-Roussillon",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-K"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRJ1",
+    "adminName": "Languedoc-Roussillon",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-K"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-L",
+    "adminName": "Limousin",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-L"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRI2",
+    "adminName": "Limousin",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-L"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-M",
+    "adminName": "Lorraine",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-M"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR41",
+    "adminName": "Lorraine",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-M"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRF3",
+    "adminName": "Lorraine",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-M"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-MF",
+    "adminName": "Saint-Martin",
+    "adminLevel": "",
+    "iso31662": "FR-MF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-N",
+    "adminName": "Midi-Pyrénées",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-N"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRJ2",
+    "adminName": "Midi-Pyrénées",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-N"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR62",
+    "adminName": "Midi-Pyrénées",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-N"
+  },
+  {
+    "countryIso3": "FRA",
     "adminCode": "FR-NAQ",
     "adminName": "Nouvelle-Aquitaine",
     "adminLevel": "NUTS",
     "iso31662": "FR-NAQ"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRI",
+    "adminName": "Nouvelle-Aquitaine",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-NAQ"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.10_1",
+    "adminName": "Nouvelle-Aquitaine",
+    "adminLevel": "GADM",
+    "iso31662": "FR-NAQ"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-NC",
+    "adminName": "New Caledonia",
+    "adminLevel": "",
+    "iso31662": "FR-NC"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-NOR",
+    "adminName": "Normandy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-NOR"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRD",
+    "adminName": "Normandy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-NOR"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.9_1",
+    "adminName": "Normandy",
+    "adminLevel": "GADM",
+    "iso31662": "FR-NOR"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-O",
+    "adminName": "Nord-Pas-de-Calais",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-O"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR3",
+    "adminName": "Nord-Pas-de-Calais",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-O"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR30",
+    "adminName": "Nord-Pas-de-Calais",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-O"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRE1",
+    "adminName": "Nord-Pas-de-Calais",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-O"
   },
   {
     "countryIso3": "FRA",
@@ -1520,549 +3263,2467 @@ export const CLIMATE_ISO_CROSSWALK: readonly IsoCrosswalkEntry[] = [
   },
   {
     "countryIso3": "FRA",
-    "adminCode": "FR-I",
-    "adminName": "Franche-Comté",
+    "adminCode": "FRJ",
+    "adminName": "Occitania",
     "adminLevel": "NUTS",
-    "iso31662": "FR-I"
+    "iso31662": "FR-OCC"
   },
   {
-    "countryIso3": "PER",
-    "adminCode": "PE-LOR",
-    "adminName": "Loreto Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-LOR"
+    "countryIso3": "FRA",
+    "adminCode": "FRA.11_1",
+    "adminName": "Occitania",
+    "adminLevel": "GADM",
+    "iso31662": "FR-OCC"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-P",
+    "adminName": "Lower Normandy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-P"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR25",
+    "adminName": "Lower Normandy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-P"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRD1",
+    "adminName": "Lower Normandy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-P"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-PAC",
+    "adminName": "Provence-Alpes-Côte d'Azur",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-PAC"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRL",
+    "adminName": "Provence-Alpes-Côte d'Azur",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-PAC"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.13_1",
+    "adminName": "Provence-Alpes-Côte d'Azur",
+    "adminLevel": "GADM",
+    "iso31662": "FR-PAC"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-PDL",
+    "adminName": "Pays de la Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-PDL"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRG",
+    "adminName": "Pays de la Loire",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-PDL"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRA.12_1",
+    "adminName": "Pays de la Loire",
+    "adminLevel": "GADM",
+    "iso31662": "FR-PDL"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-PF",
+    "adminName": "French Polynesia",
+    "adminLevel": "GADM",
+    "iso31662": "FR-PF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "PYF",
+    "adminName": "French Polynesia",
+    "adminLevel": "GADM",
+    "iso31662": "FR-PF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-PM",
+    "adminName": "Saint Pierre and Miquelon",
+    "adminLevel": "GADM",
+    "iso31662": "FR-PM"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "SPM",
+    "adminName": "Saint Pierre and Miquelon",
+    "adminLevel": "GADM",
+    "iso31662": "FR-PM"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-Q",
+    "adminName": "Upper Normandy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-Q"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRD2",
+    "adminName": "Upper Normandy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-Q"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-S",
+    "adminName": "Picardy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-S"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR22",
+    "adminName": "Picardy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-S"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRE2",
+    "adminName": "Picardy",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-S"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-T",
+    "adminName": "Poitou-Charentes",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-T"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR53",
+    "adminName": "Poitou-Charentes",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-T"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRI3",
+    "adminName": "Poitou-Charentes",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-T"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-TF",
+    "adminName": "French Southern and Antarctic Lands",
+    "adminLevel": "GADM",
+    "iso31662": "FR-TF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "ATF",
+    "adminName": "French Southern and Antarctic Lands",
+    "adminLevel": "GADM",
+    "iso31662": "FR-TF"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-V",
+    "adminName": "Rhône-Alpes",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-V"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR71",
+    "adminName": "Rhône-Alpes",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-V"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FRK2",
+    "adminName": "Rhône-Alpes",
+    "adminLevel": "NUTS",
+    "iso31662": "FR-V"
+  },
+  {
+    "countryIso3": "FRA",
+    "adminCode": "FR-WF",
+    "adminName": "Wallis and Futuna",
+    "adminLevel": "",
+    "iso31662": "FR-WF"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-AT",
+    "adminName": "Attapeu Province",
+    "adminLevel": "",
+    "iso31662": "LA-AT"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-BK",
+    "adminName": "Bokeo Province",
+    "adminLevel": "",
+    "iso31662": "LA-BK"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-BL",
+    "adminName": "Bolikhamsai Province",
+    "adminLevel": "",
+    "iso31662": "LA-BL"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-CH",
+    "adminName": "Champasak Province",
+    "adminLevel": "",
+    "iso31662": "LA-CH"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-HO",
+    "adminName": "Hūaphan",
+    "adminLevel": "",
+    "iso31662": "LA-HO"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-KH",
+    "adminName": "Khammouane Province",
+    "adminLevel": "",
+    "iso31662": "LA-KH"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-LM",
+    "adminName": "Lūang Namthā",
+    "adminLevel": "",
+    "iso31662": "LA-LM"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-LP",
+    "adminName": "Luang Prabang Province",
+    "adminLevel": "",
+    "iso31662": "LA-LP"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-OU",
+    "adminName": "Udomsai",
+    "adminLevel": "",
+    "iso31662": "LA-OU"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-PH",
+    "adminName": "Phongsaly Province",
+    "adminLevel": "",
+    "iso31662": "LA-PH"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-SL",
+    "adminName": "Salavan Province",
+    "adminLevel": "",
+    "iso31662": "LA-SL"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-SV",
+    "adminName": "Savannakhet Province",
+    "adminLevel": "",
+    "iso31662": "LA-SV"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-VI",
+    "adminName": "Vientiane Province",
+    "adminLevel": "",
+    "iso31662": "LA-VI"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-VT",
+    "adminName": "Vientiane",
+    "adminLevel": "",
+    "iso31662": "LA-VT"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-XA",
+    "adminName": "Sainyabūlī",
+    "adminLevel": "",
+    "iso31662": "LA-XA"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-XE",
+    "adminName": "Sekong province",
+    "adminLevel": "",
+    "iso31662": "LA-XE"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-XI",
+    "adminName": "Xiangkhouang Province",
+    "adminLevel": "",
+    "iso31662": "LA-XI"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-XN",
+    "adminName": "Xaisomboun",
+    "adminLevel": "",
+    "iso31662": "LA-XN"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LA-XS",
+    "adminName": "Xaisomboun Province",
+    "adminLevel": "GADM",
+    "iso31662": "LA-XS"
+  },
+  {
+    "countryIso3": "LAO",
+    "adminCode": "LAO.16_1",
+    "adminName": "Xaisomboun Province",
+    "adminLevel": "GADM",
+    "iso31662": "LA-XS"
   },
   {
     "countryIso3": "PER",
     "adminCode": "PE-AMA",
     "adminName": "Amazonas Department",
-    "adminLevel": "ADM1",
+    "adminLevel": "",
     "iso31662": "PE-AMA"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-CUS",
-    "adminName": "Cusco Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-CUS"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-ARE",
-    "adminName": "Arequipa Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-ARE"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-CAJ",
-    "adminName": "Cajamarca Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-CAJ"
   },
   {
     "countryIso3": "PER",
     "adminCode": "PE-ANC",
     "adminName": "Áncash Department",
-    "adminLevel": "ADM1",
+    "adminLevel": "",
     "iso31662": "PE-ANC"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-PUN",
-    "adminName": "Puno Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-PUN"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-AYA",
-    "adminName": "Ayacucho Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-AYA"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-LAL",
-    "adminName": "La Libertad Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-LAL"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-TAC",
-    "adminName": "Tacna Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-TAC"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-UCA",
-    "adminName": "Ucayali Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-UCA"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-JUN",
-    "adminName": "Junín Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-JUN"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-MOQ",
-    "adminName": "Moquegua Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-MOQ"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-PIU",
-    "adminName": "Piura Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-PIU"
   },
   {
     "countryIso3": "PER",
     "adminCode": "PE-APU",
     "adminName": "Apurímac Department",
-    "adminLevel": "ADM1",
+    "adminLevel": "",
     "iso31662": "PE-APU"
   },
   {
     "countryIso3": "PER",
-    "adminCode": "PE-ICA",
-    "adminName": "Ica Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-ICA"
+    "adminCode": "PE-ARE",
+    "adminName": "Arequipa Department",
+    "adminLevel": "",
+    "iso31662": "PE-ARE"
   },
   {
     "countryIso3": "PER",
-    "adminCode": "PE-TUM",
-    "adminName": "Tumbes Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-TUM"
+    "adminCode": "PE-AYA",
+    "adminName": "Ayacucho Department",
+    "adminLevel": "",
+    "iso31662": "PE-AYA"
   },
   {
     "countryIso3": "PER",
-    "adminCode": "PE-LAM",
-    "adminName": "Lambayeque Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-LAM"
+    "adminCode": "PE-CAJ",
+    "adminName": "Cajamarca Department",
+    "adminLevel": "",
+    "iso31662": "PE-CAJ"
   },
   {
     "countryIso3": "PER",
-    "adminCode": "PE-MDD",
-    "adminName": "Madre de Dios Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-MDD"
+    "adminCode": "PE-CAL",
+    "adminName": "Constitutional Province of Callao",
+    "adminLevel": "",
+    "iso31662": "PE-CAL"
   },
   {
     "countryIso3": "PER",
-    "adminCode": "PE-PAS",
-    "adminName": "Pasco Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-PAS"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-SAM",
-    "adminName": "San Martin Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-SAM"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-LIM",
-    "adminName": "Lima Department",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-LIM"
+    "adminCode": "PE-CUS",
+    "adminName": "Cusco Department",
+    "adminLevel": "",
+    "iso31662": "PE-CUS"
   },
   {
     "countryIso3": "PER",
     "adminCode": "PE-HUC",
     "adminName": "Huanuco Department",
-    "adminLevel": "ADM1",
+    "adminLevel": "",
     "iso31662": "PE-HUC"
   },
   {
     "countryIso3": "PER",
     "adminCode": "PE-HUV",
     "adminName": "Huancavelica Department",
-    "adminLevel": "ADM1",
+    "adminLevel": "",
     "iso31662": "PE-HUV"
   },
   {
     "countryIso3": "PER",
-    "adminCode": "PE-CAL",
-    "adminName": "Callao Region",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-CAL"
+    "adminCode": "PE-ICA",
+    "adminName": "Ica Department",
+    "adminLevel": "",
+    "iso31662": "PE-ICA"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-QC",
-    "adminName": "Quebec",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-QC"
+    "countryIso3": "PER",
+    "adminCode": "PE-JUN",
+    "adminName": "Junín Department",
+    "adminLevel": "",
+    "iso31662": "PE-JUN"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-ON",
-    "adminName": "Ontario",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-ON"
+    "countryIso3": "PER",
+    "adminCode": "PE-LAL",
+    "adminName": "La Libertad Department",
+    "adminLevel": "",
+    "iso31662": "PE-LAL"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-MB",
-    "adminName": "Manitoba",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-MB"
+    "countryIso3": "PER",
+    "adminCode": "PE-LAM",
+    "adminName": "Lambayeque Department",
+    "adminLevel": "",
+    "iso31662": "PE-LAM"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-AB",
-    "adminName": "Alberta",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-AB"
+    "countryIso3": "PER",
+    "adminCode": "PE-LIM",
+    "adminName": "Lima Department",
+    "adminLevel": "",
+    "iso31662": "PE-LIM"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-NS",
-    "adminName": "Nova Scotia",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-NS"
+    "countryIso3": "PER",
+    "adminCode": "PE-LMA",
+    "adminName": "Lima Province",
+    "adminLevel": "",
+    "iso31662": "PE-LMA"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-NB",
-    "adminName": "New Brunswick",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-NB"
+    "countryIso3": "PER",
+    "adminCode": "PE-LOR",
+    "adminName": "Loreto Department",
+    "adminLevel": "",
+    "iso31662": "PE-LOR"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-BC",
-    "adminName": "British Columbia",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-BC"
+    "countryIso3": "PER",
+    "adminCode": "PE-MDD",
+    "adminName": "Madre de Dios Department",
+    "adminLevel": "",
+    "iso31662": "PE-MDD"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-PE",
-    "adminName": "Prince Edward Island",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-PE"
+    "countryIso3": "PER",
+    "adminCode": "PE-MOQ",
+    "adminName": "Moquegua Department",
+    "adminLevel": "",
+    "iso31662": "PE-MOQ"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-SK",
-    "adminName": "Saskatchewan",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-SK"
+    "countryIso3": "PER",
+    "adminCode": "PE-PAS",
+    "adminName": "Pasco Department",
+    "adminLevel": "",
+    "iso31662": "PE-PAS"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-NL",
-    "adminName": "Newfoundland and Labrador",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-NL"
+    "countryIso3": "PER",
+    "adminCode": "PE-PIU",
+    "adminName": "Piura Department",
+    "adminLevel": "",
+    "iso31662": "PE-PIU"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-NT",
-    "adminName": "Northwest Territories",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-NT"
+    "countryIso3": "PER",
+    "adminCode": "PE-PUN",
+    "adminName": "Puno Department",
+    "adminLevel": "",
+    "iso31662": "PE-PUN"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-YT",
-    "adminName": "Yukon",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-YT"
+    "countryIso3": "PER",
+    "adminCode": "PE-SAM",
+    "adminName": "San Martin Department",
+    "adminLevel": "",
+    "iso31662": "PE-SAM"
   },
   {
-    "countryIso3": "CAN",
-    "adminCode": "CA-NU",
-    "adminName": "Nunavut",
-    "adminLevel": "GAUL",
-    "iso31662": "CA-NU"
+    "countryIso3": "PER",
+    "adminCode": "PE-TAC",
+    "adminName": "Tacna Department",
+    "adminLevel": "",
+    "iso31662": "PE-TAC"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-SL",
-    "adminName": "Salavan Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-SL"
+    "countryIso3": "PER",
+    "adminCode": "PE-TUM",
+    "adminName": "Tumbes Department",
+    "adminLevel": "",
+    "iso31662": "PE-TUM"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-PH",
-    "adminName": "Phongsaly Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-PH"
+    "countryIso3": "PER",
+    "adminCode": "PE-UCA",
+    "adminName": "Ucayali Department",
+    "adminLevel": "",
+    "iso31662": "PE-UCA"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-BK",
-    "adminName": "Bokeo Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-BK"
+    "countryIso3": "SWE",
+    "adminCode": "SE-AB",
+    "adminName": "Stockholm County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-AB"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-CH",
-    "adminName": "Champasak Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-CH"
+    "countryIso3": "SWE",
+    "adminCode": "SE110",
+    "adminName": "Stockholm County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-AB"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-XA",
-    "adminName": "Sainyabūlī",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-XA"
+    "countryIso3": "SWE",
+    "adminCode": "SWE.15_1",
+    "adminName": "Stockholm County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-AB"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-SV",
-    "adminName": "Savannakhet Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-SV"
+    "countryIso3": "SWE",
+    "adminCode": "SE-AC",
+    "adminName": "Västerbotten County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-AC"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-XI",
-    "adminName": "Xiangkhouang Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-XI"
+    "countryIso3": "SWE",
+    "adminCode": "SE331",
+    "adminName": "Västerbotten County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-AC"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-OU",
-    "adminName": "Udomsai",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-OU"
+    "countryIso3": "SWE",
+    "adminCode": "SWE.18_1",
+    "adminName": "Västerbotten County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-AC"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-HO",
-    "adminName": "Hūaphan",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-HO"
+    "countryIso3": "SWE",
+    "adminCode": "SE-BD",
+    "adminName": "Norrbotten County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-BD"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-AT",
-    "adminName": "Attapeu Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-AT"
+    "countryIso3": "SWE",
+    "adminCode": "SE332",
+    "adminName": "Norrbotten County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-BD"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-KH",
-    "adminName": "Khammouane Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-KH"
+    "countryIso3": "SWE",
+    "adminCode": "SE-C",
+    "adminName": "Uppsala County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-C"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-XE",
-    "adminName": "Sekong province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-XE"
+    "countryIso3": "SWE",
+    "adminCode": "SE121",
+    "adminName": "Uppsala County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-C"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-VI",
-    "adminName": "Vientiane Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-VI"
+    "countryIso3": "SWE",
+    "adminCode": "SWE.16_1",
+    "adminName": "Uppsala County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-C"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-LP",
-    "adminName": "Luang Prabang Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-LP"
+    "countryIso3": "SWE",
+    "adminCode": "SE-D",
+    "adminName": "Södermanland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-D"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-LM",
-    "adminName": "Lūang Namthā",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-LM"
+    "countryIso3": "SWE",
+    "adminCode": "SE122",
+    "adminName": "Södermanland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-D"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-BL",
-    "adminName": "Bolikhamsai Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-BL"
+    "countryIso3": "SWE",
+    "adminCode": "SWE.14_1",
+    "adminName": "Södermanland County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-D"
   },
   {
-    "countryIso3": "LAO",
-    "adminCode": "LA-XS",
-    "adminName": "Xaisomboun Province",
-    "adminLevel": "ADM1",
-    "iso31662": "LA-XS"
+    "countryIso3": "SWE",
+    "adminCode": "SE-E",
+    "adminName": "Östergötland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-E"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE123",
+    "adminName": "Östergötland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-E"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SWE.12_1",
+    "adminName": "Östergötland County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-E"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-F",
+    "adminName": "Jönköping County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-F"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE211",
+    "adminName": "Jönköping County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-F"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SWE.7_1",
+    "adminName": "Jönköping County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-F"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-G",
+    "adminName": "Kronoberg County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-G"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE212",
+    "adminName": "Kronoberg County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-G"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-H",
+    "adminName": "Kalmar County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-H"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE213",
+    "adminName": "Kalmar County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-H"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SWE.8_1",
+    "adminName": "Kalmar County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-H"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-I",
+    "adminName": "Gotland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-I"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE214",
+    "adminName": "Gotland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-I"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SWE.4_1",
+    "adminName": "Gotland County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-I"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-K",
+    "adminName": "Blekinge County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-K"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE221",
+    "adminName": "Blekinge County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-K"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-M",
+    "adminName": "Skåne County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-M"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE224",
+    "adminName": "Skåne County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-M"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-N",
+    "adminName": "Halland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-N"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE231",
+    "adminName": "Halland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-N"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SWE.5_1",
+    "adminName": "Halland County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-N"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-O",
+    "adminName": "Västra Götaland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-O"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE232",
+    "adminName": "Västra Götaland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-O"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-S",
+    "adminName": "Värmland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-S"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE311",
+    "adminName": "Värmland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-S"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SWE.17_1",
+    "adminName": "Värmland County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-S"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-T",
+    "adminName": "Örebro County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-T"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE124",
+    "adminName": "Örebro County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-T"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SWE.11_1",
+    "adminName": "Örebro County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-T"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-U",
+    "adminName": "Västmanland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-U"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE125",
+    "adminName": "Västmanland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-U"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SWE.20_1",
+    "adminName": "Västmanland County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-U"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-W",
+    "adminName": "Dalarna County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-W"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE312",
+    "adminName": "Dalarna County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-W"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SWE.2_1",
+    "adminName": "Dalarna County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-W"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-X",
+    "adminName": "Gävleborg County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-X"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE313",
+    "adminName": "Gävleborg County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-X"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-Y",
+    "adminName": "Västernorrland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-Y"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE321",
+    "adminName": "Västernorrland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-Y"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE-Z",
+    "adminName": "Jämtland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-Z"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SE322",
+    "adminName": "Jämtland County",
+    "adminLevel": "NUTS",
+    "iso31662": "SE-Z"
+  },
+  {
+    "countryIso3": "SWE",
+    "adminCode": "SWE.6_1",
+    "adminName": "Jämtland County",
+    "adminLevel": "GADM",
+    "iso31662": "SE-Z"
   },
   {
     "countryIso3": "USA",
-    "adminCode": "US-PR",
-    "adminName": "Puerto Rico",
-    "adminLevel": "GAUL",
-    "iso31662": "US-PR"
+    "adminCode": "US-AK",
+    "adminName": "Alaska",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-AK"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-973",
-    "adminName": "French Guiana",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-973"
+    "countryIso3": "USA",
+    "adminCode": "AK",
+    "adminName": "Alaska",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-AK"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-973",
-    "adminName": "French Guiana",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-973"
+    "countryIso3": "USA",
+    "adminCode": "02",
+    "adminName": "Alaska",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-AK"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-973",
-    "adminName": "French Guiana",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-973"
+    "countryIso3": "USA",
+    "adminCode": "USA.2_1",
+    "adminName": "Alaska",
+    "adminLevel": "GADM",
+    "iso31662": "US-AK"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-973",
-    "adminName": "French Guiana",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-973"
+    "countryIso3": "USA",
+    "adminCode": "US-AL",
+    "adminName": "Alabama",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-AL"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-973",
-    "adminName": "French Guiana",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-973"
+    "countryIso3": "USA",
+    "adminCode": "AL",
+    "adminName": "Alabama",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-AL"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "01",
+    "adminName": "Alabama",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-AL"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.1_1",
+    "adminName": "Alabama",
+    "adminLevel": "GADM",
+    "iso31662": "US-AL"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-AR",
+    "adminName": "Arkansas",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-AR"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "AR",
+    "adminName": "Arkansas",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-AR"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "05",
+    "adminName": "Arkansas",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-AR"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.4_1",
+    "adminName": "Arkansas",
+    "adminLevel": "GADM",
+    "iso31662": "US-AR"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-AS",
+    "adminName": "American Samoa",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-AS"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "AS",
+    "adminName": "American Samoa",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-AS"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "60",
+    "adminName": "American Samoa",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-AS"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "ASM",
+    "adminName": "American Samoa",
+    "adminLevel": "GADM",
+    "iso31662": "US-AS"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-AZ",
+    "adminName": "Arizona",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-AZ"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "AZ",
+    "adminName": "Arizona",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-AZ"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "04",
+    "adminName": "Arizona",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-AZ"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.3_1",
+    "adminName": "Arizona",
+    "adminLevel": "GADM",
+    "iso31662": "US-AZ"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-CA",
+    "adminName": "California",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-CA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "CA",
+    "adminName": "California",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-CA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "06",
+    "adminName": "California",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-CA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.5_1",
+    "adminName": "California",
+    "adminLevel": "GADM",
+    "iso31662": "US-CA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-CO",
+    "adminName": "Colorado",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-CO"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "CO",
+    "adminName": "Colorado",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-CO"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "08",
+    "adminName": "Colorado",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-CO"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.6_1",
+    "adminName": "Colorado",
+    "adminLevel": "GADM",
+    "iso31662": "US-CO"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-CT",
+    "adminName": "Connecticut",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-CT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "CT",
+    "adminName": "Connecticut",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-CT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "09",
+    "adminName": "Connecticut",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-CT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.7_1",
+    "adminName": "Connecticut",
+    "adminLevel": "GADM",
+    "iso31662": "US-CT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-DC",
+    "adminName": "District of Columbia",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-DC"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "DC",
+    "adminName": "District of Columbia",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-DC"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "11",
+    "adminName": "District of Columbia",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-DC"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.9_1",
+    "adminName": "District of Columbia",
+    "adminLevel": "GADM",
+    "iso31662": "US-DC"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-DE",
+    "adminName": "Delaware",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-DE"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "DE",
+    "adminName": "Delaware",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-DE"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "10",
+    "adminName": "Delaware",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-DE"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.8_1",
+    "adminName": "Delaware",
+    "adminLevel": "GADM",
+    "iso31662": "US-DE"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-FL",
+    "adminName": "Florida",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-FL"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "FL",
+    "adminName": "Florida",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-FL"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "12",
+    "adminName": "Florida",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-FL"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.10_1",
+    "adminName": "Florida",
+    "adminLevel": "GADM",
+    "iso31662": "US-FL"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-GA",
+    "adminName": "Georgia",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-GA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "GA",
+    "adminName": "Georgia",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-GA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "13",
+    "adminName": "Georgia",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-GA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.11_1",
+    "adminName": "Georgia",
+    "adminLevel": "GADM",
+    "iso31662": "US-GA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-GU",
+    "adminName": "Guam",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-GU"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "GU",
+    "adminName": "Guam",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-GU"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "66",
+    "adminName": "Guam",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-GU"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "GUM",
+    "adminName": "Guam",
+    "adminLevel": "GADM",
+    "iso31662": "US-GU"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-HI",
+    "adminName": "Hawaii",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-HI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "HI",
+    "adminName": "Hawaii",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-HI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "15",
+    "adminName": "Hawaii",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-HI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.12_1",
+    "adminName": "Hawaii",
+    "adminLevel": "GADM",
+    "iso31662": "US-HI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-IA",
+    "adminName": "Iowa",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-IA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "IA",
+    "adminName": "Iowa",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-IA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "19",
+    "adminName": "Iowa",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-IA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.16_1",
+    "adminName": "Iowa",
+    "adminLevel": "GADM",
+    "iso31662": "US-IA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-ID",
+    "adminName": "Idaho",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-ID"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "ID",
+    "adminName": "Idaho",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-ID"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "16",
+    "adminName": "Idaho",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-ID"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.13_1",
+    "adminName": "Idaho",
+    "adminLevel": "GADM",
+    "iso31662": "US-ID"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-IL",
+    "adminName": "Illinois",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-IL"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "IL",
+    "adminName": "Illinois",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-IL"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "17",
+    "adminName": "Illinois",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-IL"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.14_1",
+    "adminName": "Illinois",
+    "adminLevel": "GADM",
+    "iso31662": "US-IL"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-IN",
+    "adminName": "Indiana",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-IN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "IN",
+    "adminName": "Indiana",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-IN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "18",
+    "adminName": "Indiana",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-IN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.15_1",
+    "adminName": "Indiana",
+    "adminLevel": "GADM",
+    "iso31662": "US-IN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-KS",
+    "adminName": "Kansas",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-KS"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "KS",
+    "adminName": "Kansas",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-KS"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "20",
+    "adminName": "Kansas",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-KS"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.17_1",
+    "adminName": "Kansas",
+    "adminLevel": "GADM",
+    "iso31662": "US-KS"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-KY",
+    "adminName": "Kentucky",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-KY"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "KY",
+    "adminName": "Kentucky",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-KY"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "21",
+    "adminName": "Kentucky",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-KY"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.18_1",
+    "adminName": "Kentucky",
+    "adminLevel": "GADM",
+    "iso31662": "US-KY"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-LA",
+    "adminName": "Louisiana",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-LA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "LA",
+    "adminName": "Louisiana",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-LA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "22",
+    "adminName": "Louisiana",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-LA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.19_1",
+    "adminName": "Louisiana",
+    "adminLevel": "GADM",
+    "iso31662": "US-LA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-MA",
+    "adminName": "Massachusetts",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "MA",
+    "adminName": "Massachusetts",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "25",
+    "adminName": "Massachusetts",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-MA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.22_1",
+    "adminName": "Massachusetts",
+    "adminLevel": "GADM",
+    "iso31662": "US-MA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-MD",
+    "adminName": "Maryland",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MD"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "MD",
+    "adminName": "Maryland",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MD"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "24",
+    "adminName": "Maryland",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-MD"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.21_1",
+    "adminName": "Maryland",
+    "adminLevel": "GADM",
+    "iso31662": "US-MD"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-ME",
+    "adminName": "Maine",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-ME"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "ME",
+    "adminName": "Maine",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-ME"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "23",
+    "adminName": "Maine",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-ME"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.20_1",
+    "adminName": "Maine",
+    "adminLevel": "GADM",
+    "iso31662": "US-ME"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-MI",
+    "adminName": "Michigan",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "MI",
+    "adminName": "Michigan",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "26",
+    "adminName": "Michigan",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-MI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.23_1",
+    "adminName": "Michigan",
+    "adminLevel": "GADM",
+    "iso31662": "US-MI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-MN",
+    "adminName": "Minnesota",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "MN",
+    "adminName": "Minnesota",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "27",
+    "adminName": "Minnesota",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-MN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.24_1",
+    "adminName": "Minnesota",
+    "adminLevel": "GADM",
+    "iso31662": "US-MN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-MO",
+    "adminName": "Missouri",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MO"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "MO",
+    "adminName": "Missouri",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MO"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "29",
+    "adminName": "Missouri",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-MO"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.26_1",
+    "adminName": "Missouri",
+    "adminLevel": "GADM",
+    "iso31662": "US-MO"
   },
   {
     "countryIso3": "USA",
     "adminCode": "US-MP",
     "adminName": "Northern Mariana Islands",
-    "adminLevel": "ADM1",
+    "adminLevel": "FIPS-Alpha",
     "iso31662": "US-MP"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-971",
-    "adminName": "Guadeloupe",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-971"
+    "countryIso3": "USA",
+    "adminCode": "MP",
+    "adminName": "Northern Mariana Islands",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MP"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-971",
-    "adminName": "Guadeloupe",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-971"
+    "countryIso3": "USA",
+    "adminCode": "69",
+    "adminName": "Northern Mariana Islands",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-MP"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-972",
-    "adminName": "Martinique",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-972"
+    "countryIso3": "USA",
+    "adminCode": "US-MS",
+    "adminName": "Mississippi",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MS"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-972",
-    "adminName": "Martinique",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-972"
+    "countryIso3": "USA",
+    "adminCode": "MS",
+    "adminName": "Mississippi",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MS"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-972",
-    "adminName": "Martinique",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-972"
+    "countryIso3": "USA",
+    "adminCode": "28",
+    "adminName": "Mississippi",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-MS"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-972",
-    "adminName": "Martinique",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-972"
+    "countryIso3": "USA",
+    "adminCode": "USA.25_1",
+    "adminName": "Mississippi",
+    "adminLevel": "GADM",
+    "iso31662": "US-MS"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-972",
-    "adminName": "Martinique",
-    "adminLevel": "GAUL",
-    "iso31662": "FR-972"
+    "countryIso3": "USA",
+    "adminCode": "US-MT",
+    "adminName": "Montana",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MT"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-976",
-    "adminName": "Mayotte",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-976"
+    "countryIso3": "USA",
+    "adminCode": "MT",
+    "adminName": "Montana",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-MT"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-976",
-    "adminName": "Mayotte",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-976"
+    "countryIso3": "USA",
+    "adminCode": "30",
+    "adminName": "Montana",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-MT"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-976",
-    "adminName": "Mayotte",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-976"
+    "countryIso3": "USA",
+    "adminCode": "USA.27_1",
+    "adminName": "Montana",
+    "adminLevel": "GADM",
+    "iso31662": "US-MT"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-974",
-    "adminName": "Réunion",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-974"
+    "countryIso3": "USA",
+    "adminCode": "US-NC",
+    "adminName": "North Carolina",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NC"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-974",
-    "adminName": "Réunion",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-974"
+    "countryIso3": "USA",
+    "adminCode": "NC",
+    "adminName": "North Carolina",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NC"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-974",
-    "adminName": "Réunion",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-974"
+    "countryIso3": "USA",
+    "adminCode": "37",
+    "adminName": "North Carolina",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-NC"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-974",
-    "adminName": "Réunion",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-974"
+    "countryIso3": "USA",
+    "adminCode": "USA.34_1",
+    "adminName": "North Carolina",
+    "adminLevel": "GADM",
+    "iso31662": "US-NC"
   },
   {
-    "countryIso3": "FRA",
-    "adminCode": "FR-974",
-    "adminName": "Réunion",
-    "adminLevel": "NUTS",
-    "iso31662": "FR-974"
+    "countryIso3": "USA",
+    "adminCode": "US-ND",
+    "adminName": "North Dakota",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-ND"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "ND",
+    "adminName": "North Dakota",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-ND"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "38",
+    "adminName": "North Dakota",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-ND"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.35_1",
+    "adminName": "North Dakota",
+    "adminLevel": "GADM",
+    "iso31662": "US-ND"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-NE",
+    "adminName": "Nebraska",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NE"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "NE",
+    "adminName": "Nebraska",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NE"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "31",
+    "adminName": "Nebraska",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-NE"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.28_1",
+    "adminName": "Nebraska",
+    "adminLevel": "GADM",
+    "iso31662": "US-NE"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-NH",
+    "adminName": "New Hampshire",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NH"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "NH",
+    "adminName": "New Hampshire",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NH"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "33",
+    "adminName": "New Hampshire",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-NH"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.30_1",
+    "adminName": "New Hampshire",
+    "adminLevel": "GADM",
+    "iso31662": "US-NH"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-NJ",
+    "adminName": "New Jersey",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NJ"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "NJ",
+    "adminName": "New Jersey",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NJ"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "34",
+    "adminName": "New Jersey",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-NJ"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.31_1",
+    "adminName": "New Jersey",
+    "adminLevel": "GADM",
+    "iso31662": "US-NJ"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-NM",
+    "adminName": "New Mexico",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NM"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "NM",
+    "adminName": "New Mexico",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NM"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "35",
+    "adminName": "New Mexico",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-NM"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.32_1",
+    "adminName": "New Mexico",
+    "adminLevel": "GADM",
+    "iso31662": "US-NM"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-NV",
+    "adminName": "Nevada",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NV"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "NV",
+    "adminName": "Nevada",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NV"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "32",
+    "adminName": "Nevada",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-NV"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.29_1",
+    "adminName": "Nevada",
+    "adminLevel": "GADM",
+    "iso31662": "US-NV"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-NY",
+    "adminName": "New York",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NY"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "NY",
+    "adminName": "New York",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-NY"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "36",
+    "adminName": "New York",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-NY"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.33_1",
+    "adminName": "New York",
+    "adminLevel": "GADM",
+    "iso31662": "US-NY"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-OH",
+    "adminName": "Ohio",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-OH"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "OH",
+    "adminName": "Ohio",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-OH"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "39",
+    "adminName": "Ohio",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-OH"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.36_1",
+    "adminName": "Ohio",
+    "adminLevel": "GADM",
+    "iso31662": "US-OH"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-OK",
+    "adminName": "Oklahoma",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-OK"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "OK",
+    "adminName": "Oklahoma",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-OK"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "40",
+    "adminName": "Oklahoma",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-OK"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.37_1",
+    "adminName": "Oklahoma",
+    "adminLevel": "GADM",
+    "iso31662": "US-OK"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-OR",
+    "adminName": "Oregon",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-OR"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "OR",
+    "adminName": "Oregon",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-OR"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "41",
+    "adminName": "Oregon",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-OR"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.38_1",
+    "adminName": "Oregon",
+    "adminLevel": "GADM",
+    "iso31662": "US-OR"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-PA",
+    "adminName": "Pennsylvania",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-PA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "PA",
+    "adminName": "Pennsylvania",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-PA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "42",
+    "adminName": "Pennsylvania",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-PA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.39_1",
+    "adminName": "Pennsylvania",
+    "adminLevel": "GADM",
+    "iso31662": "US-PA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-PR",
+    "adminName": "Puerto Rico",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-PR"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "PR",
+    "adminName": "Puerto Rico",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-PR"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "72",
+    "adminName": "Puerto Rico",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-PR"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-RI",
+    "adminName": "Rhode Island",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-RI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "RI",
+    "adminName": "Rhode Island",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-RI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "44",
+    "adminName": "Rhode Island",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-RI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.40_1",
+    "adminName": "Rhode Island",
+    "adminLevel": "GADM",
+    "iso31662": "US-RI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-SC",
+    "adminName": "South Carolina",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-SC"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "SC",
+    "adminName": "South Carolina",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-SC"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "45",
+    "adminName": "South Carolina",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-SC"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.41_1",
+    "adminName": "South Carolina",
+    "adminLevel": "GADM",
+    "iso31662": "US-SC"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-SD",
+    "adminName": "South Dakota",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-SD"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "SD",
+    "adminName": "South Dakota",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-SD"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "46",
+    "adminName": "South Dakota",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-SD"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.42_1",
+    "adminName": "South Dakota",
+    "adminLevel": "GADM",
+    "iso31662": "US-SD"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-TN",
+    "adminName": "Tennessee",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-TN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "TN",
+    "adminName": "Tennessee",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-TN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "47",
+    "adminName": "Tennessee",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-TN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.43_1",
+    "adminName": "Tennessee",
+    "adminLevel": "GADM",
+    "iso31662": "US-TN"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-TX",
+    "adminName": "Texas",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-TX"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "TX",
+    "adminName": "Texas",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-TX"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "48",
+    "adminName": "Texas",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-TX"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.44_1",
+    "adminName": "Texas",
+    "adminLevel": "GADM",
+    "iso31662": "US-TX"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-UM",
+    "adminName": "United States Minor Outlying Islands",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-UM"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "UM",
+    "adminName": "United States Minor Outlying Islands",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-UM"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "74",
+    "adminName": "United States Minor Outlying Islands",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-UM"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-UT",
+    "adminName": "Utah",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-UT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "UT",
+    "adminName": "Utah",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-UT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "49",
+    "adminName": "Utah",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-UT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.45_1",
+    "adminName": "Utah",
+    "adminLevel": "GADM",
+    "iso31662": "US-UT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-VA",
+    "adminName": "Virginia",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-VA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "VA",
+    "adminName": "Virginia",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-VA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "51",
+    "adminName": "Virginia",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-VA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.47_1",
+    "adminName": "Virginia",
+    "adminLevel": "GADM",
+    "iso31662": "US-VA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-VT",
+    "adminName": "Vermont",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-VT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "VT",
+    "adminName": "Vermont",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-VT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "50",
+    "adminName": "Vermont",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-VT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.46_1",
+    "adminName": "Vermont",
+    "adminLevel": "GADM",
+    "iso31662": "US-VT"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-WA",
+    "adminName": "Washington",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-WA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "WA",
+    "adminName": "Washington",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-WA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "53",
+    "adminName": "Washington",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-WA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.48_1",
+    "adminName": "Washington",
+    "adminLevel": "GADM",
+    "iso31662": "US-WA"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-WI",
+    "adminName": "Wisconsin",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-WI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "WI",
+    "adminName": "Wisconsin",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-WI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "55",
+    "adminName": "Wisconsin",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-WI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.50_1",
+    "adminName": "Wisconsin",
+    "adminLevel": "GADM",
+    "iso31662": "US-WI"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-WV",
+    "adminName": "West Virginia",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-WV"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "WV",
+    "adminName": "West Virginia",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-WV"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "54",
+    "adminName": "West Virginia",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-WV"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.49_1",
+    "adminName": "West Virginia",
+    "adminLevel": "GADM",
+    "iso31662": "US-WV"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "US-WY",
+    "adminName": "Wyoming",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-WY"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "WY",
+    "adminName": "Wyoming",
+    "adminLevel": "FIPS-Alpha",
+    "iso31662": "US-WY"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "56",
+    "adminName": "Wyoming",
+    "adminLevel": "FIPS-Numeric",
+    "iso31662": "US-WY"
+  },
+  {
+    "countryIso3": "USA",
+    "adminCode": "USA.51_1",
+    "adminName": "Wyoming",
+    "adminLevel": "GADM",
+    "iso31662": "US-WY"
   },
   {
     "countryIso3": "USA",
@@ -2091,20 +5752,6 @@ export const CLIMATE_ISO_CROSSWALK: readonly IsoCrosswalkEntry[] = [
     "adminName": "British Columbia",
     "adminLevel": "GAUL1",
     "iso31662": "CA-BC"
-  },
-  {
-    "countryIso3": "PER",
-    "adminCode": "PE-LIM",
-    "adminName": "Lima",
-    "adminLevel": "ADM1",
-    "iso31662": "PE-LIM"
-  },
-  {
-    "countryIso3": "SWE",
-    "adminCode": "SE-AB",
-    "adminName": "Stockholm County",
-    "adminLevel": "ADM1",
-    "iso31662": "SE-AB"
   }
 ] as const;
 
