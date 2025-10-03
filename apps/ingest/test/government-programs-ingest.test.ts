@@ -115,6 +115,15 @@ function setupSchema(db: ReturnType<typeof createTestDB>) {
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
+    CREATE TABLE industry_mappings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      naics_code TEXT NOT NULL,
+      tags TEXT NOT NULL DEFAULT '[]',
+      confidence REAL,
+      created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
+      updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+    );
+    CREATE UNIQUE INDEX idx_industry_mappings_code ON industry_mappings(naics_code);
     CREATE UNIQUE INDEX idx_programs_uid ON programs(uid);
     CREATE UNIQUE INDEX idx_dataset_services_unique ON dataset_services (dataset_id, service_name);
   `);
