@@ -85,3 +85,4 @@ This roadmap sequences the Phase 2 scope into themed sprints that align ingestio
 - Maintain documentation for Cloudflare credentials, DNS overrides, and Durable Object requirements.
 - Track success metrics: ≥5 live sources, ≥90% programs with NAICS/tags, ingestion diffs surfaced within 15 minutes.
 - Climate backlog: automate INFORM subnational manifests (HDX credential flow), ingest FEMA NRI tract-level + hazard metrics, add WorldRiskIndex ingestion once HDX permissions are granted, and implement the unified `climate_hazard_metrics` table described in the INFORM/NRI deep-dive. Document legal clearances before expanding restricted datasets (per `docs/LICENSING.md`).
+- Programs backlog: broaden the ISO-3166-2 program registry with EU/APAC sources and state/district incentives, build notification/application calendars, and connect programs to capital-stack datasets for blended-finance workflows.
