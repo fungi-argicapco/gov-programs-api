@@ -261,6 +261,7 @@
           Use the admin console to review detailed metrics, API latency budgets, and ingestion diff samples.
         </p>
         <a class="link" href="/docs" rel="noopener">Explore API docs →</a>
+        <a class="link" href="/design/preview">View Atlas design preview →</a>
       </div>
     </aside>
   </section>

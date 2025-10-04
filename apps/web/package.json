@@ -3,8 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bunx vite --config vite.config.ts",
-    "build": "bunx vite build --config vite.config.ts",
-    "preview": "bunx vite preview --config vite.config.ts"
+    "dev": "bun run sync && bunx --bun vite dev",
+    "build": "bun run sync && bunx --bun vite build",
+    "preview": "bun run sync && bunx --bun vite preview",
+    "sync": "bunx --bun svelte-kit sync"
+  },
+  "dependencies": {
+    "@atlas/svelte": "workspace:*"
   }
 }

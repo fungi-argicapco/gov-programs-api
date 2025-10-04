@@ -1,0 +1,22 @@
+{
+  "name": "@atlas/svelte",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "svelte": "./src/lib/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/lib/index.ts",
+      "svelte": "./src/lib/index.ts",
+      "default": "./src/lib/index.ts"
+    },
+    "./styles/tokens.css": "./src/lib/styles/tokens.css",
+    "./styles/primitives.css": "./src/lib/styles/primitives.css"
+  },
+  "files": [
+    "src/lib"
+  ],
+  "peerDependencies": {
+    "svelte": "^4.0.0"
+  }
+}

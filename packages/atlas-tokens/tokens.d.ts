@@ -1,0 +1,215 @@
+declare const tokens: {
+  'color': {
+    'background': {
+      'canvas': {
+        light: '#f8fafc';
+        dark: '#050914';
+      };
+      'muted': {
+        light: '#e2e8f0';
+        dark: '#0f172a';
+      };
+      'inset': {
+        light: '#ffffff';
+        dark: '#0b1220';
+      };
+    };
+    'surface': {
+      'default': {
+        light: '#ffffff';
+        dark: '#111c33';
+      };
+      'raised': {
+        light: '#f9fbff';
+        dark: '#15223d';
+      };
+      'overlay': {
+        light: 'rgba(9, 13, 30, 0.56)';
+        dark: 'rgba(4, 7, 15, 0.74)';
+      };
+    };
+    'border': {
+      'subtle': {
+        light: '#d4dbe9';
+        dark: '#1e2b47';
+      };
+      'default': {
+        light: '#b4c1d8';
+        dark: '#31456e';
+      };
+      'emphasis': {
+        light: '#5470f0';
+        dark: '#6d8bff';
+      };
+    };
+    'content': {
+      'primary': {
+        light: '#102043';
+        dark: '#e6eefc';
+      };
+      'secondary': {
+        light: '#4c5a7b';
+        dark: '#b3c3eb';
+      };
+      'muted': {
+        light: '#64748b';
+        dark: '#a0b0d2';
+      };
+      'inverse': {
+        light: '#f9fbff';
+        dark: '#10172b';
+      };
+    };
+    'accent': {
+      'primary': {
+        light: '#4666ff';
+        dark: '#7d9dff';
+      };
+      'positive': {
+        light: '#0f9d58';
+        dark: '#62d58a';
+      };
+      'warning': {
+        light: '#f7b731';
+        dark: '#f7cf6a';
+      };
+      'critical': {
+        light: '#e74c3c';
+        dark: '#ff8a7a';
+      };
+      'info': {
+        light: '#0f62fe';
+        dark: '#6ca6ff';
+      };
+    };
+    'status': {
+      'success-surface': {
+        light: '#edf9f1';
+        dark: '#0f2e20';
+      };
+      'warning-surface': {
+        light: '#fff7ec';
+        dark: '#2e2410';
+      };
+      'critical-surface': {
+        light: '#ffefef';
+        dark: '#381616';
+      };
+    };
+    'focus': {
+      'ring': {
+        light: 'rgba(70, 102, 255, 0.4)';
+        dark: 'rgba(125, 157, 255, 0.5)';
+      };
+    };
+  };
+  'space': {
+    'none': '0px';
+    '3xs': '0.125rem';
+    '2xs': '0.25rem';
+    'xs': '0.375rem';
+    'sm': '0.5rem';
+    'md': '0.75rem';
+    'lg': '1rem';
+    'xl': '1.5rem';
+    '2xl': '2rem';
+    '3xl': '3rem';
+    '4xl': '4rem';
+  };
+  'radius': {
+    'none': '0px';
+    'xs': '0.25rem';
+    'sm': '0.375rem';
+    'md': '0.5rem';
+    'lg': '0.75rem';
+    'xl': '1rem';
+    'pill': '9999px';
+  };
+  'elevation': {
+    'flat': 'none';
+    'raised': '0 1px 2px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.10)';
+    'overlay': '0 20px 40px rgba(8, 15, 31, 0.35)';
+    'focus': '0 0 0 3px rgba(70, 102, 255, 0.35)';
+    'inset': 'inset 0 0 0 1px rgba(255, 255, 255, 0.12)';
+  };
+  'motion': {
+    'duration': {
+      'instant': '0ms';
+      'fast': '120ms';
+      'moderate': '200ms';
+      'slow': '320ms';
+    };
+    'easing': {
+      'standard': 'cubic-bezier(0.2, 0, 0.38, 0.9)';
+      'emphasized': 'cubic-bezier(0.2, 0, 0, 1)';
+      'decelerate': 'cubic-bezier(0, 0, 0.2, 1)';
+      'accelerate': 'cubic-bezier(0.4, 0, 1, 1)';
+    };
+  };
+  'zIndex': {
+    'base': 0;
+    'dropdown': 20;
+    'sticky': 30;
+    'modal': 999;
+    'popover': 1000;
+    'toast': 1100;
+  };
+  'type': {
+    'fontFamily': {
+      'sans': '\'Inter\', \'SF Pro Display\', \'Segoe UI\', sans-serif';
+      'serif': '\'IBM Plex Serif\', \'Georgia\', serif';
+      'mono': '\'JetBrains Mono\', \'Menlo\', monospace';
+    };
+    'lineHeight': {
+      'tight': '1.25';
+      'snug': '1.35';
+      'normal': '1.5';
+      'relaxed': '1.65';
+    };
+    'weight': {
+      'regular': 400;
+      'medium': 500;
+      'semibold': 600;
+      'bold': 700;
+    };
+    'letterSpacing': {
+      'tight': '-0.01em';
+      'normal': '0';
+      'loose': '0.02em';
+    };
+    'scale': {
+      'xs': {
+        'fontSize': '0.75rem';
+        'lineHeight': '1.2';
+      };
+      'sm': {
+        'fontSize': '0.875rem';
+        'lineHeight': '1.4';
+      };
+      'body': {
+        'fontSize': '1rem';
+        'lineHeight': '1.55';
+      };
+      'lg': {
+        'fontSize': '1.125rem';
+        'lineHeight': '1.55';
+      };
+      'xl': {
+        'fontSize': '1.5rem';
+        'lineHeight': '1.4';
+      };
+      '2xl': {
+        'fontSize': '2rem';
+        'lineHeight': '1.2';
+      };
+      'display': {
+        'fontSize': '2.75rem';
+        'lineHeight': '1.1';
+      };
+    };
+  };
+};
+export type AtlasTokens = typeof tokens;
+export type AtlasThemeName = 'light' | 'dark';
+export type AtlasColorToken = { light: string; dark: string };
+export default tokens;

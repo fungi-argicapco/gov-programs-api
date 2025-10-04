@@ -37,6 +37,24 @@
       ],
       "@ml/*": [
         "packages/ml/src/*"
+      ],
+      "@atlas/tokens": [
+        "packages/atlas-tokens/tokens.json"
+      ],
+      "@atlas/tokens/*": [
+        "packages/atlas-tokens/*"
+      ],
+      "@atlas/svelte": [
+        "packages/atlas-svelte/src/lib/index.ts"
+      ],
+      "@atlas/svelte/*": [
+        "packages/atlas-svelte/src/lib/*"
+      ],
+      "@atlas/components": [
+        "packages/atlas-svelte/src/lib/components"
+      ],
+      "@atlas/components/*": [
+        "packages/atlas-svelte/src/lib/components/*"
       ]
     }
   },

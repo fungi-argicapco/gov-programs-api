@@ -56,6 +56,7 @@ graph TD
 | Automation scripts | `scripts/` | Local/CI helpers for setup, deploy, ingestion, post-deploy validation |
 | Persistence | `migrations/`, `packages/db` | D1 schema, Drizzle bindings, migration history |
 | Datasets & docs | `data/`, `docs/` | Source registry, research artifacts, schema docs |
+| UI primitives | `packages/atlas-tokens`, `packages/atlas-svelte` | Atlas design tokens, Tailwind preset, and Svelte primitives consumed by web clients |
 
 ## Deployment Flow
 

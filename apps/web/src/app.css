@@ -1,20 +1,20 @@
-:root {
-  color-scheme: light;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color: #0f172a;
-  background-color: #f8fafc;
-}
+@import '@atlas/svelte/styles/tokens.css';
+@import '@atlas/svelte/styles/primitives.css';
 
-* {
-  box-sizing: border-box;
+:root {
+  font-family: var(--atlas-type-font-family-sans);
+  line-height: var(--atlas-type-line-height-normal);
+  font-weight: var(--atlas-type-weight-regular);
+  background: var(--atlas-color-background-canvas);
+  color: var(--atlas-color-content-primary);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top left, #e0f2fe, #f8fafc 45%), radial-gradient(circle at bottom right, #e8f5fc, #f8fafc 60%);
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--atlas-color-accent-info) 18%, transparent), var(--atlas-color-background-canvas) 45%),
+    radial-gradient(circle at bottom right, color-mix(in srgb, var(--atlas-color-accent-primary) 12%, transparent), var(--atlas-color-background-canvas) 60%);
 }
 
 a {

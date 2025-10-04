@@ -1,0 +1,22 @@
+{
+  "name": "@atlas/tokens",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./tokens.json",
+      "default": "./tokens.json"
+    },
+    "./tokens": "./tokens.json",
+    "./tailwind": "./tailwind.preset.cjs"
+  },
+  "files": [
+    "tokens.json",
+    "tailwind.preset.cjs",
+    "tokens.d.ts"
+  ],
+  "scripts": {
+    "build": "bun run build.ts"
+  }
+}

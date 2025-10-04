@@ -44,6 +44,11 @@ async function runInstall() {
 }
 
 async function buildWebAssets() {
+  const tokensDir = resolve(cwd, 'packages/atlas-tokens');
+  if (existsSync(tokensDir)) {
+    info('➡️ Building Atlas tokens…');
+    await $`bun run --cwd ${tokensDir} build`;
+  }
   info('➡️ Refreshing dataset bundles…');
   await $`bun run datasets:build`;
   info('➡️ Building frontend assets (apps/web)…');
