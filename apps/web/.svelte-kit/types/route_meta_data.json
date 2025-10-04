@@ -1,9 +1,0 @@
-{
-	"/": [
-		"src/routes/+layout.ts",
-		"src/routes/+layout.ts"
-	],
-	"/design/preview": [
-		"src/routes/+layout.ts"
-	]
-}

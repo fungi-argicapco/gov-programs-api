@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+/// <reference types="bun-types" />
 import { $ } from 'bun';
 
 const env = process.env;

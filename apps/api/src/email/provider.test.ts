@@ -51,8 +51,7 @@ describe('Email provider factory', () => {
       POSTMARK_TOKEN: 'token-123',
     } as Env;
     const fetchMock = vi.fn().mockResolvedValue({ ok: true } as Response);
-    // @ts-expect-error – injected mock for tests
-    globalThis.fetch = fetchMock;
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     const service = createMailService(env);
     await service.send(sampleMessage);
@@ -84,8 +83,7 @@ describe('Email provider factory', () => {
       statusText: 'Unauthorized',
       json: async () => ({ Message: 'Invalid token' }),
     } as Response);
-    // @ts-expect-error – injected mock for tests
-    globalThis.fetch = fetchMock;
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     const service = createMailService(env);
     await expect(service.send(sampleMessage)).rejects.toThrow(/Postmark request failed/);
@@ -98,8 +96,7 @@ describe('Email provider factory', () => {
       POSTMARK_API_BASE: 'https://api.test-postmark.com/email',
     } as Env;
     const fetchMock = vi.fn().mockResolvedValue({ ok: true } as Response);
-    // @ts-expect-error – injected mock for tests
-    globalThis.fetch = fetchMock;
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     const service = createMailService(env);
     await service.send(sampleMessage);

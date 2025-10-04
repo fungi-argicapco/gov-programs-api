@@ -1,3 +1,5 @@
+/// <reference types="bun-types" />
+
 import { SOURCES } from '../data/sources/phase2';
 
 type Schedule = '4h' | 'daily';

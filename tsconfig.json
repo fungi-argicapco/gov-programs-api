@@ -62,9 +62,10 @@
     "apps",
     "packages",
     "scripts",
-    "vitest.config.ts"
+    "vite.config.ts"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "**/dist"
   ]
 }

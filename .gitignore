@@ -1,6 +1,7 @@
 node_modules
 bun.lockb
 dist
+**/dist
 .env
 .env.dev
 .env.dev.local
@@ -14,3 +15,4 @@ coverage/
 gov-programs-api.code-workspace
 .wrangler/
 data/ingest.dev.sqlite
+**/.svelte-kit

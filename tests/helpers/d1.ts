@@ -1,3 +1,5 @@
+/// <reference types="bun-types" />
+
 type Prepared = {
   bind: (...values: any[]) => Prepared;
   first: <T = any>() => Promise<T | null>;
