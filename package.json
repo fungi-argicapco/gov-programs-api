@@ -12,7 +12,7 @@
     "dev:api": "bunx wrangler dev --local",
     "test": "bun test",
     "test:watch": "bun test --watch",
-    "test:vitest": "bunx --bun vitest run",
+    "test:vitest": "node ./node_modules/vitest/vitest.mjs run --pool=forks",
     "setup": "bun run scripts/setup.ts",
     "setup:local": "bun run scripts/setup.ts --local",
     "setup:remote": "bun run scripts/setup.ts --remote",
