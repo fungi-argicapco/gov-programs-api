@@ -58,6 +58,12 @@ graph TD
 | Datasets & docs | `data/`, `docs/` | Source registry, research artifacts, schema docs |
 | UI primitives | `packages/atlas-tokens`, `packages/atlas-svelte` | Atlas design tokens, Tailwind preset, and Svelte primitives consumed by web clients |
 
+## Database Tooling
+
+- Drizzle ORM (`packages/db/src/schema.ts`) is the typed source of truth for D1 tables consumed by Workers and automation.
+- `bun run db:generate` runs `drizzle-kit` to emit SQLite migrations into `migrations/`, keeping SQL history aligned with the schema.
+- `bun run db:check` lints the schema and pending migrations during CI before we ship new storage changes.
+
 ## Deployment Flow
 
 1. `bun run setup:*` renders environment-specific `wrangler.toml` (local vs remote) and builds the web bundle.

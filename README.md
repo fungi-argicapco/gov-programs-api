@@ -22,6 +22,15 @@ bun run web:build
 bun run typecheck
 bun test
 
+# Drop build artefacts and reinstall dependencies from scratch
+bun run clean && bun install
+
+# Regenerate SQLite migrations after updating Drizzle schema
+bun run db:generate
+
+# Ensure schema and migrations stay in sync before deploying
+bun run db:check
+
 # Verify SAM.gov access before enabling cron (requires `SAM_API_KEY`)
 SAM_API_KEY=... bun run verify:sam
 
