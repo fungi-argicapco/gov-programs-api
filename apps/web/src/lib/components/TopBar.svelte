@@ -23,7 +23,7 @@
   }
 </script>
 
-<header class="top-bar" role="banner">
+<header class="top-bar">
   <div class="top-bar__section">
     <button
       class="top-bar__menu atlas-focusable"

@@ -43,7 +43,10 @@
         <summary>
           <div class="atlas-report-card__metric-header">
             <div class="atlas-report-card__gauge" role="group" aria-label={progressLabel(metric)}>
-              <div class="atlas-report-card__gauge-bar" style={`--atlas-gauge-value: ${clampScore(metric.score) / 100};`} />
+              <div
+                class="atlas-report-card__gauge-bar"
+                style={`--atlas-gauge-value: ${clampScore(metric.score) / 100};`}
+              ></div>
               <span class="atlas-report-card__gauge-score">{clampScore(metric.score)}</span>
             </div>
             <div>

@@ -1,0 +1,185 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`AtlasReportCard > matches snapshot and passes axe checks when collapsed > atlas-report-card-collapsed 1`] = `
+<div>
+  <article
+    class="atlas-report-card svelte-ctx5ac"
+    data-accent="primary"
+  >
+    <header
+      class="atlas-report-card__header svelte-ctx5ac"
+    >
+      <div>
+        <h3
+          class="svelte-ctx5ac"
+        >
+          Green Manufacturing Cohort
+        </h3>
+         
+        <p
+          class="atlas-report-card__subtitle svelte-ctx5ac"
+        >
+          Retrofit support for industrial corridors
+        </p>
+        <!---->
+      </div>
+       
+      <!---->
+    </header>
+     
+    <section
+      aria-label="Report metrics"
+      class="atlas-report-card__metrics svelte-ctx5ac"
+    >
+      <details
+        class="atlas-report-card__metric svelte-ctx5ac"
+      >
+        <summary
+          class="svelte-ctx5ac"
+        >
+          <div
+            class="atlas-report-card__metric-header svelte-ctx5ac"
+          >
+            <div
+              aria-label="Scale score 82 out of 100"
+              class="atlas-report-card__gauge svelte-ctx5ac"
+              role="group"
+            >
+              <div
+                class="atlas-report-card__gauge-bar"
+                style="--atlas-gauge-value: 0.82;"
+              />
+               
+              <span
+                class="atlas-report-card__gauge-score svelte-ctx5ac"
+              >
+                82
+              </span>
+            </div>
+             
+            <div>
+              <p
+                class="atlas-report-card__metric-title svelte-ctx5ac"
+              >
+                Scale
+              </p>
+               
+              <p
+                class="atlas-report-card__metric-summary svelte-ctx5ac"
+              >
+                Strong nationwide reach across metro and rural regions.
+              </p>
+            </div>
+          </div>
+        </summary>
+         
+        <div
+          class="atlas-report-card__metric-details svelte-ctx5ac"
+        >
+          <ul
+            class="svelte-ctx5ac"
+          >
+            <li
+              class="svelte-ctx5ac"
+            >
+              <span
+                aria-hidden="true"
+                class="atlas-report-card__metric-index svelte-ctx5ac"
+              >
+                1.
+              </span>
+               
+              <span>
+                Operating in 18 states with local delivery partnerships.
+              </span>
+            </li>
+            
+          </ul>
+        </div>
+        <!---->
+      </details>
+      <details
+        class="atlas-report-card__metric svelte-ctx5ac"
+      >
+        <summary
+          class="svelte-ctx5ac"
+        >
+          <div
+            class="atlas-report-card__metric-header svelte-ctx5ac"
+          >
+            <div
+              aria-label="Reliability score 67 out of 100"
+              class="atlas-report-card__gauge svelte-ctx5ac"
+              role="group"
+            >
+              <div
+                class="atlas-report-card__gauge-bar"
+                style="--atlas-gauge-value: 0.67;"
+              />
+               
+              <span
+                class="atlas-report-card__gauge-score svelte-ctx5ac"
+              >
+                67
+              </span>
+            </div>
+             
+            <div>
+              <p
+                class="atlas-report-card__metric-title svelte-ctx5ac"
+              >
+                Reliability
+              </p>
+               
+              <p
+                class="atlas-report-card__metric-summary svelte-ctx5ac"
+              >
+                Good track record with minor variance in reporting.
+              </p>
+            </div>
+          </div>
+        </summary>
+         
+        <!---->
+      </details>
+      
+    </section>
+     
+    <section
+      aria-label="References"
+      class="atlas-report-card__references svelte-ctx5ac"
+    >
+      <h4
+        class="svelte-ctx5ac"
+      >
+        References
+      </h4>
+       
+      <ul
+        class="svelte-ctx5ac"
+      >
+        <li>
+          <a
+            class="atlas-report-card__reference-link svelte-ctx5ac"
+            href="https://energy.gov"
+            rel="noreferrer"
+            target="_blank"
+          >
+            <span>
+              DOE FOA overview
+            </span>
+             
+            <!---->
+          </a>
+          <!---->
+        </li>
+        
+      </ul>
+       
+      <!---->
+    </section>
+    <!---->
+  </article>
+  
+</div>
+`;

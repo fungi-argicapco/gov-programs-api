@@ -61,7 +61,8 @@ export default defineConfig(async () => {
         ...createAlias('@atlas/components', 'packages/atlas-svelte/src/lib/components'),
         { find: '@atlas/tokens', replacement: resolve(repoRoot, 'packages/atlas-tokens/tokens.json') },
         { find: '@atlas/tokens/', replacement: resolve(repoRoot, 'packages/atlas-tokens/') }
-      ]
+      ],
+      conditions: ['browser']
     },
     test: {
       environment: 'happy-dom',
@@ -69,6 +70,7 @@ export default defineConfig(async () => {
       css: true,
       globals: true,
       pool: 'threads',
+      include: ['**/*.{test,spec}.?(c|m)[jt]s?(x)', '**/*.vitest.ts'],
       onConsoleLog(log, type) {
         if (type === 'stderr' && log.includes('Your tsconfig.json should extend')) {
           return false

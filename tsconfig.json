@@ -15,7 +15,8 @@
     ],
     "types": [
       "@cloudflare/workers-types",
-      "vitest/globals"
+      "vitest/globals",
+      "vitest-axe/extend-expect"
     ],
     "noEmit": true,
     "baseUrl": ".",
@@ -67,7 +68,8 @@
   "include": [
     "apps",
     "packages",
-    "scripts"
+    "scripts",
+    "vitest.setup.ts"
   ],
   "exclude": [
     "dist",

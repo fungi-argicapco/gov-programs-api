@@ -9,15 +9,14 @@ const items = [
 
 describe('SideNav', () => {
   it('highlights active route and emits navigate events', async () => {
-        const events: string[] = [];
-    const { getByRole, component } = render(SideNav, {
-      props: { items, currentPath: '/capital', open: true }
-    });
-
-    (component as unknown as {
-      $on: (event: 'navigate', cb: (event: CustomEvent<{ href: string }>) => void) => void;
-    }).$on('navigate', (event) => {
-      events.push(event.detail.href);
+    const events: string[] = [];
+    const { getByRole } = render(SideNav, {
+      props: { items, currentPath: '/capital', open: true },
+      events: {
+        navigate: (event: CustomEvent<{ href: string }>) => {
+          events.push(event.detail.href);
+        }
+      }
     });
 
     const capitalLink = getByRole('link', { name: /Capital/ });

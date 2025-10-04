@@ -20,6 +20,7 @@
 
   let inputRef: HTMLInputElement | null = null;
   let activeIndex = 0;
+  let lastQuery = '';
 
   const handleKeydown = (event: KeyboardEvent) => {
     if (!browser) return;
@@ -103,7 +104,12 @@
 
 {#if open}
   <div class="palette" role="presentation">
-    <div class="palette__backdrop" on:click={closePalette} />
+    <button
+      type="button"
+      class="palette__backdrop"
+      aria-label="Close command palette"
+      on:click={closePalette}
+    ></button>
     <div class="palette__dialog" role="dialog" aria-modal="true" aria-label="Command palette">
       <header class="palette__header">
         <input
@@ -120,7 +126,7 @@
         </button>
       </header>
 
-      <section class="palette__results" role="listbox" aria-label="Command results">
+      <div class="palette__results" role="listbox" aria-label="Command results">
         {#if filtered.length === 0}
           <p class="palette__empty">No results for “{query}”. Try different keywords.</p>
         {:else}
@@ -145,7 +151,7 @@
             </button>
           {/each}
         {/if}
-      </section>
+      </div>
     </div>
   </div>
 {/if}
@@ -160,9 +166,12 @@
   }
 
   .palette__backdrop {
+    border: none;
+    padding: 0;
     position: absolute;
     inset: 0;
     background: rgba(10, 18, 40, 0.4);
+    cursor: pointer;
   }
 
   .palette__dialog {
