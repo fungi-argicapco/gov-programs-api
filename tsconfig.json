@@ -55,6 +55,12 @@
       ],
       "@atlas/components/*": [
         "packages/atlas-svelte/src/lib/components/*"
+      ],
+      "$lib": [
+        "apps/web/src/lib/index.ts"
+      ],
+      "$lib/*": [
+        "apps/web/src/lib/*"
       ]
     }
   },

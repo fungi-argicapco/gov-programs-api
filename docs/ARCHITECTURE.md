@@ -64,6 +64,7 @@ graph TD
 - `packages/atlas-svelte` ships Atlas primitives alongside the new `AtlasReportCard` and `AtlasEvidenceBlock` components used across capital and partner insights.
 - `apps/web/src/lib/layout/AppShell.svelte` composes the responsive navigation shell (TopBar, SideNav, CommandPalette) shared by `/discover`, `/capital`, `/partners`, and future operator routes.
 - Sample data for capital programs and partner profiles lives under `apps/web/src/lib/data`, enabling Sprint 1 report cards and evidence previews without backend dependencies.
+- Capital Finder now consumes `/v1/programs` through `apps/web/src/lib/api/programs.ts`, synchronising filter state with the URL and rendering live results via the Atlas Evidence block component.
 - Sprint 2 prerequisites: land the Playwright CI container story (official Docker image, artifacts, trace-on-retry) and align `/v1/programs` query parameters with the upcoming capital finder filters before attaching live data.
 
 
