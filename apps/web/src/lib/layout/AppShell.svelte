@@ -46,7 +46,7 @@ import { goto } from '$app/navigation';
     />
 
     {#if navOpen}
-      <div class="app-shell__overlay" aria-hidden="true" on:click={() => (navOpen = false)} />
+      <div class="app-shell__overlay" aria-hidden="true" on:click={() => (navOpen = false)}></div>
     {/if}
 
     <main class="app-shell__main" tabindex="-1">

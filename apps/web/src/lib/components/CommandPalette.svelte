@@ -93,11 +93,13 @@
   }
 
   onMount(() => {
+    if (!browser) return;
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
   });
 
   onDestroy(() => {
+    if (!browser) return;
     window.removeEventListener('keydown', handleKeydown);
   });
 </script>

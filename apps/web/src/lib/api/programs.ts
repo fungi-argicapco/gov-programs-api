@@ -51,6 +51,9 @@ export type ProgramFilters = {
 export const DEFAULT_PAGE_SIZE = 25;
 export const DEFAULT_SORT = '-updated_at';
 
+const USE_E2E_MOCK_PROGRAMS = import.meta.env?.VITE_E2E_MOCK_PROGRAMS === '1';
+const API_BASE = import.meta.env?.VITE_API_BASE?.replace(/\/$/, '') ?? '';
+
 export function buildProgramsQuery(filters: ProgramFilters): URLSearchParams {
   const params = new URLSearchParams();
 
@@ -89,8 +92,14 @@ export async function fetchPrograms(
   fetchFn: typeof fetch,
   filters: ProgramFilters
 ): Promise<ProgramListResponse> {
+  if (USE_E2E_MOCK_PROGRAMS) {
+    const { getMockProgramsResponse } = await import('./programs.mock');
+    return getMockProgramsResponse();
+  }
+
   const query = buildProgramsQuery(filters);
-  const response = await fetchFn(`/v1/programs?${query.toString()}`);
+  const base = API_BASE ? `${API_BASE}/v1/programs` : '/v1/programs';
+  const response = await fetchFn(`${base}?${query.toString()}`);
 
   if (!response.ok) {
     const message = await safeErrorMessage(response);

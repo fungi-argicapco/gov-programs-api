@@ -16,3 +16,5 @@ gov-programs-api.code-workspace
 .wrangler/
 data/ingest.dev.sqlite
 **/.svelte-kit
+**/playwright-report/
+**/test-results/

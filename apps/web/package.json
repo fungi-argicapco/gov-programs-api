@@ -6,7 +6,8 @@
     "dev": "bun run scripts/svelte-sync.ts && bun run scripts/vite-cli.ts dev",
     "build": "bun run scripts/svelte-sync.ts && bun run scripts/vite-cli.ts build",
     "preview": "bun run scripts/svelte-sync.ts && bun run scripts/vite-cli.ts preview",
-    "sync": "bun run scripts/svelte-sync.ts"
+    "sync": "bun run scripts/svelte-sync.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@atlas/svelte": "workspace:*"
@@ -15,6 +16,7 @@
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.43.8",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@playwright/test": "^1.45.0",
     "svelte": "^5.39.8",
     "vite": "^7.1.9"
   }

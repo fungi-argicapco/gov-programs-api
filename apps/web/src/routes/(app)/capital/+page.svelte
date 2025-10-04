@@ -281,7 +281,7 @@
       </div>
 
       {#each data.programs.data as program (program.id)}
-        <article class="results__row" role="row">
+        <div class="results__row" role="row">
           <div role="cell" class="results__title">
             <a href={program.url ?? '#'} target={program.url ? '_blank' : undefined} rel="noreferrer">
               {program.title}
@@ -292,15 +292,15 @@
           <div role="cell" class="results__cell">{formatBenefit(program.benefit_type)}</div>
           <div role="cell" class="results__cell">{formatCountry(program.country_code)}</div>
           <div role="cell" class="results__cell">{formatDate(program.end_date)}</div>
-         <div role="cell" class="results__cell">
-           <AtlasEvidenceBlock
+          <div role="cell" class="results__cell">
+            <AtlasEvidenceBlock
               source={resolveSource(program.url)}
               freshness={formatFreshness(program.updated_at)}
               lineageHref={program.url ?? undefined}
               description={benefitDescription(program)}
             />
-         </div>
-        </article>
+          </div>
+        </div>
       {/each}
     </div>
   </section>

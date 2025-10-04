@@ -6,6 +6,7 @@ import {
   type ProgramFilters,
   type ProgramListResponse
 } from '$lib/api/programs';
+import { getMockProgramsResponse } from '$lib/api/programs.mock';
 
 type CapitalPageData = {
   filters: ProgramFilters;
@@ -25,6 +26,17 @@ export const load = async ({ fetch, url }: LoadEvent): Promise<CapitalPageData> 
     ...filters,
     sort: filters.sort ?? DEFAULT_SORT
   };
+
+  const useMockPrograms =
+    import.meta.env?.VITE_MOCK_PROGRAMS === '1' || import.meta.env?.VITE_E2E_MOCK_PROGRAMS === '1';
+
+  if (useMockPrograms) {
+    return {
+      filters: appliedFilters,
+      programs: getMockProgramsResponse(),
+      error: null
+    };
+  }
 
   try {
     const programs = await fetchPrograms(fetch, appliedFilters);
