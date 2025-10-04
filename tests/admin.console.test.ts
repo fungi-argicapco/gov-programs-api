@@ -137,11 +137,13 @@ describe('admin console UI', () => {
     expect(response.headers.get('content-type')).toContain('text/html');
     const html = await response.text();
     expect(html).toContain('Operations console');
-    expect(html).toContain('id="pending-container"');
-    expect(html).toContain('id="history-container"');
+    expect(html).toContain('data-view-target="reports"');
+    expect(html).toContain('Feeds &amp; Schedules');
+    expect(html).toContain('id="reports-container"');
     expect(html).toContain('id="metrics-container"');
-    expect(html).toContain('id="datasets-container"');
+    expect(html).toContain('id="feeds-container"');
+    expect(html).toContain('id="schema-container"');
     expect(html).toContain('id="keys-list"');
-    expect(html).toContain('/v1/operator/account-requests?status=pending');
+    expect(html).toContain('id="activity-container"');
   });
 });

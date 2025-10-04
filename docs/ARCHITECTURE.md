@@ -50,7 +50,7 @@ graph TD
 | Area | Source | Responsibilities |
 | --- | --- | --- |
 | Access portal | `apps/web` | Svelte SPA for signup and playbook surface |
-| API Worker | `apps/api` | Hono router exposing `/v1` program search, stacks, metrics, operator console |
+| API Worker | `apps/api` | Hono router exposing `/v1` program search, stacks, metrics, and the session-backed operator console (requests, feeds, schema browser, observability dashboards) |
 | Canvas Worker | `apps/canvas` | Collaborative canvas & onboarding flows for internal users |
 | Ingestion Worker | `apps/ingest` | Fetches catalog sources, stores normalized programs, computes coverage |
 | Automation scripts | `scripts/` | Local/CI helpers for setup, deploy, ingestion, post-deploy validation |
@@ -73,7 +73,7 @@ graph TD
 
 ## Dataset Automation
 
-- `dataset_snapshots` and `dataset_services` track every research bundle registered in `apps/ingest/src/datasets/registry.ts`.
+- `dataset_snapshots` and `dataset_services` track every research bundle registered in `apps/ingest/src/datasets/registry.ts` and power the `/v1/operator/feeds` console dashboard (history, services, manual reloads).
 - `climate_country_metrics` and `climate_subnational_metrics` (migration `0017`) persist climate/ESG outputs from ND-GAIN, WRI Aqueduct, FEMA NRI, INFORM (global + subnational), Yale EPI, and UNEP freshwater statistics. Each run stores immutable snapshots plus source metadata for provenance. (Germanwatch Climate Risk Index remains pending—reports are PDF-only and require licensing approval before automation.)
 - ISO-3166-2 crosswalks generated from research CSVs backfill province/state codes so that subnational feeds (Aqueduct, INFORM, UNEP, FEMA) share the same identifiers.
 - Dataset generators pull subdivision metadata directly from Wikidata (with local overrides for GAUL/NUTS codes) via `bun run datasets:build`, ensuring crosswalks stay current without manual CSV edits.

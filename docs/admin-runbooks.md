@@ -6,8 +6,19 @@
 - Sessions can be refreshed with the hidden `*_rt` cookie—users do not see the raw refresh token.
 - Activation emails land on `/account/activate?token=…`. Set your password there; expired or empty links can be reissued from the “Need a new activation email?” form on the sign-in page.
 
+## Operations Console Overview
+After signing in, `/admin` presents a navigation shell that keeps the core operator workflows in dedicated views:
+
+- **Requests** – pending access requests, decision history, and inline approve/decline actions.
+- **Strategic Reports** – PESTLE snapshot, macro/climate coverage, capital stack highlights, and country playbook updates sourced from `/v1/operator/reports`.
+- **Observability** – request metrics, SLO aggregation, source health, and latest dataset snapshots.
+- **Feeds & Schedules** – dataset registry view with snapshot history, service metadata, and one-click reloads via `/v1/operator/feeds/:id/trigger`.
+- **Schema Catalog** – searchable catalog backed by `/v1/operator/schema`, exposing column types, nullability, and approximate row counts for D1 tables.
+- **API Keys** – session-protected CRUD for partner/admin keys with audit logging.
+- **Activity** – real-time audit trail from `admin_audits`, showing who performed which console actions.
+
 ## Approving Account Requests
-Inbound requests flow through the access portal served at `/`, which writes to `account_requests` and emails the operator distribution list configured via `EMAIL_ADMIN`.
+Inbound requests flow through the access portal served at `/`, which writes to `account_requests` and emails the operator distribution list configured via `EMAIL_ADMIN`. Use the **Requests** view to process them.
 
 1. Visit `/admin` after signing in to view the pending queue. Each row exposes justification, requested apps, and timestamps.
 2. Approve or decline directly from the console; the Worker applies the decision using the embedded token and records the audit trail.
@@ -40,6 +51,11 @@ Inbound requests flow through the access portal served at `/`, which writes to `
      ```
 - If Postmark reintroduces webhook signatures you can instead set `POSTMARK_WEBHOOK_SECRET`, but either approach will keep the endpoint locked down.
 - Email sends default to the `outbound` message stream. Override with `POSTMARK_MESSAGE_STREAM=<stream-id>` if your server uses a custom stream ID.
+
+## Observability & Feed Management
+- The **Observability** tab aggregates `/v1/ops/metrics`, `/v1/ops/slo`, and `/v1/admin/sources/health` so operators can watch request success, p99 latency, and ingestion freshness without opening separate dashboards. Stale sources (>24h) bubble to the top; click through to the ingestion runbook when remediation is required.
+- The **Feeds & Schedules** tab uses `/v1/operator/feeds` to list every dataset registered in `apps/ingest`. Each card shows the target version, latest snapshot, captured history, and documented services (endpoint, cadence, rate limit). Press **Reload** to trigger `/v1/operator/feeds/:id/trigger`, which runs the associated ingest job in-place and records a new snapshot.
+- Schema explorers and auditors can use the **Schema Catalog** tab to confirm table layouts before issuing D1 queries; the search box filters tables/columns in-browser.
 
 ## Archiving Canvases
 1. Use the authenticated Canvas API (`PATCH /v1/canvases/:id`) with `{ "status": "archived" }` and the latest `revision` to avoid conflicts.

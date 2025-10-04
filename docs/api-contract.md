@@ -100,6 +100,14 @@ Body `{ code: string }`. Verifies the secret and marks MFA as enrolled.
 - `DELETE /v1/canvases/:id` → `{ ok: true }`
 - `GET /v1/canvases/:id/versions` → `{ data: CanvasVersion[] }`
 
+### Operator console endpoints (admin session required)
+- `GET /v1/operator/account-requests?status=pending|approved|declined` → `{ data: AccountRequest[] }`.
+- `GET /v1/operator/schema` → `{ data: Array<{ name: string; row_count: number | null; columns: Array<{ name: string; type: string | null; nullable: boolean; primary_key: boolean; default: string | null }> }> }`.
+- `GET /v1/operator/feeds?history=5` → `{ data: Array<{ id: string; label: string; targetVersion: string; latestSnapshot?: { version: string; capturedAt: string }; history: Array<{ version: string; capturedAt: string }>; services: Array<{ serviceName: string; endpoint: string; readiness?: string | null; statusPage?: string | null; rateLimit?: string | null; cadence?: string | null }>; totalSnapshots: number; reloadEndpoint: string }> }`.
+- `POST /v1/operator/feeds/:id/trigger` → `{ data: DatasetIngestSummary }` (runs the associated ingest job; returns 404 if the dataset id is not registered).
+- `GET /v1/operator/reports` → `{ data: { programs: {...}, macro: {...}, climate: {...}, capital: {...}, playbooks: Array<{ country: string; updated_at: string | null }>, pestle: {...} } }` summarising macro, climate, capital stack, and playbook coverage.
+- `GET /v1/operator/audits` → `{ data: Array<{ id: number; actor_key_id: number | null; action: string; target: string | null; meta: Record<string, unknown> | null; ts: number }> }` sorted by `ts` descending.
+
 ## Email Notifications
 
 Emails are currently logged (Cloudflare Email Routing integration pending). Templates:

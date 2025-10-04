@@ -326,6 +326,96 @@ function auditMeta(payload: Record<string, unknown>): string | null {
   return JSON.stringify(Object.fromEntries(entries));
 }
 
+function sanitizeSqlIdentifier(value: string): string | null {
+  if (!value || typeof value !== 'string') {
+    return null;
+  }
+  if (!/^[A-Za-z0-9_]+$/.test(value)) {
+    return null;
+  }
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+async function listDatasetSummaries(env: Env, options?: { historyLimit?: number }) {
+  const historyLimit = options?.historyLimit ?? 5;
+  const summaries = [] as Array<{
+    id: string;
+    label: string;
+    targetVersion: string;
+    latestSnapshot: { version: string; capturedAt: string } | null;
+    history: Array<{ version: string; capturedAt: string }>;
+    services: Array<{
+      serviceName: string;
+      endpoint: string;
+      readiness: string | null;
+      statusPage: string | null;
+      rateLimit: string | null;
+      cadence: string | null;
+    }>;
+  }>;
+
+  for (const def of DATASET_REGISTRY) {
+    const snapshots = await env.DB.prepare(
+      `SELECT version, captured_at FROM dataset_snapshots WHERE dataset_id = ? ORDER BY captured_at DESC LIMIT ?`
+    )
+      .bind(def.id, historyLimit)
+      .all<{ version: string; captured_at: number }>()
+      .catch(() => ({ results: [] as Array<{ version: string; captured_at: number }> }));
+
+    const latest = snapshots.results?.[0];
+
+    const services = await env.DB.prepare(
+      `SELECT service_name, endpoint, readiness, status_page, rate_limit, cadence
+         FROM dataset_services WHERE dataset_id = ? ORDER BY service_name`
+    )
+      .bind(def.id)
+      .all<{
+        service_name: string;
+        endpoint: string;
+        readiness: string | null;
+        status_page: string | null;
+        rate_limit: string | null;
+        cadence: string | null;
+      }>()
+      .catch(() => ({ results: [] as Array<any> }));
+
+    summaries.push({
+      id: def.id,
+      label: def.label,
+      targetVersion: def.version,
+      latestSnapshot: latest
+        ? {
+            version: latest.version,
+            capturedAt: new Date(Number(latest.captured_at)).toISOString()
+          }
+        : null,
+      history: (snapshots.results ?? []).map((row) => ({
+        version: row.version,
+        capturedAt: new Date(Number(row.captured_at)).toISOString()
+      })),
+      services: (services.results ?? []).map((row) => ({
+        serviceName: row.service_name,
+        endpoint: row.endpoint,
+        readiness: row.readiness,
+        statusPage: row.status_page,
+        rateLimit: row.rate_limit,
+        cadence: row.cadence
+      }))
+    });
+  }
+
+  return summaries;
+}
+
+async function triggerDatasetIngest(env: Env, datasetId: string) {
+  const def = DATASET_REGISTRY.find((dataset) => dataset.id === datasetId);
+  if (!def) {
+    return null;
+  }
+  const result = await def.ingest({ DB: env.DB });
+  return result;
+}
+
 function toNullableNumber(value: unknown): number | null {
   if (value === null || value === undefined) {
     return null;
@@ -1887,50 +1977,7 @@ app.get('/v1/admin/datasets', async (c) => {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
-  const rows = await Promise.all(
-    DATASET_REGISTRY.map(async (def) => {
-      const snapshot = await c.env.DB.prepare(
-        `SELECT version, captured_at FROM dataset_snapshots WHERE dataset_id = ? ORDER BY captured_at DESC LIMIT 1`
-      )
-        .bind(def.id)
-        .first<{ version: string; captured_at: number }>()
-        .catch(() => null);
-
-      const services = await c.env.DB.prepare(
-        `SELECT service_name, endpoint, readiness, status_page, rate_limit, cadence FROM dataset_services WHERE dataset_id = ? ORDER BY service_name`
-      )
-        .bind(def.id)
-        .all<{
-          service_name: string;
-          endpoint: string;
-          readiness: string | null;
-          status_page: string | null;
-          rate_limit: string | null;
-          cadence: string | null;
-        }>();
-
-      return {
-        id: def.id,
-        label: def.label,
-        targetVersion: def.version,
-        latestSnapshot: snapshot
-          ? {
-              version: snapshot.version,
-              capturedAt: new Date(Number(snapshot.captured_at)).toISOString()
-            }
-          : null,
-        services: services.results.map((service) => ({
-          serviceName: service.service_name,
-          endpoint: service.endpoint,
-          readiness: service.readiness,
-          statusPage: service.status_page,
-          rateLimit: service.rate_limit,
-          cadence: service.cadence
-        }))
-      };
-    })
-  );
-
+  const rows = await listDatasetSummaries(c.env, { historyLimit: 5 });
   return c.json({ data: rows });
 });
 
@@ -1950,13 +1997,217 @@ app.post('/v1/admin/datasets/:id/reload', async (c) => {
   }
 
   const datasetId = c.req.param('id');
-  const def = DATASET_REGISTRY.find((dataset) => dataset.id === datasetId);
-  if (!def) {
+  const result = await triggerDatasetIngest(c.env, datasetId);
+  if (!result) {
     return apiError(c, 404, 'not_found', 'Requested dataset was not found.');
   }
-
-  const result = await def.ingest({ DB: c.env.DB });
   return c.json({ data: result });
+});
+
+app.get('/v1/operator/feeds', requireAdmin, async (c) => {
+  const limitParam = parseInt(c.req.query('history') ?? '', 10);
+  const historyLimit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 25) : 10;
+
+  const datasets = await listDatasetSummaries(c.env, { historyLimit });
+
+  const enriched = await Promise.all(
+    datasets.map(async (dataset) => {
+      const totalSnapshotsRow = await c.env.DB.prepare(
+        'SELECT COUNT(*) as count FROM dataset_snapshots WHERE dataset_id = ?'
+      )
+        .bind(dataset.id)
+        .first<{ count: number }>()
+        .catch(() => ({ count: 0 }));
+
+      return {
+        ...dataset,
+        totalSnapshots: Number(totalSnapshotsRow?.count ?? 0),
+        reloadEndpoint: `/v1/operator/feeds/${dataset.id}/trigger`
+      };
+    })
+  );
+
+  return c.json({ data: enriched });
+});
+
+app.post('/v1/operator/feeds/:id/trigger', requireAdmin, async (c) => {
+  const datasetId = c.req.param('id');
+  const result = await triggerDatasetIngest(c.env, datasetId);
+  if (!result) {
+    return apiError(c, 404, 'not_found', 'Requested dataset was not found.');
+  }
+  return c.json({ data: result });
+});
+
+app.get('/v1/operator/schema', requireAdmin, async (c) => {
+  const tablesResult = await c.env.DB.prepare(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+  ).all<{ name: string }>();
+
+  const tables: Array<{
+    name: string;
+    row_count: number | null;
+    columns: Array<{ name: string; type: string | null; nullable: boolean; primary_key: boolean; default: string | null }>;
+  }> = [];
+
+  for (const row of tablesResult.results ?? []) {
+    const safeName = sanitizeSqlIdentifier(row.name);
+    if (!safeName) continue;
+
+    const columnsResult = await c.env.DB.prepare(`PRAGMA table_info(${safeName})`).all<{
+      name: string;
+      type: string | null;
+      notnull: number;
+      dflt_value: string | null;
+      pk: number;
+    }>();
+
+    let rowCount: number | null = null;
+    try {
+      const countRow = await c.env.DB.prepare(`SELECT COUNT(*) as count FROM ${safeName}`).first<{ count: number }>();
+      if (countRow && Number.isFinite(Number(countRow.count))) {
+        rowCount = Number(countRow.count);
+      }
+    } catch (error) {
+      console.warn('Failed to compute row count for table', row.name, error);
+    }
+
+    tables.push({
+      name: row.name,
+      row_count: rowCount,
+      columns: (columnsResult.results ?? []).map((col) => ({
+        name: col.name,
+        type: col.type ?? null,
+        nullable: col.notnull === 0,
+        primary_key: col.pk === 1,
+        default: col.dflt_value ?? null
+      }))
+    });
+  }
+
+  return c.json({ data: tables });
+});
+
+app.get('/v1/operator/audits', requireAdmin, async (c) => {
+  const rows = await c.env.DB.prepare(
+    `SELECT id, actor_key_id, action, target, meta, ts FROM admin_audits ORDER BY ts DESC LIMIT 200`
+  ).all<{ id: number; actor_key_id: number | null; action: string; target: string | null; meta: string | null; ts: number }>();
+
+  const data = (rows.results ?? []).map((row) => {
+    let parsed: Record<string, unknown> | null = null;
+    if (row.meta) {
+      try {
+        parsed = JSON.parse(row.meta) as Record<string, unknown>;
+      } catch {
+        parsed = null;
+      }
+    }
+    return {
+      id: row.id,
+      actor_key_id: row.actor_key_id,
+      action: row.action,
+      target: row.target ?? null,
+      meta: parsed,
+      ts: row.ts
+    };
+  });
+
+  return c.json({ data });
+});
+
+app.get('/v1/operator/reports', requireAdmin, async (c) => {
+  const nowIso = new Date().toISOString().slice(0, 10);
+
+  const [
+    programStatusRows,
+    programAuthorityRows,
+    programTotalRow,
+    upcomingProgramsRow,
+    macroGroupRows,
+    macroMetricTotalRow,
+    climateDatasetRows,
+    climateTotalRow,
+    capitalScenarioRows,
+    capitalTotalRow,
+    workforceCountRow,
+    clusterCountRow,
+    playbookRows,
+    regulatoryRow
+  ] = await Promise.all([
+    c.env.DB.prepare('SELECT status, COUNT(*) as count FROM programs GROUP BY status').all<{ status: string; count: number }>(),
+    c.env.DB.prepare('SELECT authority_level as authority, COUNT(*) as count FROM programs GROUP BY authority_level').all<{ authority: string; count: number }>(),
+    c.env.DB.prepare('SELECT COUNT(*) as count FROM programs').first<{ count: number }>(),
+    c.env.DB.prepare('SELECT COUNT(*) as count FROM programs WHERE end_date IS NULL OR end_date >= ?').bind(nowIso).first<{ count: number }>(),
+    c.env.DB.prepare('SELECT COALESCE(metric_group, "uncategorized") as group_name, COUNT(*) as count FROM macro_metrics GROUP BY group_name').all<{ group_name: string; count: number }>(),
+    c.env.DB.prepare('SELECT COUNT(*) as count FROM macro_metrics').first<{ count: number }>(),
+    c.env.DB.prepare('SELECT dataset_id, COUNT(*) as count FROM climate_country_metrics GROUP BY dataset_id').all<{ dataset_id: string; count: number }>(),
+    c.env.DB.prepare('SELECT COUNT(*) as count FROM climate_country_metrics').first<{ count: number }>(),
+    c.env.DB.prepare('SELECT scenario_id, COUNT(*) as count FROM capital_stack_entries GROUP BY scenario_id').all<{ scenario_id: string; count: number }>(),
+    c.env.DB.prepare('SELECT COUNT(*) as count FROM capital_stack_entries').first<{ count: number }>(),
+    c.env.DB.prepare('SELECT COUNT(*) as count FROM workforce_ecosystem').first<{ count: number }>().catch(() => ({ count: 0 })),
+    c.env.DB.prepare('SELECT COUNT(*) as count FROM industry_clusters').first<{ count: number }>().catch(() => ({ count: 0 })),
+    c.env.DB.prepare('SELECT country, updated_at FROM country_playbooks ORDER BY updated_at DESC').all<{ country: string; updated_at: string | null }>().catch(() => ({ results: [] as Array<any> })),
+    c.env.DB.prepare('SELECT COUNT(*) as count FROM country_playbooks WHERE regulatory_compliance IS NOT NULL AND regulatory_compliance <> ""').first<{ count: number }>().catch(() => ({ count: 0 }))
+  ]);
+
+  const programStatus = (programStatusRows.results ?? []).map((row) => ({ status: row.status, count: Number(row.count ?? 0) }));
+  const programByAuthority = (programAuthorityRows.results ?? []).map((row) => ({ authority: row.authority, count: Number(row.count ?? 0) }));
+  const macroGroups = (macroGroupRows.results ?? []).map((row) => ({ group: row.group_name, count: Number(row.count ?? 0) }));
+  const climateDatasets = (climateDatasetRows.results ?? []).map((row) => ({ dataset: row.dataset_id, count: Number(row.count ?? 0) }));
+  const capitalScenarios = (capitalScenarioRows.results ?? []).map((row) => ({ scenario: row.scenario_id, count: Number(row.count ?? 0) }));
+  const playbooks = (playbookRows.results ?? []).map((row) => ({ country: row.country, updated_at: row.updated_at }));
+
+  const pestle = {
+    political: {
+      programs_by_authority: programByAuthority
+    },
+    economic: {
+      macro_groups: macroGroups,
+      total_metrics: Number(macroMetricTotalRow?.count ?? 0)
+    },
+    social: {
+      workforce_programs: Number(workforceCountRow?.count ?? 0),
+      industry_clusters: Number(clusterCountRow?.count ?? 0)
+    },
+    technological: {
+      innovation_signals: macroGroups
+        .filter((entry) => (entry.group || '').toLowerCase().includes('innovation'))
+        .reduce((sum, entry) => sum + Number(entry.count ?? 0), 0),
+      cluster_count: Number(clusterCountRow?.count ?? 0)
+    },
+    legal: {
+      regulatory_playbooks: Number(regulatoryRow?.count ?? 0)
+    },
+    environmental: {
+      climate_datasets: climateDatasets,
+      total_indicators: Number(climateTotalRow?.count ?? 0)
+    }
+  };
+
+  return c.json({
+    data: {
+      programs: {
+        total: Number(programTotalRow?.count ?? 0),
+        upcoming: Number(upcomingProgramsRow?.count ?? 0),
+        by_status: programStatus,
+        by_authority: programByAuthority
+      },
+      macro: {
+        total_metrics: Number(macroMetricTotalRow?.count ?? 0),
+        groups: macroGroups
+      },
+      climate: {
+        total_indicators: Number(climateTotalRow?.count ?? 0),
+        datasets: climateDatasets
+      },
+      capital: {
+        total_entries: Number(capitalTotalRow?.count ?? 0),
+        scenarios: capitalScenarios
+      },
+      playbooks,
+      pestle
+    }
+  });
 });
 
 app.get('/v1/playbooks/:country', async (c) => {
