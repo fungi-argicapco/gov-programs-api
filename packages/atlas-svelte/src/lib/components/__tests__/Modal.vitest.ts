@@ -1,5 +1,5 @@
 import './setup-env';
-import { fireEvent, render } from '@testing-library/svelte';
+import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import Modal from '../Modal.svelte';
@@ -11,10 +11,10 @@ describe('AtlasModal', () => {
     });
 
     const spy = vi.fn();
-    component.$on('close', spy);
+    (component as any).$on('close', spy);
 
     const dialog = getByRole('dialog');
-    await fireEvent.keyDown(dialog, { key: 'Escape' });
+    dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     await tick();
 
     expect(spy).toHaveBeenCalledTimes(1);
@@ -30,11 +30,11 @@ describe('AtlasModal', () => {
     });
 
     const spy = vi.fn();
-    component.$on('close', spy);
+    (component as any).$on('close', spy);
 
     const backdrop = container.querySelector('.atlas-modal__backdrop');
     expect(backdrop).toBeTruthy();
-    await fireEvent.click(backdrop as Element);
+    (backdrop as Element).dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick();
 
     expect(spy).toHaveBeenCalledTimes(1);

@@ -1,5 +1,5 @@
 import './setup-env';
-import { fireEvent, render } from '@testing-library/svelte';
+import { render } from '@testing-library/svelte';
 import { describe, expect, it } from 'vitest';
 import Input from '../Input.svelte';
 import Select from '../Select.svelte';
@@ -12,7 +12,8 @@ describe('AtlasInput', () => {
     const input = getByRole('textbox', { name: 'Email' }) as HTMLInputElement;
     expect(input.value).toBe('hello@example.com');
 
-    await fireEvent.input(input, { target: { value: 'new@example.com' } });
+    input.value = 'new@example.com';
+    input.dispatchEvent(new Event('input'));
     expect(getByTestId('value')).toHaveTextContent('new@example.com');
   });
 
@@ -50,9 +51,12 @@ describe('AtlasSelect', () => {
 
   it('supports bind:value using harness', async () => {
     const { getByRole, getByTestId } = render(SelectHarness, { props: { options } });
-    const select = getByRole('combobox', { name: 'Country' }) as unknown as HTMLSelectElement;
-
-    await fireEvent.change(select, { target: { value: 'pe' } });
+    const select = getByRole('combobox', { name: 'Country' });
+    if (!(select instanceof HTMLSelectElement)) {
+      throw new Error('Select element not found');
+    }
+    select.value = 'pe';
+    select.dispatchEvent(new Event('change'));
     expect(getByTestId('value')).toHaveTextContent('pe');
   });
 });
