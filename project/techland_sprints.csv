@@ -1,0 +1,10 @@
+
+Sprint Name,Description,Included Epics
+Sprint 1 - Foundation,"Set up design system, primitives, global layout, navigation and report cards","E01,E02,E03"
+Sprint 2 - Funding & Stacks,"Develop capital finder, stack builder and blueprint composer w/ export","E04,E05,E06"
+Sprint 3 - Maps & Playbooks,"Implement asset atlas, signals & alerts groundwork, partners directory and playbooks","E07,E08,E09,E10"
+Sprint 4 - Discovery & Ikigai,"Build problem explorer, Ikigai profile and micro-credential studio","E11,E12,E13"
+Sprint 5 - Credentials & Hazards,"Implement credential wallet, climate hazard backbone and crosswalk expansion","E14,E15,E16"
+Sprint 6 - Alerts & Observability,"Develop application alerts monitors, ingestion observability and auth hardening","E17,E18,E19"
+"Sprint 7 - Docs, Performance & Demo","Create docs site, optimize performance, provide demo seeds and implement licensing guardrails","E20,E21,E22,E23"
+Sprint 8 - Deployment & Go-Live,"Integrate staging environment, roll out production and finalize guardrails","E24,E25"

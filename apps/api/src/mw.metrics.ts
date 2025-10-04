@@ -71,17 +71,22 @@ export const mwMetrics: MiddlewareHandler<{ Bindings: MetricsBindings; Variables
 
   await next();
 
-  c.res.headers.set('x-request-id', requestId);
+  const response = c.res;
+  if (!response || typeof (response as Response).headers?.set !== 'function') {
+    return;
+  }
+
+  response.headers.set('x-request-id', requestId);
 
   const durationMs = Math.max(0, Date.now() - start);
-  const bytesOut = (await estimateBytesOut(c.res)) ?? 0;
+  const bytesOut = (await estimateBytesOut(response as Response)) ?? 0;
   const reporter = getMetricsReporter(c.env as MetricsBindings);
   const metricTs = Date.now();
 
   try {
     await reporter.reportRequest({
       route: c.req.path,
-      status: c.res.status,
+      status: response.status,
       dur_ms: durationMs,
       bytes_out: Math.max(0, Math.trunc(bytesOut)),
       ts: metricTs

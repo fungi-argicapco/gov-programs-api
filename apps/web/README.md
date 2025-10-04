@@ -13,6 +13,9 @@ shared Atlas primitives (`@atlas/svelte`).
 - The dev server proxies `/v1`, `/admin`, `/docs`, and `/openapi.json` to `http://127.0.0.1:8787`; override via `VITE_API_PROXY`.
 - Static assets are uploaded during `bun run setup:*` and `bun run deploy`.
 - `src/routes/design/preview/+page.svelte` provides a live gallery for Atlas primitives.
+- The `/capital` and `/partners` routes (under `src/routes/(app)/`) now render Atlas report cards and evidence blocks using mock datasets in `src/lib/data`.
+- `src/lib/layout/AppShell.svelte` composes the shared TopBar, SideNav, and CommandPalette for authenticated operator flows.
+- `src/lib/components` holds shell-specific UI (TopBar, SideNav, CommandPalette) built atop Atlas tokens.
 - Update copy or styling with awareness of the API contract documented in `openapi.json`.
 
 Refer to [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for the broader system context.

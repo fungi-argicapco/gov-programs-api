@@ -49,7 +49,7 @@ graph TD
 
 | Area | Source | Responsibilities |
 | --- | --- | --- |
-| Access portal | `apps/web` | Svelte SPA for signup and playbook surface |
+| Access portal | `apps/web` | SvelteKit app with marketing surface plus secure AppShell (TopBar, SideNav, CommandPalette) for operator tooling |
 | API Worker | `apps/api` | Hono router exposing `/v1` program search, stacks, metrics, and the session-backed operator console (requests, feeds, schema browser, observability dashboards) |
 | Canvas Worker | `apps/canvas` | Collaborative canvas & onboarding flows for internal users |
 | Ingestion Worker | `apps/ingest` | Fetches catalog sources, stores normalized programs, computes coverage |
@@ -57,6 +57,15 @@ graph TD
 | Persistence | `migrations/`, `packages/db` | D1 schema, Drizzle bindings, migration history |
 | Datasets & docs | `data/`, `docs/` | Source registry, research artifacts, schema docs |
 | UI primitives | `packages/atlas-tokens`, `packages/atlas-svelte` | Atlas design tokens, Tailwind preset, and Svelte primitives consumed by web clients |
+
+### Atlas UI Foundation
+
+- `packages/atlas-tokens` defines the unified design token source (`tokens.json`) and Bun build pipeline emitting CSS variables, Tailwind preset, and TypeScript contracts for downstream packages.
+- `packages/atlas-svelte` ships Atlas primitives alongside the new `AtlasReportCard` and `AtlasEvidenceBlock` components used across capital and partner insights.
+- `apps/web/src/lib/layout/AppShell.svelte` composes the responsive navigation shell (TopBar, SideNav, CommandPalette) shared by `/discover`, `/capital`, `/partners`, and future operator routes.
+- Sample data for capital programs and partner profiles lives under `apps/web/src/lib/data`, enabling Sprint 1 report cards and evidence previews without backend dependencies.
+- Sprint 2 prerequisites: land the Playwright CI container story (official Docker image, artifacts, trace-on-retry) and align `/v1/programs` query parameters with the upcoming capital finder filters before attaching live data.
+
 
 ## Database Tooling
 
