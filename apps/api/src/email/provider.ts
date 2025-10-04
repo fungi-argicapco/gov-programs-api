@@ -25,10 +25,12 @@ class ConsoleMailService implements MailService {
 class PostmarkMailService implements MailService {
   private readonly token: string;
   private readonly endpoint: string;
+  private readonly messageStream: string;
 
-  constructor(token: string, endpoint?: string) {
+  constructor(token: string, endpoint?: string, messageStream?: string) {
     this.token = token;
     this.endpoint = endpoint ?? 'https://api.postmarkapp.com/email';
+    this.messageStream = messageStream ?? 'outbound';
   }
 
   async send(message: MailMessage): Promise<void> {
@@ -38,6 +40,7 @@ class PostmarkMailService implements MailService {
       Subject: message.subject,
       HtmlBody: message.html,
       TextBody: message.text,
+      MessageStream: this.messageStream,
     };
 
     const response = await fetch(this.endpoint, {
@@ -62,6 +65,12 @@ class PostmarkMailService implements MailService {
           (errorBody ? ` – ${JSON.stringify(errorBody)}` : '')
       );
     }
+
+    console.info('Email sent via Postmark', {
+      to: message.to,
+      subject: message.subject,
+      stream: this.messageStream
+    });
   }
 }
 
@@ -78,7 +87,7 @@ export function createMailService(env: Env): MailService {
       if (!token) {
         throw new Error('POSTMARK_TOKEN is required when EMAIL_PROVIDER=postmark');
       }
-      return new PostmarkMailService(token, env.POSTMARK_API_BASE);
+      return new PostmarkMailService(token, env.POSTMARK_API_BASE, env.POSTMARK_MESSAGE_STREAM);
     }
     case 'console':
     default:

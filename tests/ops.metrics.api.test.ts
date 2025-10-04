@@ -1,28 +1,91 @@
 import { describe, it, expect } from 'vitest';
 import app from '../apps/api/src/index';
 import { createTestDB } from './helpers/d1';
-import { upsertDevApiKey } from '../apps/api/src/mw.auth';
-
-const ADMIN_KEY = 'ops-metrics-admin';
+import { ensureUserWithDefaultCanvas, createSignupToken } from '../apps/api/src/onboarding/storage';
 
 const schema = `
-CREATE TABLE api_keys (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  key_hash TEXT NOT NULL UNIQUE,
-  role TEXT NOT NULL,
-  name TEXT,
-  quota_daily INTEGER,
-  quota_monthly INTEGER,
-  created_at INTEGER,
-  updated_at INTEGER,
-  last_seen_at INTEGER
+PRAGMA foreign_keys=ON;
+CREATE TABLE users (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  display_name TEXT NOT NULL,
+  status TEXT NOT NULL,
+  apps TEXT NOT NULL,
+  roles TEXT NOT NULL,
+  password_hash TEXT,
+  mfa_enrolled INTEGER NOT NULL DEFAULT 0,
+  last_login_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
 );
-CREATE TABLE usage_events (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  api_key_id INTEGER NOT NULL,
-  ts INTEGER NOT NULL,
-  route TEXT NOT NULL,
-  cost INTEGER DEFAULT 1
+CREATE TABLE mfa_methods (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  secret TEXT,
+  verified_at TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE TABLE account_requests (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  requested_apps TEXT NOT NULL,
+  justification TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  schema_version INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  decided_at TEXT,
+  reviewer_id TEXT,
+  reviewer_comment TEXT
+);
+CREATE TABLE email_tokens (
+  id TEXT PRIMARY KEY,
+  token TEXT NOT NULL UNIQUE,
+  purpose TEXT NOT NULL,
+  user_id TEXT,
+  account_request_id TEXT,
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (account_request_id) REFERENCES account_requests(id) ON DELETE CASCADE
+);
+CREATE TABLE sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  issued_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  refresh_expires_at TEXT,
+  mfa_required INTEGER NOT NULL DEFAULT 0,
+  ip TEXT,
+  user_agent TEXT,
+  refresh_token_hash TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE TABLE canvases (
+  id TEXT PRIMARY KEY,
+  owner_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  summary TEXT,
+  content TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  schema_version INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE TABLE canvas_versions (
+  id TEXT PRIMARY KEY,
+  canvas_id TEXT NOT NULL,
+  revision INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  diff TEXT,
+  created_at TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  FOREIGN KEY (canvas_id) REFERENCES canvases(id) ON DELETE CASCADE
 );
 CREATE TABLE request_metrics_5m (
   bucket_ts INTEGER NOT NULL,
@@ -38,12 +101,41 @@ CREATE TABLE request_metrics_5m (
 `;
 
 describe('ops metrics API', () => {
-  it('aggregates hourly metrics with admin auth', async () => {
+  it('aggregates hourly metrics with session-authenticated admin', async () => {
     const db = createTestDB();
     await db.exec(schema);
-    await upsertDevApiKey(db as any, { rawKey: ADMIN_KEY, role: 'admin', name: 'ops-admin' });
 
-    const env = { DB: db } as any;
+    const env = { DB: db, SESSION_COOKIE_NAME: 'fungi_session' } as any;
+
+    await ensureUserWithDefaultCanvas(env, {
+      email: 'ops@example.com',
+      display_name: 'Ops Admin',
+      status: 'pending',
+      apps: { canvas: true, program: true, website: false },
+      roles: ['admin'],
+      mfa_enrolled: false
+    });
+
+    const userRow = await db
+      .prepare('SELECT id FROM users WHERE email = ? LIMIT 1')
+      .bind('ops@example.com')
+      .first<{ id: string }>();
+    const signup = await createSignupToken(env, userRow?.id ?? 'user_ops', 24);
+
+    const activate = await app.fetch(
+      new Request('http://localhost/v1/account/activate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ token: signup.token, password: 'Sup3rSecure!PW' })
+      }),
+      env
+    );
+    expect(activate.status).toBe(200);
+    const sessionCookie = activate.headers
+      .get('set-cookie')
+      ?.split(/,(?=[^ ]|$)/)
+      ?.find((entry) => entry.startsWith('fungi_session='));
+    expect(sessionCookie).toBeTruthy();
 
     const base = Date.UTC(2024, 0, 1, 0, 0, 0);
     const fiveMinutes = 5 * 60 * 1000;
@@ -75,11 +167,14 @@ describe('ops metrics API', () => {
     const fromIso = new Date(base).toISOString();
     const toIso = new Date(base + 2 * 60 * 60 * 1000).toISOString();
     const response = await app.fetch(
-      new Request(`http://localhost/v1/ops/metrics?bucket=1h&from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`, {
-        headers: {
-          'x-api-key': ADMIN_KEY
+      new Request(
+        `http://localhost/v1/ops/metrics?bucket=1h&from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`,
+        {
+          headers: {
+            cookie: sessionCookie as string
+          }
         }
-      }),
+      ),
       env
     );
 
@@ -94,7 +189,7 @@ describe('ops metrics API', () => {
     expect(firstHourProgram2xx).toBeDefined();
     expect(firstHourProgram2xx.count).toBe(120);
     expect(firstHourProgram2xx.bytes_out).toBe(12 * 1024);
-    expect(firstHourProgram2xx.p99_ms).toBeCloseTo(160); // 120 + 40 weighted uniformly
+    expect(firstHourProgram2xx.p99_ms).toBeCloseTo(160);
 
     const secondHourMatch5xx = payload.data.find(
       (row: any) => row.route === '/v1/match' && row.status_class === '5xx' && row.bucket_ts === base + 60 * 60 * 1000
@@ -102,6 +197,6 @@ describe('ops metrics API', () => {
     expect(secondHourMatch5xx).toBeDefined();
     expect(secondHourMatch5xx.count).toBe(24);
     expect(secondHourMatch5xx.bytes_out).toBe(12 * 256);
-    expect(secondHourMatch5xx.p50_ms).toBeCloseTo(360); // 240 * 1.5
+    expect(secondHourMatch5xx.p50_ms).toBeCloseTo(360);
   });
 });

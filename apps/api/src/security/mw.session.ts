@@ -15,25 +15,19 @@ function isExpired(iso: string): boolean {
   return Number.isNaN(ts) || ts <= Date.now();
 }
 
-function appendClearCookies(c: Context<{ Bindings: Env; Variables: SessionVariables }>) {
-  const env = c.env;
-  const expires = 'Thu, 01 Jan 1970 00:00:00 GMT';
-  c.header(
-    'Set-Cookie',
-    `${getSessionCookieName(env)}=; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=${expires}`,
-    { append: true }
-  );
-  c.header(
-    'Set-Cookie',
-    `${getRefreshCookieName(env)}=; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=${expires}`,
-    { append: true }
-  );
+function safeAppendCookie(c: Context<{ Bindings: Env; Variables: SessionVariables }>, name: string, value: string) {
+  try {
+    c.header(name, value, { append: true });
+  } catch (error) {
+    console.warn('Failed to append cookie header', { name, error: error instanceof Error ? error.message : String(error) });
+  }
 }
 
 export const mwSession: MiddlewareHandler<{ Bindings: Env; Variables: SessionVariables }> = async (c, next) => {
   const sessionId = readSessionCookie(c.env, c.req.raw);
   if (!sessionId) {
-    return next();
+    await next();
+    return;
   }
 
   const session = await getSession(c.env, sessionId);
@@ -41,15 +35,27 @@ export const mwSession: MiddlewareHandler<{ Bindings: Env; Variables: SessionVar
     if (session?.id) {
       await deleteSession(c.env, session.id).catch(() => undefined);
     }
-    appendClearCookies(c);
-    return next();
+    const pathname = new URL(c.req.url).pathname;
+    if (!pathname.startsWith('/assets/') && pathname !== '/favicon.ico' && !pathname.startsWith('/cdn-cgi/')) {
+      const expires = 'Thu, 01 Jan 1970 00:00:00 GMT';
+      safeAppendCookie(c, 'Set-Cookie', `${getSessionCookieName(c.env)}=; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=${expires}`);
+      safeAppendCookie(c, 'Set-Cookie', `${getRefreshCookieName(c.env)}=; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=${expires}`);
+    }
+    await next();
+    return;
   }
 
   const profile = await getUserProfileById(c.env, session.user_id);
   if (!profile) {
     await deleteSession(c.env, session.id).catch(() => undefined);
-    appendClearCookies(c);
-    return next();
+    const pathname = new URL(c.req.url).pathname;
+    if (!pathname.startsWith('/assets/') && pathname !== '/favicon.ico' && !pathname.startsWith('/cdn-cgi/')) {
+      const expires = 'Thu, 01 Jan 1970 00:00:00 GMT';
+      safeAppendCookie(c, 'Set-Cookie', `${getSessionCookieName(c.env)}=; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=${expires}`);
+      safeAppendCookie(c, 'Set-Cookie', `${getRefreshCookieName(c.env)}=; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=${expires}`);
+    }
+    await next();
+    return;
   }
 
   c.set('session', session);

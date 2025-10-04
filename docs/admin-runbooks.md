@@ -4,6 +4,7 @@
 - Operators authenticate at `/account/login`. Successful logins drop an HttpOnly session cookie (`fungi_session`) that the Worker checks on every request.
 - Accounts with TOTP enabled will trigger a second step; enter the 6 digit code or use the emailed decision link to bootstrap MFA.
 - Sessions can be refreshed with the hidden `*_rt` cookie—users do not see the raw refresh token.
+- Activation emails land on `/account/activate?token=…`. Set your password there; expired or empty links can be reissued from the “Need a new activation email?” form on the sign-in page.
 
 ## Approving Account Requests
 Inbound requests flow through the access portal served at `/`, which writes to `account_requests` and emails the operator distribution list configured via `EMAIL_ADMIN`.
@@ -15,6 +16,7 @@ Inbound requests flow through the access portal served at `/`, which writes to `
    - Provision the user profile and default “Lean Canvas Quickstart” canvas (if the user is new).
    - Issue a one-time signup token (24 hour TTL) and dispatch both the approval and activation emails.
 4. Confirm the onboarding email landed by checking Postmark activity or worker logs for `Email send requested` entries. Declines dispatch a courteous rejection note automatically.
+5. Requests submitted from the configured `EMAIL_ADMIN` address are auto-approved, promoted to the `admin` role, and receive the approval + activation emails immediately.
 
 ### Handling Duplicate Requests
 - Submissions now reuse the existing record when a pending request already exists for the same email. The API returns `{ status: "pending", existing: true }` rather than creating a new row.
@@ -37,6 +39,7 @@ Inbound requests flow through the access portal served at `/`, which writes to `
      echo "<generated-pass>"   | bunx wrangler secret put POSTMARK_WEBHOOK_BASIC_PASS
      ```
 - If Postmark reintroduces webhook signatures you can instead set `POSTMARK_WEBHOOK_SECRET`, but either approach will keep the endpoint locked down.
+- Email sends default to the `outbound` message stream. Override with `POSTMARK_MESSAGE_STREAM=<stream-id>` if your server uses a custom stream ID.
 
 ## Archiving Canvases
 1. Use the authenticated Canvas API (`PATCH /v1/canvases/:id`) with `{ "status": "archived" }` and the latest `revision` to avoid conflicts.

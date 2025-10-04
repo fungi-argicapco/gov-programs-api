@@ -157,6 +157,10 @@
   </section>
 
   <section class="layout">
+    <div class="login-cta">
+      <span>Existing user already approved?</span>
+      <a href="/account/login">Log in</a>
+    </div>
     <form class="form" on:submit={submitRequest} aria-describedby="form-status">
       <header>
         <h2>Request access</h2>
@@ -339,6 +343,38 @@
     grid-template-columns: minmax(0, 1fr) 320px;
     gap: 24px;
     align-items: start;
+  }
+
+  .login-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    color: rgba(15, 23, 42, 0.85);
+    font-size: 0.95rem;
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: 100%;
+    max-width: 540px;
+  }
+
+  .login-cta a {
+    color: #0ea5e9;
+    font-weight: 600;
+    text-decoration: none;
+    background: rgba(14, 165, 233, 0.12);
+    padding: 8px 16px;
+    border-radius: 999px;
+    transition: background 0.15s ease;
+  }
+
+  .login-cta a:hover {
+    background: rgba(14, 165, 233, 0.22);
   }
 
   .form {
@@ -570,6 +606,12 @@
 
     .hero__highlights {
       grid-template-columns: 1fr;
+    }
+
+    .login-cta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
     }
 
     .form {

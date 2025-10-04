@@ -33,3 +33,7 @@ Git Workflow (conflict-proof)
   git branch -M "$BR"
   git push -u origin "$BR" || echo "Warning: Failed to push branch $BR"
   ```
+
+Operational notes
+- Wrangler 4.42.0 dropped the `--log-level` flag. Use `WRANGLER_LOG_LEVEL=debug bunx wrangler deploy` (see `scripts/deploy.ts`).
+- When curling worker routes that include query strings, wrap the URL in quotes (e.g., `curl "https://.../account/activate?token=test"`) to avoid shell expansion.

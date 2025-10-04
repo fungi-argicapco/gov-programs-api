@@ -88,7 +88,7 @@ async function deployWorker(): Promise<void> {
   await $`bun run web:build`;
   await ensureDnsRecord();
   console.log('➡️ Deploying Worker via wrangler…');
-  await $`bunx wrangler deploy`;
+  await $`WRANGLER_LOG_LEVEL=debug bunx wrangler deploy`;
 }
 
 deployWorker().catch((error) => {

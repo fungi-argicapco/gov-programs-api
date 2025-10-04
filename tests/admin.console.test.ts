@@ -139,6 +139,9 @@ describe('admin console UI', () => {
     expect(html).toContain('Operations console');
     expect(html).toContain('id="pending-container"');
     expect(html).toContain('id="history-container"');
+    expect(html).toContain('id="metrics-container"');
+    expect(html).toContain('id="datasets-container"');
+    expect(html).toContain('id="keys-list"');
     expect(html).toContain('/v1/operator/account-requests?status=pending');
   });
 });

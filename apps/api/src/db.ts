@@ -9,6 +9,7 @@ export type Env = {
   EMAIL_PROVIDER?: string;
   POSTMARK_TOKEN?: string;
   POSTMARK_API_BASE?: string;
+  POSTMARK_MESSAGE_STREAM?: string;
   PROGRAM_API_BASE?: string;
   SESSION_COOKIE_NAME?: string;
   ASSETS?: Fetcher;

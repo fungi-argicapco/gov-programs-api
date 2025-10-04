@@ -26,8 +26,13 @@ export function loginUi(c: Context<{ Bindings: Env; Variables: AuthVariables }>)
         padding: 32px 16px;
         background: radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 55%), #0f172a;
       }
-      form {
-        width: min(420px, 100%);
+      main {
+        width: min(940px, 100%);
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      }
+      form, section.activation {
         background: rgba(15, 23, 42, 0.88);
         border: 1px solid rgba(148, 163, 184, 0.25);
         border-radius: 20px;
@@ -39,6 +44,11 @@ export function loginUi(c: Context<{ Bindings: Env; Variables: AuthVariables }>)
       h1 {
         margin: 0;
         font-size: 1.6rem;
+        color: #f8fafc;
+      }
+      h2 {
+        margin: 0;
+        font-size: 1.2rem;
         color: #f8fafc;
       }
       p {
@@ -76,17 +86,32 @@ export function loginUi(c: Context<{ Bindings: Env; Variables: AuthVariables }>)
         opacity: 0.6;
         cursor: wait;
       }
+      .secondary-btn {
+        background: rgba(15, 23, 42, 0.7);
+        color: rgba(226, 232, 240, 0.95);
+        border: 1px solid rgba(148, 163, 184, 0.32);
+        box-shadow: none;
+      }
       .error {
         display: none;
         padding: 12px;
         border-radius: 12px;
+        font-size: 0.95rem;
         background: rgba(239, 68, 68, 0.16);
         border: 1px solid rgba(239, 68, 68, 0.32);
         color: #fecaca;
-        font-size: 0.95rem;
       }
       .error.visible {
         display: block;
+      }
+      .status-success {
+        display: block;
+        padding: 12px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        background: rgba(16, 185, 129, 0.18);
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        color: #bbf7d0;
       }
       .link {
         color: rgba(125, 211, 252, 0.95);
@@ -94,30 +119,49 @@ export function loginUi(c: Context<{ Bindings: Env; Variables: AuthVariables }>)
         font-weight: 500;
         font-size: 0.9rem;
       }
+      section.activation p {
+        font-size: 0.9rem;
+      }
     </style>
   </head>
   <body>
-    <form id="login-form">
-      <div>
-        <h1>Sign in</h1>
-        <p>Access the fungiagricap operations console.</p>
-      </div>
-      <div id="error" class="error" role="alert"></div>
-      <label>
-        Email
-        <input id="email" name="email" type="email" autocomplete="email" required />
-      </label>
-      <label>
-        Password
-        <input id="password" name="password" type="password" autocomplete="current-password" required />
-      </label>
-      <label id="totp-field" hidden>
-        MFA code
-        <input id="totp" name="totp" inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code" />
-      </label>
-      <button id="submit" type="submit">Continue</button>
-      <p style="text-align:center;font-size:0.85rem;">Need an account? <a class="link" href="/">Request access</a></p>
-    </form>
+    <main>
+      <form id="login-form">
+        <div>
+          <h1>Sign in</h1>
+          <p>Access the fungiagricap operations console.</p>
+        </div>
+        <div id="error" class="error" role="alert"></div>
+        <label>
+          Email
+          <input id="email" name="email" type="email" autocomplete="email" required />
+        </label>
+        <label>
+          Password
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <label id="totp-field" hidden>
+          MFA code
+          <input id="totp" name="totp" inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code" />
+        </label>
+        <button id="submit" type="submit">Continue</button>
+        <p style="text-align:center;font-size:0.85rem;">Need an account? <a class="link" href="/">Request access</a></p>
+      </form>
+      <section class="activation">
+        <div>
+          <h2>Need a new activation email?</h2>
+          <p>Enter your work email and we’ll send a fresh link to set or reset your password.</p>
+        </div>
+        <div id="activation-status" class="error" role="alert"></div>
+        <form id="activation-form">
+          <label>
+            Work email
+            <input id="activation-email" name="email" type="email" autocomplete="email" required />
+          </label>
+          <button id="activation-submit" type="submit" class="secondary-btn">Send activation email</button>
+        </form>
+      </section>
+    </main>
 
     <script>
       (function () {
@@ -128,6 +172,10 @@ export function loginUi(c: Context<{ Bindings: Env; Variables: AuthVariables }>)
         const totpInput = document.getElementById('totp');
         const submitBtn = document.getElementById('submit');
         const errorEl = document.getElementById('error');
+        const activationForm = document.getElementById('activation-form');
+        const activationEmail = document.getElementById('activation-email');
+        const activationStatus = document.getElementById('activation-status');
+        const activationSubmit = document.getElementById('activation-submit');
         const params = new URLSearchParams(window.location.search);
         const redirectTo = params.get('next') || ${JSON.stringify(next)};
         let challengeId = null;
@@ -140,6 +188,22 @@ export function loginUi(c: Context<{ Bindings: Env; Variables: AuthVariables }>)
         function clearError() {
           errorEl.textContent = '';
           errorEl.classList.remove('visible');
+        }
+
+        function setActivationStatus(message, tone) {
+          if (!activationStatus) return;
+          if (!message) {
+            activationStatus.textContent = '';
+            activationStatus.className = 'error';
+            return;
+          }
+          if (tone === 'success') {
+            activationStatus.textContent = message;
+            activationStatus.className = 'status-success';
+          } else {
+            activationStatus.textContent = message;
+            activationStatus.className = 'error visible';
+          }
         }
 
         async function requestJson(url, options) {
@@ -200,6 +264,30 @@ export function loginUi(c: Context<{ Bindings: Env; Variables: AuthVariables }>)
           } catch (error) {
             showError(error.message || String(error));
             submitBtn.disabled = false;
+          }
+        });
+
+        activationForm?.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const value = activationEmail?.value.trim().toLowerCase();
+          if (!value) {
+            setActivationStatus('Enter the email address associated with your account.', 'error');
+            return;
+          }
+          setActivationStatus('', 'success');
+          activationSubmit.disabled = true;
+          try {
+            await requestJson('/v1/account/activation', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ email: value })
+            });
+            setActivationStatus('If the email exists, a new activation link is on the way.', 'success');
+            activationForm.reset();
+          } catch (error) {
+            setActivationStatus(error.message || String(error), 'error');
+          } finally {
+            activationSubmit.disabled = false;
           }
         });
       })();

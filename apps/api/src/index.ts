@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import type { Context } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 import openapiDocument from '../../../openapi.json';
 import { Env } from './db';
 import { buildProgramsQuery } from './query';
@@ -18,6 +18,7 @@ import { apiError } from './errors';
 import { adminUi } from './admin/ui';
 import { adminDecisionUi } from './admin/decision';
 import { loginUi } from './admin/login';
+import { activationUi } from './admin/activate';
 import { DATASET_REGISTRY } from '../../ingest/src/datasets/registry';
 import ingestWorker from '../../ingest/src/index';
 import type { ExportedHandler } from '@cloudflare/workers-types';
@@ -207,6 +208,54 @@ function handleAuthError(c: Context<ApiBindings>, error: unknown) {
   }
   console.error('Unhandled auth error', error);
   return apiError(c, 500, 'auth_error', 'Unexpected authentication error.');
+}
+
+function parseEmailList(raw?: string | null): string[] {
+  if (!raw) {
+    return [];
+  }
+  return raw
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter((value) => value.length > 0);
+}
+
+const mwAdminAccess: MiddlewareHandler<ApiBindings> = async (c, next) => {
+  const user = c.get('user');
+  if (user && Array.isArray(user.roles) && user.roles.includes('admin')) {
+    await next();
+    return;
+  }
+  await mwAuth(c as unknown as Context<{ Bindings: Env; Variables: AuthVariables }>, async () => {
+    const auth = c.get('auth');
+    if (!auth || auth.role !== 'admin') {
+      await apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
+      return;
+    }
+    await next();
+  });
+};
+
+function hasAdminPrivileges(c: Context<ApiBindings>): boolean {
+  const user = c.get('user');
+  if (user && Array.isArray(user.roles) && user.roles.includes('admin')) {
+    return true;
+  }
+  const auth = c.get('auth');
+  return Boolean(auth && auth.role === 'admin');
+}
+
+function getAdminActorKeyId(c: Context<ApiBindings>): number | null {
+  const auth = c.get('auth');
+  return auth?.apiKeyId ?? null;
+}
+
+function getAdminActorUserId(c: Context<ApiBindings>): string | null {
+  const user = c.get('user');
+  if (user && Array.isArray(user.roles) && user.roles.includes('admin')) {
+    return user.id;
+  }
+  return null;
 }
 
 function parseTimeInput(raw: string | null): number | null {
@@ -414,7 +463,7 @@ app.get('/', serveSite);
 app.get('/signup', serveSite);
 app.get('/signup/*', serveSite);
 app.get('/assets/*', serveStaticAsset);
-app.get('/favicon.ico', serveStaticAsset);
+app.get('/favicon.ico', () => new Response(null, { status: 204 }));
 app.get('/docs', serveDocs);
 app.get('/openapi.json', (c) => {
   const res = c.json(openapiDocument);
@@ -424,6 +473,12 @@ app.get('/openapi.json', (c) => {
 
 app.get('/account/login', (c) => {
   return new Response(loginUi(c), {
+    headers: { 'content-type': 'text/html; charset=utf-8' }
+  });
+});
+
+app.get('/account/activate', (c) => {
+  return new Response(activationUi(c), {
     headers: { 'content-type': 'text/html; charset=utf-8' }
   });
 });
@@ -498,6 +553,51 @@ app.post('/v1/auth/mfa/challenge', async (c) => {
   } catch (error) {
     return handleAuthError(c, error);
   }
+});
+
+app.post('/v1/account/activation', async (c) => {
+  let body: any;
+  try {
+    body = await c.req.json();
+  } catch {
+    return apiError(c, 400, 'invalid_payload', 'Request body must be valid JSON.');
+  }
+  const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+  if (!email) {
+    return apiError(c, 400, 'invalid_payload', 'Email is required.');
+  }
+
+  const userRecord = await findUserByEmail(c.env, email);
+  if (!userRecord) {
+    return c.json({ status: 'sent' }, 202);
+  }
+
+  if (userRecord.status === 'disabled') {
+    return c.json({ status: 'sent' }, 202);
+  }
+
+  const profile = await getUserProfileById(c.env, userRecord.id);
+  if (!profile) {
+    return c.json({ status: 'sent' }, 202);
+  }
+
+  const signup = await createSignupToken(c.env, profile.id);
+  const baseUrl = c.env.PROGRAM_API_BASE ?? `https://${c.req.header('host') ?? 'program.fungiagricap.com'}`;
+  const activationBase = new URL('/account/activate', baseUrl).toString();
+  console.info('Issuing activation email', {
+    email: profile.email,
+    stream: c.env.POSTMARK_MESSAGE_STREAM ?? 'outbound',
+    provider: c.env.EMAIL_PROVIDER ?? 'console'
+  });
+  const activationEmail = buildSignupEmail({
+    recipient: profile.email,
+    token: signup.token,
+    activationBaseUrl: activationBase,
+    expiresAt: signup.expiresAt
+  });
+  await sendEmail(c.env, activationEmail);
+
+  return c.json({ status: 'sent', expires_at: signup.expiresAt }, 202);
 });
 
 app.post('/v1/auth/logout', requireSession, async (c) => {
@@ -841,6 +941,65 @@ app.post('/v1/account/request', async (c) => {
   });
 
   const baseUrl = c.env.PROGRAM_API_BASE ?? `https://${c.req.header('host') ?? 'program.fungiagricap.com'}`;
+  const adminEmails = parseEmailList(c.env.EMAIL_ADMIN);
+
+  if (adminEmails.includes(normalizedEmail)) {
+    const tokenRecord = await getAccountRequestByToken(c.env, decisionToken);
+    if (!tokenRecord) {
+      console.warn('Unable to auto-approve EMAIL_ADMIN request: decision token missing. Falling back to manual flow.');
+    } else {
+      const approved = await updateAccountRequestStatus(
+        c.env,
+        tokenRecord.accountRequest.id,
+        'approved',
+        'system',
+        'Auto-approved (EMAIL_ADMIN)'
+      );
+      if (!approved) {
+        console.warn('Unable to auto-approve EMAIL_ADMIN request: status update failed. Falling back to manual flow.');
+      } else {
+        await markDecisionTokenUsed(c.env, tokenRecord.token.id);
+        const apps = tokenRecord.accountRequest.requested_apps ?? parsed.data.requested_apps;
+        const userId = await ensureUserWithDefaultCanvas(c.env, {
+          email: tokenRecord.accountRequest.email,
+          display_name: tokenRecord.accountRequest.display_name,
+          status: 'active',
+          apps,
+          roles: ['admin'],
+          mfa_enrolled: false
+        });
+        const profile = await getUserProfileById(c.env, userId);
+        if (!profile) {
+          console.warn('Auto-approved EMAIL_ADMIN request but could not load user profile.');
+        } else {
+          const signupToken = await createSignupToken(c.env, userId);
+          const activationBase = new URL('/account/activate', baseUrl).toString();
+          const activationEmail = buildSignupEmail({
+            recipient: profile.email,
+            token: signupToken.token,
+            activationBaseUrl: activationBase,
+            expiresAt: signupToken.expiresAt
+          });
+          const approvalEmail = buildDecisionResultEmail({
+            recipient: profile.email,
+            decision: 'approved'
+          });
+          await Promise.all([sendEmail(c.env, approvalEmail), sendEmail(c.env, activationEmail)]);
+
+          return c.json(
+            {
+              status: 'approved',
+              auto_approved: true,
+              request: approved,
+              activation_expires_at: signupToken.expiresAt
+            },
+            200
+          );
+        }
+      }
+    }
+  }
+
   const adminEmail = c.env.EMAIL_ADMIN;
   if (adminEmail) {
     const decisionBase = new URL('/admin/account/decision', baseUrl).toString();
@@ -1126,10 +1285,10 @@ app.use('/v1/usage/me', mwRate, mwAuth);
 app.use('/v1/match', mwRate, mwAuth);
 app.use('/v1/stacks', mwRate, mwAuth);
 app.use('/v1/stacks/*', mwRate, mwAuth);
-app.use('/v1/ops', mwRate, mwAuth);
-app.use('/v1/ops/*', mwRate, mwAuth);
-app.use('/v1/admin', mwRate, mwAuth);
-app.use('/v1/admin/*', mwRate, mwAuth);
+app.use('/v1/ops', mwRate, mwAdminAccess);
+app.use('/v1/ops/*', mwRate, mwAdminAccess);
+app.use('/v1/admin', mwRate, mwAdminAccess);
+app.use('/v1/admin/*', mwRate, mwAdminAccess);
 
 app.post('/v1/match', async (c) => {
   const auth = c.get('auth');
@@ -1189,9 +1348,7 @@ app.post('/v1/stacks/suggest', async (c) => {
 });
 
 app.get('/v1/ops/metrics', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
@@ -1302,9 +1459,7 @@ app.get('/v1/ops/metrics', async (c) => {
 });
 
 app.get('/v1/ops/slo', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
@@ -1407,9 +1562,7 @@ app.get('/v1/ops/slo', async (c) => {
 });
 
 app.get('/v1/ops/alerts', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
@@ -1421,9 +1574,7 @@ app.get('/v1/ops/alerts', async (c) => {
 });
 
 app.post('/v1/ops/alerts/resolve', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
@@ -1458,9 +1609,7 @@ app.post('/v1/ops/alerts/resolve', async (c) => {
 });
 
 app.get('/v1/admin/api-keys', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
@@ -1483,9 +1632,7 @@ app.get('/v1/admin/api-keys', async (c) => {
 });
 
 app.post('/v1/admin/api-keys', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
@@ -1518,25 +1665,26 @@ app.post('/v1/admin/api-keys', async (c) => {
 
   const id = Number(result?.meta?.last_row_id ?? 0);
 
+  const actorKeyId = getAdminActorKeyId(c) ?? -1;
+  const actorUserId = getAdminActorUserId(c);
+  const createMeta = auditMeta({
+    name,
+    role,
+    quota_daily: quotaDaily,
+    quota_monthly: quotaMonthly,
+    actor_user_id: actorUserId ?? undefined
+  });
   await c.env.DB.prepare(
     `INSERT INTO admin_audits (actor_key_id, action, target, meta, ts) VALUES (?, ?, ?, ?, ?)`
   )
-    .bind(
-      auth.apiKeyId,
-      'api_keys.create',
-      String(id),
-      auditMeta({ name, role, quota_daily: quotaDaily, quota_monthly: quotaMonthly }),
-      nowSeconds
-    )
+    .bind(actorKeyId, 'api_keys.create', String(id), createMeta, nowSeconds)
     .run();
 
   return c.json({ id, raw_key: rawKey });
 });
 
 app.patch('/v1/admin/api-keys/:id', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
@@ -1633,10 +1781,13 @@ app.patch('/v1/admin/api-keys/:id', async (c) => {
       .bind(...values)
       .run();
 
+    const actorKeyId = getAdminActorKeyId(c) ?? -1;
+    const actorUserId = getAdminActorUserId(c);
+    const auditPayload = auditMeta({ ...changes, actor_user_id: actorUserId ?? undefined });
     await c.env.DB.prepare(
       `INSERT INTO admin_audits (actor_key_id, action, target, meta, ts) VALUES (?, ?, ?, ?, ?)`
     )
-      .bind(auth.apiKeyId, 'api_keys.update', String(id), auditMeta(changes) ?? null, nowSeconds)
+      .bind(actorKeyId, 'api_keys.update', String(id), auditPayload, nowSeconds)
       .run();
   }
 
@@ -1659,9 +1810,7 @@ app.patch('/v1/admin/api-keys/:id', async (c) => {
 });
 
 app.delete('/v1/admin/api-keys/:id', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
@@ -1683,10 +1832,13 @@ app.delete('/v1/admin/api-keys/:id', async (c) => {
     .run();
 
   const nowSeconds = Math.floor(Date.now() / 1000);
+  const actorKeyId = getAdminActorKeyId(c) ?? -1;
+  const actorUserId = getAdminActorUserId(c);
+  const deleteMeta = auditMeta({ actor_user_id: actorUserId ?? undefined });
   await c.env.DB.prepare(
     `INSERT INTO admin_audits (actor_key_id, action, target, meta, ts) VALUES (?, ?, ?, ?, ?)`
   )
-    .bind(auth.apiKeyId, 'api_keys.delete', String(id), null, nowSeconds)
+    .bind(actorKeyId, 'api_keys.delete', String(id), deleteMeta, nowSeconds)
     .run();
 
   return c.json({ deleted: true });
@@ -1705,9 +1857,7 @@ app.get('/admin', mwRate, requireAdmin, async (c) => {
 });
 
 app.get('/v1/admin/sources/health', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
   const metrics = await listSourcesWithMetrics(c.env);
@@ -1733,9 +1883,7 @@ app.get('/v1/admin/sources/health', async (c) => {
 });
 
 app.get('/v1/admin/datasets', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
@@ -1787,9 +1935,7 @@ app.get('/v1/admin/datasets', async (c) => {
 });
 
 app.get('/v1/admin/climate', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
@@ -1799,9 +1945,7 @@ app.get('/v1/admin/climate', async (c) => {
 });
 
 app.post('/v1/admin/datasets/:id/reload', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
 
@@ -1830,9 +1974,7 @@ app.get('/v1/playbooks/:country', async (c) => {
 });
 
 app.post('/v1/admin/ingest/retry', async (c) => {
-  const auth = c.get('auth');
-  if (!auth) return apiError(c, 401, 'unauthorized', 'Authentication required.');
-  if (auth.role !== 'admin') {
+  if (!hasAdminPrivileges(c)) {
     return apiError(c, 403, 'forbidden', 'You do not have access to this resource.');
   }
   const url = new URL(c.req.url);

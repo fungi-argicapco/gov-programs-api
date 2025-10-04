@@ -95,6 +95,78 @@ describe('/v1/account/request duplicate handling', () => {
     const body = await response.json();
     expect(body?.error?.code).toBe('account_exists');
   });
+
+  it('auto-approves requests from EMAIL_ADMIN and provisions an admin user', async () => {
+    const response = await app.fetch(
+      new Request('http://localhost/v1/account/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'operations@fungiagricap.com',
+          display_name: 'Ops Admin',
+          requested_apps: { canvas: true, program: true },
+          justification: 'Primary admin'
+        })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.status).toBe('approved');
+    expect(body.auto_approved).toBe(true);
+    expect(body.request?.status).toBe('approved');
+
+    const accountRow = await env.DB.prepare(
+      `SELECT status FROM account_requests WHERE email = ? LIMIT 1`
+    )
+      .bind('operations@fungiagricap.com')
+      .first<{ status: string }>();
+    expect(accountRow?.status).toBe('approved');
+
+    const userRow = await env.DB.prepare(
+      `SELECT roles FROM users WHERE email = ? LIMIT 1`
+    )
+      .bind('operations@fungiagricap.com')
+      .first<{ roles: string }>();
+    expect(userRow).toBeTruthy();
+    expect(JSON.parse(userRow?.roles ?? '[]')).toContain('admin');
+
+    const tokenRow = await env.DB.prepare(
+      `SELECT used_at FROM email_tokens WHERE purpose = 'account-decision' AND account_request_id IN (SELECT id FROM account_requests WHERE email = ?) LIMIT 1`
+    )
+      .bind('operations@fungiagricap.com')
+      .first<{ used_at: string | null }>();
+    expect(tokenRow?.used_at).not.toBeNull();
+  });
+
+  it('reissues activation links for existing users', async () => {
+    await env.DB.prepare(
+      `INSERT INTO users (id, email, display_name, status, apps, roles, password_hash, mfa_enrolled, created_at, updated_at)
+       VALUES (?1, ?2, ?3, 'pending', ?4, '["user"]', NULL, 0, datetime('now'), datetime('now'))`
+    )
+      .bind('user-activation', 'resend@example.com', 'Resend User', JSON.stringify({ website: false, program: true, canvas: true }))
+      .run();
+
+    const response = await app.fetch(
+      new Request('http://localhost/v1/account/activation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'resend@example.com' })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(202);
+    const body = await response.json();
+    expect(body.status).toBe('sent');
+    const tokenRow = await env.DB.prepare(
+      `SELECT purpose FROM email_tokens WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`
+    )
+      .bind('user-activation')
+      .first<{ purpose: string }>();
+    expect(tokenRow?.purpose).toBe('signup');
+  });
 });
 
 afterAll(() => {

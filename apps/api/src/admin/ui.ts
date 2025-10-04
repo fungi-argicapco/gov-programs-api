@@ -184,6 +184,48 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
         <h2>Recent decisions</h2>
         <div id="history-container" class="empty">Loading history…</div>
       </section>
+      <section class="card">
+        <h2>Request metrics</h2>
+        <div id="metrics-container" class="empty">Loading metrics…</div>
+      </section>
+      <section class="card">
+        <h2>SLO summary</h2>
+        <div id="slo-summary" class="empty">Loading service-level overview…</div>
+      </section>
+      <section class="card">
+        <h2>Dataset health</h2>
+        <div id="datasets-container" class="empty">Loading dataset snapshots…</div>
+      </section>
+      <section class="card">
+        <h2>API keys</h2>
+        <p id="keys-status" class="status" aria-live="polite"></p>
+        <div id="keys-list" class="empty">Loading API keys…</div>
+        <form id="key-form" style="margin-top:18px;display:grid;gap:12px;">
+          <div style="display:grid;gap:6px;">
+            <label for="key-name">Name (optional)</label>
+            <input id="key-name" name="name" type="text" placeholder="Analytics partner" />
+          </div>
+          <div style="display:grid;gap:6px;">
+            <label for="key-role">Role</label>
+            <select id="key-role" name="role">
+              <option value="read">Read</option>
+              <option value="partner">Partner</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div style="display:grid;gap:6px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+            <div style="display:grid;gap:6px;">
+              <label for="key-quota-daily">Daily quota</label>
+              <input id="key-quota-daily" name="quota_daily" type="number" min="0" placeholder="Unlimited" />
+            </div>
+            <div style="display:grid;gap:6px;">
+              <label for="key-quota-monthly">Monthly quota</label>
+              <input id="key-quota-monthly" name="quota_monthly" type="number" min="0" placeholder="Unlimited" />
+            </div>
+          </div>
+          <button type="submit" class="primary">Create key</button>
+        </form>
+      </section>
     </main>
     <footer>Government Programs API · fungiagricap</footer>
 
@@ -195,6 +237,12 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
         const pendingContainer = document.getElementById('pending-container');
         const pendingCount = document.getElementById('pending-count');
         const historyContainer = document.getElementById('history-container');
+        const metricsContainer = document.getElementById('metrics-container');
+        const sloContainer = document.getElementById('slo-summary');
+        const datasetsContainer = document.getElementById('datasets-container');
+        const keysList = document.getElementById('keys-list');
+        const keysStatus = document.getElementById('keys-status');
+        const keyForm = document.getElementById('key-form');
 
         function showStatus(message, tone) {
           statusEl.textContent = message;
@@ -204,6 +252,17 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
         function clearStatus() {
           statusEl.textContent = '';
           statusEl.className = 'status';
+        }
+
+        function setKeysStatus(message, tone) {
+          if (!keysStatus) return;
+          if (!message) {
+            keysStatus.textContent = '';
+            keysStatus.className = 'status';
+            return;
+          }
+          keysStatus.textContent = message;
+          keysStatus.className = 'status visible ' + (tone === 'error' ? 'negative' : 'positive');
         }
 
         async function fetchJson(url, options) {
@@ -283,6 +342,220 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
           container.appendChild(table);
         }
 
+        function formatDateTime(value) {
+          if (!value) return '—';
+          try {
+            return new Date(value).toLocaleString();
+          } catch {
+            return String(value);
+          }
+        }
+
+        function formatNumber(value) {
+          return Number.isFinite(value) ? Number(value).toLocaleString() : '—';
+        }
+
+        function renderTable(container, headers, rows) {
+          if (!rows || rows.length === 0) {
+            container.className = 'empty';
+            container.textContent = 'No data available.';
+            return;
+          }
+          const table = document.createElement('table');
+          const thead = document.createElement('thead');
+          thead.innerHTML = '<tr>' + headers.map((label) => '<th>' + label + '</th>').join('') + '</tr>';
+          table.appendChild(thead);
+          const tbody = document.createElement('tbody');
+          rows.forEach((columns) => {
+            const row = document.createElement('tr');
+            row.innerHTML = columns.map((col) => '<td>' + col + '</td>').join('');
+            tbody.appendChild(row);
+          });
+          table.appendChild(tbody);
+          container.className = '';
+          container.innerHTML = '';
+          container.appendChild(table);
+        }
+
+        async function loadMetrics() {
+          if (!metricsContainer) return;
+          try {
+            const payload = await fetchJson('/v1/ops/metrics?bucket=1h');
+            if (!payload) return;
+            const rows = (payload.data || []).slice(-25);
+            renderTable(
+              metricsContainer,
+              ['Bucket (UTC)', 'Route', 'Status', 'Count', 'p99 (ms)'],
+              rows.map((row) => [
+                formatDateTime(row.bucket_ts),
+                row.route,
+                row.status_class,
+                formatNumber(row.count),
+                formatNumber(row.p99_ms)
+              ])
+            );
+          } catch (error) {
+            metricsContainer.className = 'empty';
+            metricsContainer.textContent = error.message || String(error);
+          }
+        }
+
+        async function loadSlo() {
+          if (!sloContainer) return;
+          try {
+            const payload = await fetchJson('/v1/ops/slo');
+            if (!payload) return;
+            const rows = (payload.data || []).slice(-30);
+            const summary = payload.summary || {};
+            const summaryText =
+              'Overall availability: ' +
+              (summary.overall_availability != null ? (summary.overall_availability * 100).toFixed(2) + '%' : '—') +
+              ' · Overall p99: ' +
+              (summary.overall_p99 != null ? summary.overall_p99.toFixed(0) + ' ms' : '—');
+            const header = document.createElement('div');
+            header.textContent = summaryText;
+            header.style.marginBottom = '12px';
+            const wrapper = document.createElement('div');
+            wrapper.className = '';
+            renderTable(
+              wrapper,
+              ['Day', 'Route', 'Requests', 'Error rate', 'p99 (ms)', 'Budget burn'],
+              rows.map((row) => [
+                row.day_utc,
+                row.route,
+                formatNumber(row.requests),
+                row.err_rate != null ? (row.err_rate * 100).toFixed(2) + '%' : '—',
+                formatNumber(row.p99_ms),
+                row.budget_burn != null ? (row.budget_burn * 100).toFixed(2) + '%' : '—'
+              ])
+            );
+            sloContainer.className = '';
+            sloContainer.innerHTML = '';
+            sloContainer.appendChild(header);
+            sloContainer.appendChild(wrapper.querySelector('table'));
+          } catch (error) {
+            sloContainer.className = 'empty';
+            sloContainer.textContent = error.message || String(error);
+          }
+        }
+
+        async function loadDatasets() {
+          if (!datasetsContainer) return;
+          try {
+            const payload = await fetchJson('/v1/admin/datasets');
+            if (!payload) return;
+            const rows = payload.data || [];
+            if (!rows.length) {
+              datasetsContainer.className = 'empty';
+              datasetsContainer.textContent = 'No datasets registered.';
+              return;
+            }
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            thead.innerHTML = '<tr><th>Dataset</th><th>Last snapshot</th><th>Services</th><th></th></tr>';
+            table.appendChild(thead);
+            const tbody = document.createElement('tbody');
+            rows.forEach((dataset) => {
+              const row = document.createElement('tr');
+              const services = (dataset.services || [])
+                .map((service) => (service.service_name || '') + ' (' + (service.readiness ?? 'unknown') + ')')
+                .join('<br />');
+              const lastSnapshot = dataset.snapshot
+                ? (dataset.snapshot.version || 'v?') + ' · ' + formatDateTime(dataset.snapshot.captured_at)
+                : '—';
+              row.innerHTML =
+                '<td><strong>' +
+                dataset.name +
+                '</strong><div style="color:rgba(148,163,184,0.75);font-size:0.85rem;">' +
+                (dataset.id || '') +
+                '</div></td>' +
+                '<td>' + lastSnapshot + '</td>' +
+                '<td>' + (services || '—') + '</td>' +
+                '<td></td>';
+              const actionCell = row.querySelector('td:last-child');
+              const button = document.createElement('button');
+              button.type = 'button';
+              button.className = 'secondary';
+              button.textContent = 'Queue reload';
+              button.addEventListener('click', async () => {
+                button.disabled = true;
+                try {
+                  await fetchJson('/v1/admin/datasets/' + dataset.id + '/reload', { method: 'POST' });
+                  showStatus('Queued reload for ' + dataset.name + '.', 'success');
+                } catch (error) {
+                  showStatus(error.message || String(error), 'error');
+                } finally {
+                  button.disabled = false;
+                }
+              });
+              actionCell.appendChild(button);
+              tbody.appendChild(row);
+            });
+            table.appendChild(tbody);
+            datasetsContainer.className = '';
+            datasetsContainer.innerHTML = '';
+            datasetsContainer.appendChild(table);
+          } catch (error) {
+            datasetsContainer.className = 'empty';
+            datasetsContainer.textContent = error.message || String(error);
+          }
+        }
+
+        async function loadKeys() {
+          if (!keysList) return;
+          try {
+            const payload = await fetchJson('/v1/admin/api-keys');
+            if (!payload) return;
+            const rows = payload.data || [];
+            if (!rows.length) {
+              keysList.className = 'empty';
+              keysList.textContent = 'No API keys yet.';
+              return;
+            }
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            thead.innerHTML = '<tr><th>Name</th><th>Role</th><th>Daily</th><th>Monthly</th><th></th></tr>';
+            table.appendChild(thead);
+            const tbody = document.createElement('tbody');
+            rows.forEach((row) => {
+              const tr = document.createElement('tr');
+              const nameCell = row.name ? row.name : '—';
+              tr.innerHTML =
+                '<td>' + nameCell + '</td>' +
+                '<td>' + row.role + '</td>' +
+                '<td>' + (row.quota_daily == null ? '∞' : formatNumber(row.quota_daily)) + '</td>' +
+                '<td>' + (row.quota_monthly == null ? '∞' : formatNumber(row.quota_monthly)) + '</td>' +
+                '<td></td>';
+              const actionCell = tr.querySelector('td:last-child');
+              const del = document.createElement('button');
+              del.type = 'button';
+              del.className = 'secondary';
+              del.textContent = 'Delete';
+              del.addEventListener('click', async () => {
+                del.disabled = true;
+                try {
+                  await fetchJson('/v1/admin/api-keys/' + row.id, { method: 'DELETE' });
+                  setKeysStatus('Deleted API key #' + row.id + '.', 'success');
+                  await loadKeys();
+                } catch (error) {
+                  setKeysStatus(error.message || String(error), 'error');
+                } finally {
+                  del.disabled = false;
+                }
+              });
+              actionCell.appendChild(del);
+              tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            keysList.className = '';
+            keysList.innerHTML = '';
+            keysList.appendChild(table);
+          } catch (error) {
+            keysList.className = 'empty';
+            keysList.textContent = error.message || String(error);
+          }
+        }
+
         async function handleDecision(request, decision) {
           clearStatus();
           if (!request.decision_token) {
@@ -358,9 +631,45 @@ export function adminUi(_c: Context<{ Bindings: Env; Variables: AuthVariables }>
           }
         }
 
+        if (keyForm) {
+          keyForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            setKeysStatus('', 'success');
+            const formData = new FormData(keyForm);
+            const payload = {
+              name: (formData.get('name') || '').toString().trim() || null,
+              role: (formData.get('role') || 'read').toString(),
+              quota_daily: formData.get('quota_daily') ? Number(formData.get('quota_daily')) : null,
+              quota_monthly: formData.get('quota_monthly') ? Number(formData.get('quota_monthly')) : null,
+            };
+            ['quota_daily', 'quota_monthly'].forEach((field) => {
+              if (payload[field] !== null && !Number.isFinite(payload[field])) {
+                payload[field] = null;
+              }
+            });
+            try {
+              const response = await fetchJson('/v1/admin/api-keys', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              const rawKey = response?.raw_key;
+              setKeysStatus(rawKey ? 'Created API key. Raw secret: ' + rawKey : 'Created API key.', 'success');
+              keyForm.reset();
+              await loadKeys();
+            } catch (error) {
+              setKeysStatus(error.message || String(error), 'error');
+            }
+          });
+        }
+
         loadUser();
         loadPending();
         loadHistory();
+        loadMetrics();
+        loadSlo();
+        loadDatasets();
+        loadKeys();
       })();
     </script>
   </body>

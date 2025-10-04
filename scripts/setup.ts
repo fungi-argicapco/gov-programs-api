@@ -383,7 +383,8 @@ crons = ["0 */4 * * *"]
     ['__EMAIL_PROVIDER__', process.env.EMAIL_PROVIDER?.trim() ?? 'console'],
     ['__EMAIL_SENDER__', process.env.EMAIL_SENDER?.trim() ?? ''],
     ['__EMAIL_ADMIN__', process.env.EMAIL_ADMIN?.trim() ?? ''],
-    ['__PROGRAM_API_BASE__', process.env.PROGRAM_API_BASE?.trim() ?? '']
+    ['__PROGRAM_API_BASE__', process.env.PROGRAM_API_BASE?.trim() ?? ''],
+    ['__POSTMARK_MESSAGE_STREAM__', process.env.POSTMARK_MESSAGE_STREAM?.trim() ?? 'outbound']
   ]);
   const templateContents = readFileSync(templatePath, 'utf8');
   let output = templateContents;
