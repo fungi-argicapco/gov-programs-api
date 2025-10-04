@@ -25,7 +25,7 @@ export default defineConfig({
     ]
   },
   test: {
-    environment: 'jsdom',
+    environment: 'happy-dom',
     globals: true,
     setupFiles: ['tests/setup-vitest.ts'],
     include: ['packages/atlas-svelte/src/lib/components/__tests__/**/*.vitest.ts'],
